@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Sekolah Alam Al-Karim</title>
+  <style>
+    :root {
+      --primary: #2E7D32;
+      --primary-light: #4CAF50;
+      --primary-dark: #1B5E20;
+      --secondary: #E8F5E9;
+      --accent: #81C784;
+      --white: #ffffff;
+      --gray-100: #f5f5f5;
+      --gray-200: #eeeeee;
+      --gray-300: #e0e0e0;
+      --gray-500: #9e9e9e;
+      --gray-700: #616161;
+      --gray-900: #212121;
+      --danger: #c62828;
+      --warning: #e65100;
+      --success: #2e7d32;
+      --info: #1565c0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gray-100); color: var(--gray-900); min-height: 100vh; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* LOGIN */
+    .login-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, #388E3C 100%); padding: 20px; }
+    .login-card { background: white; border-radius: 18px; padding: 40px; width: 100%; max-width: 430px; box-shadow: 0 24px 64px rgba(0,0,0,0.25); }
+    .login-logo { text-align: center; margin-bottom: 30px; }
+    .login-logo .school-icon { width: 68px; height: 68px; background: var(--secondary); border-radius: 18px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 34px; }
+    .login-logo h1 { font-size: 22px; font-weight: 800; color: var(--primary-dark); }
+    .login-logo p { font-size: 13px; color: var(--gray-500); margin-top: 3px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--gray-700); margin-bottom: 5px; }
+    .form-group select, .form-group input { width: 100%; padding: 10px 14px; border: 1.5px solid var(--gray-300); border-radius: 9px; font-size: 14px; outline: none; transition: border-color 0.2s; font-family: inherit; }
+    .form-group select:focus, .form-group input:focus { border-color: var(--primary); }
+    .btn-login { width: 100%; padding: 13px; background: var(--primary); color: white; border: none; border-radius: 9px; font-size: 15px; font-weight: 700; cursor: pointer; transition: background 0.2s; margin-top: 6px; }
+    .btn-login:hover { background: var(--primary-dark); }
+    .demo-section { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--gray-200); }
+    .demo-section p { font-size: 12px; color: var(--gray-500); margin-bottom: 10px; text-align: center; }
+    .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .demo-btn { padding: 10px; background: var(--secondary); border: 1.5px solid var(--accent); border-radius: 9px; font-size: 12px; font-weight: 700; color: var(--primary-dark); cursor: pointer; text-align: center; line-height: 1.5; transition: all 0.2s; }
+    .demo-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+    /* APP SHELL */
+    .app-layout { min-height: 100vh; display: flex; flex-direction: column; }
+    .top-nav { background: var(--primary); color: white; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 62px; box-shadow: 0 2px 10px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 100; }
+    .top-nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 16px; }
+    .top-nav .brand-icon { font-size: 24px; }
+    .top-nav .user-area { display: flex; align-items: center; gap: 10px; }
+    .user-pill { background: rgba(255,255,255,0.18); padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+    .btn-logout { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 14px; border-radius: 7px; font-size: 13px; cursor: pointer; font-weight: 600; transition: background 0.2s; }
+    .btn-logout:hover { background: rgba(255,255,255,0.22); }
+    .content-area { flex: 1; padding: 28px 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
+
+    /* SECTION HEADER */
+    .section-header { margin-bottom: 22px; }
+    .section-header h2 { font-size: 21px; font-weight: 800; color: var(--primary-dark); }
+    .section-header p { font-size: 13px; color: var(--gray-500); margin-top: 4px; }
+
+    /* TABS */
+    .tab-nav { display: flex; gap: 4px; background: white; padding: 6px; border-radius: 11px; box-shadow: 0 1px 5px rgba(0,0,0,0.08); margin-bottom: 20px; flex-wrap: wrap; }
+    .tab-btn { padding: 9px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; background: transparent; color: var(--gray-500); transition: all 0.2s; }
+    .tab-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 6px rgba(46,125,50,0.35); }
+    .tab-btn:hover:not(.active) { background: var(--secondary); color: var(--primary); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* CARD */
+    .card { background: white; border-radius: 13px; padding: 22px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+    .card-title { font-size: 15px; font-weight: 800; color: var(--gray-900); }
+
+    /* TABLE */
+    .table-wrapper { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th { background: var(--secondary); color: var(--primary-dark); font-weight: 700; padding: 11px 12px; text-align: left; border-bottom: 2px solid var(--accent); white-space: nowrap; }
+    tbody td { padding: 10px 12px; border-bottom: 1px solid var(--gray-200); vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #F9FBE7; }
+
+    td select, td input[type="text"], td input[type="date"], td textarea { width: 100%; padding: 6px 9px; border: 1.5px solid var(--gray-300); border-radius: 7px; font-size: 12px; outline: none; font-family: inherit; }
+    td select:focus, td input:focus, td textarea:focus { border-color: var(--primary); }
+    td input[type="range"] { width: 75px; cursor: pointer; accent-color: var(--primary); }
+    .score-val { font-weight: 800; color: var(--primary); font-size: 13px; min-width: 28px; display: inline-block; text-align: right; }
+
+    /* BADGE */
+    .badge { display: inline-block; padding: 3px 11px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+    .badge-onprogress { background: #FFF3E0; color: #BF360C; }
+    .badge-pending { background: #F3E5F5; color: #6A1B9A; }
+    .badge-selesai { background: #E8F5E9; color: #1B5E20; }
+    .badge-approved { background: #E8F5E9; color: #1B5E20; }
+    .badge-draft { background: #FFF3E0; color: #BF360C; }
+
+    /* BUTTONS */
+    .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; border: none; font-family: inherit; }
+    .btn-green { background: var(--primary); color: white; }
+    .btn-green:hover { background: var(--primary-dark); }
+    .btn-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+    .btn-outline:hover { background: var(--secondary); }
+    .btn-red { background: transparent; color: var(--danger); border: 1.5px solid #EF9A9A; }
+    .btn-red:hover { background: #FFEBEE; }
+    .btn-blue { background: #1565C0; color: white; border: none; }
+    .btn-blue:hover { background: #0D47A1; }
+    .btn-sm { padding: 4px 10px; font-size: 11px; }
+
+    /* STATS GRID */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 22px; }
+    .stat-card { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 1px 5px rgba(0,0,0,0.08); border-left: 4px solid var(--primary); }
+    .stat-value { font-size: 30px; font-weight: 900; color: var(--primary-dark); }
+    .stat-label { font-size: 12px; color: var(--gray-500); margin-top: 4px; font-weight: 600; }
+    .stat-card.orange { border-color: #FF6D00; } .stat-card.orange .stat-value { color: #E65100; }
+    .stat-card.blue   { border-color: #1565C0; } .stat-card.blue .stat-value   { color: #1565C0; }
+    .stat-card.red    { border-color: #C62828; } .stat-card.red .stat-value    { color: #C62828; }
+    .stat-card.purple { border-color: #7B1FA2; } .stat-card.purple .stat-value { color: #7B1FA2; }
+
+    /* DATE BADGE */
+    .date-badge { background: var(--secondary); border: 1.5px solid var(--accent); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; color: var(--primary-dark); white-space: nowrap; }
+
+    /* SELECTOR */
+    .selector-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .selector-row label { font-weight: 700; color: var(--gray-700); font-size: 14px; }
+    .selector-row select { padding: 8px 12px; border: 1.5px solid var(--gray-300); border-radius: 8px; font-size: 14px; outline: none; min-width: 200px; font-family: inherit; }
+    .selector-row select:focus { border-color: var(--primary); }
+
+    /* JENJANG PICKER */
+    .jenjang-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .jenjang-card { background: white; border: 2.5px solid var(--gray-300); border-radius: 12px; padding: 18px 10px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .jenjang-card:hover, .jenjang-card.active { border-color: var(--primary); background: var(--secondary); }
+    .jenjang-icon { font-size: 28px; margin-bottom: 6px; }
+    .jenjang-label { font-weight: 800; color: var(--primary-dark); font-size: 16px; }
+
+    /* PROGRESS BAR */
+    .progress-bar { width: 100%; height: 9px; background: var(--gray-200); border-radius: 5px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--primary); border-radius: 5px; transition: width 0.4s; }
+
+    /* BANNERS */
+    .info-banner    { background: #E3F2FD; border-left: 4px solid #1565C0; padding: 10px 16px; border-radius: 0 8px 8px 0; font-size: 13px; color: #1565C0; margin-bottom: 16px; font-weight: 600; }
+    .warn-banner    { background: #FFF3E0; border-left: 4px solid #FF6D00; padding: 10px 16px; border-radius: 0 8px 8px 0; font-size: 13px; color: #E65100; margin-bottom: 16px; font-weight: 600; }
+    .success-banner { background: #E8F5E9; border-left: 4px solid var(--primary); padding: 10px 16px; border-radius: 0 8px 8px 0; font-size: 13px; color: var(--primary-dark); margin-bottom: 16px; font-weight: 600; }
+
+    /* EMPTY STATE */
+    .empty-state { text-align: center; padding: 36px 20px; color: var(--gray-500); }
+    .empty-state .empty-icon { font-size: 44px; margin-bottom: 10px; }
+    .empty-state p { font-size: 14px; }
+
+    /* FILE UPLOAD */
+    .file-wrap input[type="file"] { display: none; }
+    .file-label { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--secondary); border: 1px solid var(--accent); border-radius: 6px; font-size: 11px; color: var(--primary); cursor: pointer; font-weight: 700; }
+    .file-label:hover { background: var(--primary); color: white; }
+    .file-name { font-size: 10px; color: var(--gray-500); margin-top: 2px; max-width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* DAY SELECTORS */
+    .day-sel { -webkit-appearance: none; appearance: none; width: 46px; height: 32px; border-radius: 7px; border: 1.5px solid var(--gray-300); background: var(--gray-100); font-size: 15px; text-align: center; cursor: pointer; outline: none; font-family: inherit; }
+    .day-sel.v-check { background: #E8F5E9; border-color: #4CAF50; color: #1B5E20; }
+    .day-sel.v-cross { background: #FFEBEE; border-color: #EF9A9A; color: #C62828; }
+    .day-sel.v-minus { background: var(--gray-100); border-color: #BDBDBD; color: #757575; }
+
+    /* BUKU TABLE */
+    .buku-table th.hari-th { text-align: center; width: 60px; }
+    .buku-table td.hari-td { text-align: center; padding: 5px 3px; }
+    .buku-kat-header td { background: var(--secondary) !important; font-weight: 800; color: var(--primary-dark); font-size: 12px; padding: 7px 12px !important; }
+    tr.sep-row td { background: var(--gray-100) !important; padding: 3px !important; }
+
+    /* APPROVAL BAR */
+    .approval-bar { display: flex; align-items: center; justify-content: space-between; background: var(--gray-100); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+
+    /* REKAP PILLS */
+    .rekap-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .rekap-pill { padding: 5px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; background: white; border: 1.5px solid var(--gray-300); color: var(--gray-700); transition: all 0.2s; }
+    .rekap-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+    /* TAKLIM */
+    .taklim-input { width: 100%; padding: 4px 6px; border: 1.5px solid var(--gray-300); border-radius: 6px; font-size: 11px; outline: none; font-family: inherit; margin-bottom: 3px; }
+    .taklim-input:focus { border-color: var(--primary); }
+
+    /* TOAST */
+    #toast { position: fixed; bottom: 24px; right: 24px; background: #1B5E20; color: white; padding: 13px 22px; border-radius: 11px; font-size: 14px; font-weight: 700; box-shadow: 0 6px 20px rgba(0,0,0,0.2); z-index: 9999; transform: translateY(80px); opacity: 0; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); pointer-events: none; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+
+    @media (max-width: 768px) {
+      .content-area { padding: 16px; }
+      .jenjang-grid { grid-template-columns: repeat(2, 1fr); }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="page-login" class="page active">
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="school-icon">🏫</div>
+        <h1>Sekolah Alam Al-Karim</h1>
+        <p>Sistem Informasi Terpadu</p>
+      </div>
+      <div class="form-group">
+        <label>Masuk Sebagai</label>
+        <select id="login-role">
+          <option value="">-- Pilih Role --</option>
+          <option value="guru">🧑‍🏫 Guru / Karyawan</option>
+          <option value="ortu">👨‍👩‍👧 Orangtua</option>
+          <option value="pimpinan">👔 Pimpinan</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="login-user" placeholder="Masukkan username" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-pass" placeholder="Masukkan password" onkeydown="if(event.key==='Enter')doLogin()" />
+      </div>
+      <button class="btn-login" onclick="doLogin()">Masuk →</button>
+      <div class="demo-section">
+        <p>🔑 Klik akun demo untuk langsung coba:</p>
+        <div class="demo-grid">
+          <div class="demo-btn" onclick="fillDemo('guru','Bu Siti','Guru Kelas 1A')">🧑‍🏫 Bu Siti<br><small style="font-weight:400">Guru Kelas 1A</small></div>
+          <div class="demo-btn" onclick="fillDemo('guru','Pak Ahmad','Guru Kelas 2B')">🧑‍🏫 Pak Ahmad<br><small style="font-weight:400">Guru Kelas 2B</small></div>
+          <div class="demo-btn" onclick="fillDemo('ortu','Ortu Zahra','Orangtua')">👨‍👩‍👧 Ortu Zahra<br><small style="font-weight:400">Anak: Zahra Putri</small></div>
+          <div class="demo-btn" onclick="fillDemo('pimpinan','Kepala Sekolah','Pimpinan')">👔 Kepala Sekolah<br><small style="font-weight:400">Pimpinan</small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PORTAL GURU ===== -->
+<div id="page-guru" class="page">
+  <div class="app-layout">
+    <nav class="top-nav">
+      <div class="brand"><span class="brand-icon">🏫</span> Portal Sekolah</div>
+      <div class="user-area">
+        <div class="user-pill" id="guru-pill">🧑‍🏫 Guru</div>
+        <button class="btn-logout" onclick="logout()">Keluar</button>
+      </div>
+    </nav>
+    <div class="content-area">
+      <div class="section-header">
+        <h2 id="guru-title">Portal Guru</h2>
+        <p id="guru-subtitle">Selasa, 26 Mei 2026</p>
+      </div>
+
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('guru','job',this)">📋 Job Tracker</button>
+        <button class="tab-btn" onclick="switchTab('guru','buku',this)">📖 Buku Penghubung</button>
+        <button class="tab-btn" onclick="switchTab('guru','kpi',this)">🎯 Agenda KPI</button>
+      </div>
+
+      <!-- JOB TRACKER -->
+      <div id="guru-tab-job" class="tab-content active">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📋 Job Tracker Harian — Input Mandiri</div>
+              <div style="margin-top:6px"><span class="date-badge">📅 Selasa, 26 Mei 2026</span></div>
+            </div>
+            <button class="btn btn-green" onclick="addJobRow()">+ Tambah Tugas</button>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:36px">No</th>
+                  <th>Tugas / Agenda</th>
+                  <th style="width:150px">Status</th>
+                  <th style="width:120px">Target Selesai</th>
+                  <th style="width:110px">Skor</th>
+                  <th style="width:100px">Bukti</th>
+                  <th>Catatan</th>
+                  <th style="width:42px"></th>
+                </tr>
+              </thead>
+              <tbody id="job-tbody"></tbody>
+            </table>
+          </div>
+          <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:10px">
+            <button class="btn btn-outline" onclick="toast('📥 Draft tersimpan')">💾 Simpan Draft</button>
+            <button class="btn btn-green" onclick="submitJobTracker()">📤 Submit ke Pimpinan</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUKU PENGHUBUNG GURU -->
+      <div id="guru-tab-buku" class="tab-content">
+        <div class="info-banner">📌 Isi laporan aktivitas siswa di sekolah, lalu klik <strong>Publish ke Orangtua</strong> agar orangtua dapat melihatnya.</div>
+        <div class="card">
+          <div class="card-header">
+            <div class="selector-row" style="margin:0">
+              <label>Pilih Siswa :</label>
+              <select id="siswa-select" onchange="loadBukuGuru()">
+                <option value="">-- Pilih Nama Siswa --</option>
+                <option>Ahmad Fauzi</option>
+                <option>Zahra Putri</option>
+                <option>Budi Santoso</option>
+                <option>Citra Lestari</option>
+                <option>Dani Pratama</option>
+              </select>
+            </div>
+            <span class="date-badge">📅 Minggu Ini</span>
+          </div>
+          <div id="buku-guru-content">
+            <div class="empty-state"><div class="empty-icon">👆</div><p>Pilih nama siswa untuk mulai mengisi laporan</p></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📩 Laporan Rumah dari Orangtua</div>
+          </div>
+          <div id="catatan-ortu-view">
+            <div class="empty-state"><div class="empty-icon">📬</div><p>Pilih siswa untuk melihat laporan dari orangtua</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENDA KPI -->
+      <div id="guru-tab-kpi" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🎯 Agenda KPI — Mei 2026</div>
+            <button class="btn btn-green" onclick="addKpiRow()">+ Tambah KPI</button>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:36px">No</th>
+                  <th>Indikator KPI</th>
+                  <th style="width:85px">Target</th>
+                  <th style="width:85px">Capaian</th>
+                  <th style="width:130px">Progres</th>
+                  <th style="width:120px">Status</th>
+                  <th>Keterangan</th>
+                  <th style="width:42px"></th>
+                </tr>
+              </thead>
+              <tbody id="kpi-tbody"></tbody>
+            </table>
+          </div>
+          <div style="margin-top:16px;display:flex;justify-content:flex-end">
+            <button class="btn btn-green" onclick="saveKpiToApi()">💾 Simpan KPI</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PORTAL ORANGTUA ===== -->
+<div id="page-ortu" class="page">
+  <div class="app-layout">
+    <nav class="top-nav">
+      <div class="brand"><span class="brand-icon">🏫</span> Portal Sekolah</div>
+      <div class="user-area">
+        <div class="user-pill" id="ortu-pill">👨‍👩‍👧 Orangtua</div>
+        <button class="btn-logout" onclick="logout()">Keluar</button>
+      </div>
+    </nav>
+    <div class="content-area">
+      <div class="section-header">
+        <h2>Portal Orangtua</h2>
+        <p>Pantau perkembangan anak &amp; isi laporan aktivitas di rumah</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="margin-bottom:16px">📚 Pilih Jenjang &amp; Nama Anak</div>
+        <div class="jenjang-grid">
+          <div class="jenjang-card" id="jnjg-TK" onclick="pickJenjang('TK')"><div class="jenjang-icon">🎨</div><div class="jenjang-label">TK</div></div>
+          <div class="jenjang-card active" id="jnjg-SD" onclick="pickJenjang('SD')"><div class="jenjang-icon">✏️</div><div class="jenjang-label">SD</div></div>
+          <div class="jenjang-card" id="jnjg-SMP" onclick="pickJenjang('SMP')"><div class="jenjang-icon">📐</div><div class="jenjang-label">SMP</div></div>
+          <div class="jenjang-card" id="jnjg-SMA" onclick="pickJenjang('SMA')"><div class="jenjang-icon">🎓</div><div class="jenjang-label">SMA</div></div>
+        </div>
+        <div style="max-width:320px">
+          <div class="form-group">
+            <label>Nama Anak</label>
+            <select id="anak-select" onchange="loadAnakPortal()">
+              <option value="">-- Pilih Nama --</option>
+              <option>Zahra Putri (Kelas 1A)</option>
+              <option>Ahmad Fauzi (Kelas 1A)</option>
+              <option>Budi Santoso (Kelas 2B)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="ortu-content" style="display:none">
+        <div class="tab-nav">
+          <button class="tab-btn active" onclick="switchTab('ortu','buku',this)">📖 Buku Penghubung</button>
+          <button class="tab-btn" onclick="switchTab('ortu','laporan',this)">📊 Laporan Perkembangan</button>
+        </div>
+
+        <div id="ortu-tab-buku" class="tab-content active">
+          <!-- Laporan dari Guru -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📋 Laporan dari Guru (Aktivitas di Sekolah)</div>
+              <div id="guru-approval-badge"></div>
+            </div>
+            <div id="laporan-guru-view"></div>
+          </div>
+
+          <!-- Laporan Rumah (diisi orangtua) -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🏠 Laporan Aktivitas di Rumah</div>
+              <span class="date-badge">📅 Selasa, 26 Mei 2026</span>
+            </div>
+            <div class="info-banner">✏️ Isi aktivitas anak di rumah minggu ini, lalu kirim ke guru.</div>
+            <div id="buku-ortu-form"></div>
+            <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px">
+              <button class="btn btn-outline" onclick="renderBukuOrtuForm()">↺ Reset</button>
+              <button class="btn btn-green" onclick="submitBukuOrtu()">📤 Kirim ke Guru</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="ortu-tab-laporan" class="tab-content">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📊 Rekap Perkembangan Anak</div>
+              <span class="date-badge">Minggu Ini</span>
+            </div>
+            <div id="laporan-rekap-content"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PORTAL PIMPINAN ===== -->
+<div id="page-pimpinan" class="page">
+  <div class="app-layout">
+    <nav class="top-nav">
+      <div class="brand"><span class="brand-icon">🏫</span> Portal Sekolah</div>
+      <div class="user-area">
+        <div class="user-pill">👔 Kepala Sekolah</div>
+        <button class="btn-logout" onclick="logout()">Keluar</button>
+      </div>
+    </nav>
+    <div class="content-area">
+      <div class="section-header">
+        <h2>Dashboard Pimpinan</h2>
+        <p>Monitoring real-time kinerja karyawan &amp; perkembangan siswa — Mei 2026</p>
+      </div>
+
+      <div class="stats-grid" id="pimpinan-stats"></div>
+
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('pimpinan','job',this)">📋 Job Tracker Live</button>
+        <button class="tab-btn" onclick="switchTab('pimpinan','rekap',this)">📊 Rekap Performa</button>
+        <button class="tab-btn" onclick="switchTab('pimpinan','buku',this)">📖 Buku Penghubung</button>
+      </div>
+
+      <!-- JOB TRACKER LIVE -->
+      <div id="pimpinan-tab-job" class="tab-content active">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Agenda Harian — Semua Karyawan</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <select id="filter-karyawan" style="padding:7px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;outline:none;font-family:inherit" onchange="renderPimpinanJob()">
+                <option value="">Semua Karyawan</option>
+              </select>
+              <select id="filter-status" style="padding:7px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;outline:none;font-family:inherit" onchange="renderPimpinanJob()">
+                <option value="">Semua Status</option>
+                <option>Selesai</option>
+                <option>OnProgress</option>
+                <option>Pending</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Karyawan</th>
+                  <th>Jabatan</th>
+                  <th>Tugas / Agenda</th>
+                  <th style="width:130px">Status</th>
+                  <th style="width:110px">Target</th>
+                  <th style="width:60px">Skor</th>
+                  <th>Catatan</th>
+                </tr>
+              </thead>
+              <tbody id="pimpinan-job-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- REKAP PERFORMA -->
+      <div id="pimpinan-tab-rekap" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📊 Rekap Performa Karyawan</div>
+            <div class="rekap-pills">
+              <button class="rekap-pill active" id="pill-harian"   onclick="switchRekap('harian',this)">Harian</button>
+              <button class="rekap-pill" id="pill-mingguan" onclick="switchRekap('mingguan',this)">Mingguan</button>
+              <button class="rekap-pill" id="pill-bulanan"  onclick="switchRekap('bulanan',this)">Bulanan</button>
+            </div>
+          </div>
+          <div id="rekap-table-container"></div>
+          <div style="margin-top:14px;display:flex;justify-content:flex-end">
+            <button class="btn btn-outline" onclick="toast('📥 Mengunduh rekap...')">⬇️ Export Excel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUKU PENGHUBUNG MONITOR -->
+      <div id="pimpinan-tab-buku" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📖 Status Buku Penghubung Siswa</div>
+            <span class="date-badge">📅 Minggu Ini</span>
+          </div>
+          <div class="table-wrapper" id="pimpinan-buku-table"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🏠 Laporan Rumah dari Orangtua</div>
+          </div>
+          <div class="table-wrapper" id="pimpinan-ortu-table"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ========================
+   API CONFIG
+======================== */
+// Ganti dengan URL Google Apps Script Anda setelah deploy
+const API_URL = 'https://script.google.com/macros/s/AKfycbwaUZAm8zoxvCfKo8xgOU7goa3GZYXH-IkcVZ2Yb1Xw6wvbIXPEB-b8wL_p6HVU5Qav/exec';
+
+function apiCall(action, payload = {}) {
+  if (!API_URL || API_URL === 'PASTE_YOUR_SCRIPT_URL_HERE') {
+    // Mode offline — pakai data lokal saja
+    return Promise.resolve({ ok: true, _offline: true });
+  }
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' }, // GAS butuh text/plain agar tidak trigger CORS preflight
+    body: JSON.stringify({ action, ...payload }),
+  })
+  .then(r => r.json())
+  .catch(err => { console.warn('API error:', err); return { ok: false, error: err.message }; });
+}
+
+function showApiStatus(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = isError ? '#C62828' : '#1B5E20';
+  t.classList.add('show');
+  setTimeout(() => { t.classList.remove('show'); t.style.background = ''; }, 3000);
+}
+
+/* ========================
+   CONSTANTS
+======================== */
+const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat'];
+const HARI_SHORT = ['Sen','Sel','Rab','Kam','Jum'];
+const TODAY_STR = 'Selasa, 26 Mei 2026';
+
+const BUKU_KAT = [
+  { no:1, label:'Pembiasaan Ibadah Harian', items:[
+    'Shalat Subuh','Shalat Dzuhur','Shalat Ashar','Shalat Maghrib','Shalat Isya',
+    'Shalat Dhuha','Shalat Tahajud','Membaca Dzikir Pagi dan Petang',
+    'Murajaah Hafalan Alquran','Membaca Alquran ½ juz per hari (Belum bisa: Iqro 3 lembar)',
+  ]},
+  { no:2, label:'Kedisiplinan', items:[
+    'Tidur maksimal pukul 21.00 WIB','Bangun tidur sebelum adzan subuh / maks. 05.30 WIB',
+    'Membawa bekal makanan sehat dan bergizi seimbang','Penggunaan HP/TV maksimal 30 menit',
+    'Belajar minimal 15–30 menit selama di rumah',
+  ]},
+  { no:3, label:'Memuliakan Orangtua', items:[
+    'Merapikan tempat tidur','Mencuci piring setelah makan',
+    'Menyapu / mengepel lantai','Memijat orangtua (minimal 1 pekan sekali)',
+  ]},
+];
+
+const SISWA_LIST = ['Ahmad Fauzi','Zahra Putri','Budi Santoso','Citra Lestari','Dani Pratama'];
+const KARYAWAN_LIST = [
+  { nama:'Bu Siti Rahayu',    jabatan:'Guru Kelas 1A' },
+  { nama:'Pak Ahmad Firdaus', jabatan:'Guru Kelas 2B' },
+  { nama:'Bu Desi Purnama',   jabatan:'TU / Admin' },
+  { nama:'Pak Budi Wahyono',  jabatan:'Guru PAI' },
+  { nama:'Bu Rina Marlina',   jabatan:'Guru Kelas 3A' },
+];
+
+/* ========================
+   STATE
+======================== */
+let currentGuruName = '';
+let currentGuruJabatan = '';
+let currentAnakOrtu = '';
+let currentRekap = 'harian';
+
+// allJobData[namaKaryawan] = { jabatan, tasks: [{agenda,status,target,skor,file,catatan}] }
+let allJobData = {};
+
+// bukuGuruState[siswa] = { published:bool, data:{ki:{ii:{hari:val}}}, taklim:{hari:{tema,val}} }
+let bukuGuruState = {};
+
+// bukuOrtuState[siswa] = [{tanggal, data:{ki:{ii:{hari:val}}}, taklim:{hari:{tema,val}}}]
+let bukuOrtuState = {};
+
+let jobRows = [];
+let kpiRows = [];
+let dataInited = false;
+
+/* ========================
+   HELPERS
+======================== */
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+}
+
+function switchTab(portal, tab, btn) {
+  document.querySelectorAll('#page-' + portal + ' .tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('#page-' + portal + ' .tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(portal + '-tab-' + tab).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function switchRekap(mode, btn) {
+  currentRekap = mode;
+  document.querySelectorAll('.rekap-pill').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderRekapTable(mode);
+}
+
+function badge(status) {
+  const cls = status==='Selesai'?'badge-selesai':status==='OnProgress'?'badge-onprogress':'badge-pending';
+  return `<span class="badge ${cls}">${status}</span>`;
+}
+
+function bpOpts() {
+  return ['—','✓','✗'].map(o => `<option value="${o}">${o}</option>`).join('');
+}
+
+function styleDay(sel) {
+  const v = sel.value;
+  sel.className = 'day-sel ' + (v==='✓'?'v-check':v==='✗'?'v-cross':'v-minus');
+}
+
+function emptyBukuData() {
+  const data = {};
+  BUKU_KAT.forEach((kat, ki) => {
+    data[ki] = {};
+    kat.items.forEach((_, ii) => {
+      data[ki][ii] = {};
+      HARI.forEach(h => { data[ki][ii][h] = '—'; });
+    });
+  });
+  const taklim = {};
+  HARI.forEach(h => { taklim[h] = { tema:'', val:'—' }; });
+  return { data, taklim };
+}
+
+/* ========================
+   LOGIN / LOGOUT
+======================== */
+function fillDemo(role, user) {
+  document.getElementById('login-role').value = role;
+  document.getElementById('login-user').value = user;
+  document.getElementById('login-pass').value = 'demo123';
+}
+
+function doLogin() {
+  const role = document.getElementById('login-role').value;
+  const user = document.getElementById('login-user').value.trim();
+  if (!role || !user) { toast('⚠️ Pilih role dan masukkan username!'); return; }
+  if (!dataInited) { initDemoData(); dataInited = true; }
+
+  if (role === 'guru') {
+    const jabatan = user.toLowerCase().includes('ahmad') ? 'Guru Kelas 2B' : 'Guru Kelas 1A';
+    currentGuruName = user;
+    currentGuruJabatan = jabatan;
+    document.getElementById('guru-pill').textContent = '🧑‍🏫 ' + user;
+    document.getElementById('guru-title').textContent = 'Portal Guru — ' + user;
+    document.getElementById('guru-subtitle').textContent = jabatan + '  |  ' + TODAY_STR;
+    if (!allJobData[user]) allJobData[user] = { jabatan, tasks: [] };
+    const existing = KARYAWAN_LIST.find(k => k.nama.toLowerCase().includes(user.split(' ')[0].toLowerCase()));
+    if (existing && allJobData[existing.nama]) {
+      jobRows = [...allJobData[existing.nama].tasks];
+    } else {
+      jobRows = [{ agenda:'', status:'Pending', target:'2026-05-26', skor:0, file:'', catatan:'' }];
+    }
+    renderJobTracker();
+    renderKpi();
+    showPage('guru');
+  } else if (role === 'ortu') {
+    document.getElementById('ortu-pill').textContent = '👨‍👩‍👧 ' + user;
+    showPage('ortu');
+  } else {
+    populateFilters();
+    renderPimpinanStats();
+    renderPimpinanJob();
+    renderRekapTable('harian');
+    renderPimpinanBuku();
+    showPage('pimpinan');
+  }
+  toast('✅ Selamat datang, ' + user + '!');
+}
+
+function logout() {
+  showPage('login');
+  ['login-role','login-user','login-pass'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('siswa-select').value = '';
+  document.getElementById('anak-select').value = '';
+  document.getElementById('ortu-content').style.display = 'none';
+  ['guru','ortu','pimpinan'].forEach(portal => {
+    document.querySelectorAll('#page-' + portal + ' .tab-content').forEach((c,i) => c.classList.toggle('active', i===0));
+    document.querySelectorAll('#page-' + portal + ' .tab-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  });
+}
+
+/* ========================
+   DEMO DATA
+======================== */
+function initDemoData() {
+  const tasks = {
+    'Bu Siti Rahayu': [
+      { agenda:'Mengajar Matematika Kelas 1A', status:'Selesai', target:'2026-05-26', skor:92, file:'', catatan:'Materi pecahan sederhana' },
+      { agenda:'Koreksi PR Siswa', status:'OnProgress', target:'2026-05-26', skor:65, file:'', catatan:'' },
+      { agenda:'Rapat Koordinasi Guru', status:'Selesai', target:'2026-05-26', skor:100, file:'', catatan:'Selesai pukul 09.00' },
+    ],
+    'Pak Ahmad Firdaus': [
+      { agenda:'Mengajar IPA Kelas 2B', status:'Selesai', target:'2026-05-26', skor:88, file:'', catatan:'' },
+      { agenda:'Input Nilai Semester', status:'OnProgress', target:'2026-05-28', skor:50, file:'', catatan:'Masih proses' },
+    ],
+    'Bu Desi Purnama': [
+      { agenda:'Rekap Absensi Siswa', status:'Selesai', target:'2026-05-26', skor:96, file:'', catatan:'Sudah diupload' },
+      { agenda:'Laporan Keuangan Bulan Mei', status:'OnProgress', target:'2026-05-31', skor:40, file:'', catatan:'' },
+    ],
+    'Pak Budi Wahyono': [
+      { agenda:'Hafalan Tahfidz Kelas 3', status:'Selesai', target:'2026-05-26', skor:90, file:'', catatan:'' },
+      { agenda:'Koreksi UTS Kelas 3', status:'Pending', target:'2026-05-28', skor:0, file:'', catatan:'Menunggu soal dari TU' },
+    ],
+    'Bu Rina Marlina': [
+      { agenda:'Mengajar Bahasa Indonesia 3A', status:'Selesai', target:'2026-05-26', skor:85, file:'', catatan:'' },
+      { agenda:'Konsultasi Wali Murid', status:'OnProgress', target:'2026-05-27', skor:70, file:'', catatan:'3 siswa perlu perhatian' },
+    ],
+  };
+  KARYAWAN_LIST.forEach(k => {
+    allJobData[k.nama] = { jabatan: k.jabatan, tasks: tasks[k.nama] || [] };
+  });
+
+  // Pre-fill buku guru for Zahra Putri
+  const z = emptyBukuData();
+  z.published = false;
+  // Some ✓ values
+  [[0,0,'Senin','✓'],[0,0,'Selasa','✓'],[0,1,'Senin','✓'],[0,2,'Senin','✓'],[0,2,'Selasa','✓'],
+   [0,5,'Senin','✓'],[0,8,'Senin','✓'],[1,0,'Senin','✓'],[1,1,'Senin','✓'],[1,3,'Senin','✗'],
+   [2,0,'Senin','✓'],[2,0,'Selasa','✓'],[2,2,'Senin','✓']].forEach(([ki,ii,h,v]) => {
+    z.data[ki][ii][h] = v;
+  });
+  z.taklim['Senin'] = { tema:'Akhlak Mulia', val:'✓' };
+  z.taklim['Selasa'] = { tema:'Tawakal', val:'✓' };
+  bukuGuruState['Zahra Putri'] = z;
+
+  // Ahmad Fauzi buku (published)
+  const a = emptyBukuData();
+  a.published = true;
+  [[0,0,'Senin','✓'],[0,1,'Senin','✓'],[0,0,'Selasa','✓'],[1,0,'Senin','✓'],[2,0,'Senin','✗']].forEach(([ki,ii,h,v]) => {
+    a.data[ki][ii][h] = v;
+  });
+  a.taklim['Senin'] = { tema:'Ikhlas', val:'✓' };
+  bukuGuruState['Ahmad Fauzi'] = a;
+}
+
+/* ========================
+   JOB TRACKER (GURU)
+======================== */
+function renderJobTracker() {
+  const tb = document.getElementById('job-tbody');
+  tb.innerHTML = '';
+  jobRows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="text-align:center;font-weight:800">${i+1}</td>
+      <td><input type="text" value="${r.agenda}" placeholder="Tulis agenda..." onchange="jobRows[${i}].agenda=this.value" /></td>
+      <td>
+        <select onchange="jobRows[${i}].status=this.value;renderJobTracker()">
+          <option ${r.status==='Pending'?'selected':''}>Pending</option>
+          <option ${r.status==='OnProgress'?'selected':''}>OnProgress</option>
+          <option ${r.status==='Selesai'?'selected':''}>Selesai</option>
+        </select>
+      </td>
+      <td><input type="date" value="${r.target}" onchange="jobRows[${i}].target=this.value" /></td>
+      <td style="white-space:nowrap">
+        <input type="range" min="0" max="100" value="${r.skor}"
+          oninput="jobRows[${i}].skor=+this.value;this.nextElementSibling.textContent=this.value" />
+        <span class="score-val">${r.skor}</span>
+      </td>
+      <td>
+        <div class="file-wrap">
+          <label class="file-label" for="jf${i}">📎 Bukti</label>
+          <input type="file" id="jf${i}" accept="image/*,.pdf" onchange="handleJobFile(${i},this)">
+          <div class="file-name" id="jfn${i}">${r.file}</div>
+        </div>
+      </td>
+      <td><input type="text" value="${r.catatan}" placeholder="Catatan..." onchange="jobRows[${i}].catatan=this.value" /></td>
+      <td><button class="btn btn-red btn-sm" onclick="jobRows.splice(${i},1);renderJobTracker()">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function addJobRow() {
+  jobRows.push({ agenda:'', status:'Pending', target:'2026-05-26', skor:0, file:'', catatan:'' });
+  renderJobTracker();
+}
+
+function handleJobFile(i, el) {
+  if (el.files[0]) {
+    jobRows[i].file = el.files[0].name;
+    document.getElementById('jfn'+i).textContent = el.files[0].name;
+    toast('📎 File diupload: ' + el.files[0].name);
+  }
+}
+
+function submitJobTracker() {
+  if (!currentGuruName) return;
+  const kd = KARYAWAN_LIST.find(k => k.nama.toLowerCase().includes(currentGuruName.split(' ')[0].toLowerCase()));
+  const key = kd ? kd.nama : currentGuruName;
+  if (!allJobData[key]) allJobData[key] = { jabatan: currentGuruJabatan, tasks: [] };
+  allJobData[key].tasks = [...jobRows];
+  toast('📤 Menyimpan...');
+  apiCall('saveJobTracker', {
+    karyawan: key,
+    jabatan: currentGuruJabatan,
+    tanggal: new Date().toISOString().split('T')[0],
+    tasks: JSON.stringify(jobRows),
+  }).then(res => {
+    if (res._offline) { toast('📤 Job tracker dikirim ke pimpinan! (mode offline)'); return; }
+    if (res.ok) showApiStatus('📤 Job tracker berhasil disimpan ke Google Sheets!');
+    else showApiStatus('⚠️ Gagal simpan: ' + res.error, true);
+  });
+}
+
+/* ========================
+   AGENDA KPI
+======================== */
+function renderKpi() {
+  if (!kpiRows.length) kpiRows = [
+    { ind:'Kehadiran Mengajar',    target:'22', capaian:'20', pct:91, status:'OnProgress', ket:'' },
+    { ind:'Nilai Rata-rata Kelas', target:'80', capaian:'78', pct:97, status:'OnProgress', ket:'Mendekati target' },
+    { ind:'Laporan Bulanan',       target:'1',  capaian:'1',  pct:100,status:'Selesai',    ket:'Sudah dikumpulkan' },
+  ];
+  const tb = document.getElementById('kpi-tbody');
+  tb.innerHTML = '';
+  kpiRows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="text-align:center;font-weight:800">${i+1}</td>
+      <td><input type="text" value="${r.ind}" onchange="kpiRows[${i}].ind=this.value" /></td>
+      <td><input type="text" value="${r.target}" onchange="kpiRows[${i}].target=this.value;recalcKpi(${i})" /></td>
+      <td><input type="text" value="${r.capaian}" onchange="kpiRows[${i}].capaian=this.value;recalcKpi(${i})" /></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="progress-bar" style="flex:1"><div class="progress-fill" id="kb${i}" style="width:${r.pct}%"></div></div>
+          <span style="font-weight:800;color:var(--primary);font-size:12px;min-width:34px" id="kp${i}">${r.pct}%</span>
+        </div>
+      </td>
+      <td><select onchange="kpiRows[${i}].status=this.value">
+        <option ${r.status==='Pending'?'selected':''}>Pending</option>
+        <option ${r.status==='OnProgress'?'selected':''}>OnProgress</option>
+        <option ${r.status==='Selesai'?'selected':''}>Selesai</option>
+      </select></td>
+      <td><input type="text" value="${r.ket}" placeholder="Keterangan..." onchange="kpiRows[${i}].ket=this.value" /></td>
+      <td><button class="btn btn-red btn-sm" onclick="kpiRows.splice(${i},1);renderKpi()">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function recalcKpi(i) {
+  const t = parseFloat(kpiRows[i].target), c = parseFloat(kpiRows[i].capaian);
+  if (!isNaN(t) && !isNaN(c) && t > 0) {
+    kpiRows[i].pct = Math.min(100, Math.round(c/t*100));
+    const b = document.getElementById('kb'+i), p = document.getElementById('kp'+i);
+    if (b) b.style.width = kpiRows[i].pct+'%';
+    if (p) p.textContent = kpiRows[i].pct+'%';
+  }
+}
+
+function addKpiRow() {
+  kpiRows.push({ ind:'', target:'', capaian:'', pct:0, status:'Pending', ket:'' });
+  renderKpi();
+}
+
+function saveKpiToApi() {
+  if (!currentGuruName) return;
+  const kd = KARYAWAN_LIST.find(k => k.nama.toLowerCase().includes(currentGuruName.split(' ')[0].toLowerCase()));
+  apiCall('saveKpi', {
+    guru: kd ? kd.nama : currentGuruName,
+    jabatan: currentGuruJabatan,
+    rows: JSON.stringify(kpiRows),
+  }).then(res => {
+    if (res._offline) { toast('✅ KPI tersimpan! (mode offline)'); return; }
+    if (res.ok) showApiStatus('✅ KPI berhasil disimpan ke Google Sheets!');
+    else showApiStatus('⚠️ Gagal simpan KPI: ' + res.error, true);
+  });
+}
+
+/* ========================
+   BUKU PENGHUBUNG GURU
+======================== */
+function loadBukuGuru() {
+  const siswa = document.getElementById('siswa-select').value;
+  if (!siswa) return;
+  if (!bukuGuruState[siswa]) { const d = emptyBukuData(); d.published = false; bukuGuruState[siswa] = d; }
+  renderBukuGuruForm(siswa);
+  renderCatatanOrtu(siswa);
+}
+
+function renderBukuGuruForm(siswa) {
+  const el = document.getElementById('buku-guru-content');
+  const st = bukuGuruState[siswa];
+
+  let html = `<div class="approval-bar">
+    <div>
+      <div style="font-size:14px;font-weight:800">📚 ${siswa}</div>
+      <div style="margin-top:4px">${st.published
+        ? '<span class="badge badge-approved">✅ Sudah Dipublish ke Orangtua</span>'
+        : '<span class="badge badge-draft">⏳ Draft — Belum Dipublish</span>'}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-outline" onclick="savesBukuGuruDraft('${siswa}')">💾 Simpan Draft</button>
+      <button class="btn ${st.published?'btn-green':'btn-blue'}" onclick="publishBuku('${siswa}')">
+        ${st.published ? '✅ Re-publish' : '📤 Publish ke Orangtua'}
+      </button>
+    </div>
+  </div>
+  <div class="table-wrapper">
+  <table class="buku-table">
+    <thead><tr>
+      <th style="width:32px">No</th>
+      <th>Aktivitas</th>
+      ${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}
+    </tr></thead>
+    <tbody>`;
+
+  let rn = 1;
+  BUKU_KAT.forEach((kat, ki) => {
+    html += `<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
+    kat.items.forEach((item, ii) => {
+      html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td>
+        <td style="font-size:12px;line-height:1.4">${item}</td>`;
+      HARI.forEach(h => {
+        const val = st.data[ki][ii][h] || '—';
+        const cls = val==='✓'?'v-check':val==='✗'?'v-cross':'v-minus';
+        html += `<td class="hari-td">
+          <select class="day-sel ${cls}" data-ki="${ki}" data-ii="${ii}" data-h="${h}"
+            onchange="setBukuGuru('${siswa}',${ki},${ii},'${h}',this.value);styleDay(this)">
+            ${bpOpts()}
+          </select>
+        </td>`;
+      });
+      html += '</tr>';
+    });
+  });
+
+  // Taklim row
+  html += `<tr><td class="buku-kat-header" colspan="${2+HARI.length}">4. Taklim</td></tr>
+  <tr>
+    <td style="text-align:center;color:var(--gray-500);font-size:12px">${rn}</td>
+    <td style="font-size:12px">Tema Taklim</td>`;
+  HARI.forEach(h => {
+    const t = st.taklim[h] || { tema:'', val:'—' };
+    const cls = t.val==='✓'?'v-check':t.val==='✗'?'v-cross':'v-minus';
+    html += `<td class="hari-td" style="min-width:72px">
+      <input type="text" class="taklim-input" value="${t.tema}" placeholder="Tema"
+        onchange="setTaklimGuru('${siswa}','${h}','tema',this.value)" />
+      <select class="day-sel ${cls}" data-taklim="${h}"
+        onchange="setTaklimGuru('${siswa}','${h}','val',this.value);styleDay(this)">
+        ${bpOpts()}
+      </select>
+    </td>`;
+  });
+  html += `</tr></tbody></table></div>`;
+  el.innerHTML = html;
+
+  // Set correct values for dropdowns
+  el.querySelectorAll('select.day-sel[data-ki]').forEach(sel => {
+    sel.value = st.data[sel.dataset.ki][sel.dataset.ii][sel.dataset.h] || '—';
+    styleDay(sel);
+  });
+  el.querySelectorAll('select.day-sel[data-taklim]').forEach(sel => {
+    const h = sel.dataset.taklim;
+    sel.value = st.taklim[h] ? st.taklim[h].val : '—';
+    styleDay(sel);
+  });
+}
+
+function setBukuGuru(siswa, ki, ii, h, val) {
+  if (bukuGuruState[siswa]) {
+    bukuGuruState[siswa].data[ki][ii][h] = val;
+    bukuGuruState[siswa].published = false;
+  }
+}
+
+function setTaklimGuru(siswa, h, field, val) {
+  if (!bukuGuruState[siswa]) return;
+  if (!bukuGuruState[siswa].taklim[h]) bukuGuruState[siswa].taklim[h] = { tema:'', val:'—' };
+  bukuGuruState[siswa].taklim[h][field] = val;
+}
+
+function publishBuku(siswa) {
+  if (!bukuGuruState[siswa]) return;
+  const st = bukuGuruState[siswa];
+  toast('📤 Menyimpan...');
+  // Simpan data dulu, lalu publish
+  apiCall('saveBukuGuru', {
+    siswa,
+    minggu: 'Minggu Ini',
+    data: JSON.stringify(st.data),
+    taklim: JSON.stringify(st.taklim),
+  }).then(() => apiCall('publishBukuGuru', { siswa }))
+  .then(res => {
+    if (res._offline) {
+      st.published = true;
+      renderBukuGuruForm(siswa);
+      toast('📤 Buku penghubung ' + siswa + ' dipublish! (mode offline)');
+      return;
+    }
+    if (res.ok) {
+      st.published = true;
+      renderBukuGuruForm(siswa);
+      showApiStatus('📤 Buku ' + siswa + ' berhasil dipublish ke orangtua & tersimpan di Google Sheets!');
+    } else {
+      showApiStatus('⚠️ Gagal publish: ' + res.error, true);
+    }
+  });
+}
+
+function savesBukuGuruDraft(siswa) {
+  if (!bukuGuruState[siswa]) return;
+  const st = bukuGuruState[siswa];
+  apiCall('saveBukuGuru', {
+    siswa,
+    minggu: 'Minggu Ini',
+    data: JSON.stringify(st.data),
+    taklim: JSON.stringify(st.taklim),
+  }).then(res => {
+    if (res._offline) { toast('✅ Tersimpan (mode offline)'); return; }
+    if (res.ok) showApiStatus('✅ Draft buku ' + siswa + ' tersimpan di Google Sheets!');
+    else showApiStatus('⚠️ Gagal simpan: ' + res.error, true);
+  });
+}
+
+function renderCatatanOrtu(siswa) {
+  const el = document.getElementById('catatan-ortu-view');
+  const entries = bukuOrtuState[siswa];
+  if (!entries || !entries.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>Belum ada laporan dari orangtua ${siswa}</p></div>`;
+    return;
+  }
+  const e = entries[0];
+  let html = `<div style="font-size:12px;color:var(--gray-500);margin-bottom:10px">Terakhir dikirim: <strong>${e.tanggal}</strong></div>
+  <div class="table-wrapper"><table class="buku-table">
+    <thead><tr>
+      <th style="width:32px">No</th><th>Aktivitas</th>
+      ${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}
+    </tr></thead><tbody>`;
+  let rn=1;
+  BUKU_KAT.forEach((kat,ki) => {
+    html += `<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
+    kat.items.forEach((_,ii) => {
+      html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:11px">${rn++}</td><td style="font-size:11px">${kat.items[ii]}</td>`;
+      HARI.forEach(h => {
+        const val = (e.data&&e.data[ki]&&e.data[ki][ii]&&e.data[ki][ii][h])||'—';
+        const s = val==='✓'?'color:#1B5E20;font-weight:800':val==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-400)';
+        html += `<td class="hari-td" style="${s}">${val}</td>`;
+      });
+      html += '</tr>';
+    });
+  });
+  html += `<tr><td class="buku-kat-header" colspan="${2+HARI.length}">4. Taklim</td></tr>
+  <tr><td style="text-align:center;color:var(--gray-500);font-size:11px">${rn}</td><td style="font-size:11px">Tema Taklim</td>`;
+  HARI.forEach(h => {
+    const t = e.taklim&&e.taklim[h] ? e.taklim[h] : {tema:'—',val:'—'};
+    const s = t.val==='✓'?'color:#1B5E20;font-weight:800':t.val==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-400)';
+    html += `<td class="hari-td"><div style="font-size:10px;color:var(--gray-700)">${t.tema||'—'}</div><div style="${s}">${t.val}</div></td>`;
+  });
+  html += '</tr></tbody></table></div>';
+  el.innerHTML = html;
+}
+
+/* ========================
+   PORTAL ORANGTUA
+======================== */
+function pickJenjang(j) {
+  ['TK','SD','SMP','SMA'].forEach(x => document.getElementById('jnjg-'+x).classList.toggle('active', x===j));
+}
+
+function loadAnakPortal() {
+  const val = document.getElementById('anak-select').value;
+  if (!val) { document.getElementById('ortu-content').style.display='none'; return; }
+  currentAnakOrtu = val.split(' (')[0];
+  document.getElementById('ortu-content').style.display = 'block';
+  renderLaporanGuruOrtu();
+  renderBukuOrtuForm();
+  renderLaporanRekap();
+}
+
+function renderLaporanGuruOrtu() {
+  const el = document.getElementById('laporan-guru-view');
+  const badgeEl = document.getElementById('guru-approval-badge');
+  const st = bukuGuruState[currentAnakOrtu];
+
+  if (!st || !st.published) {
+    badgeEl.innerHTML = '<span class="badge badge-pending">⏳ Menunggu Guru</span>';
+    el.innerHTML = `<div class="warn-banner">⏳ Laporan dari guru belum tersedia. Guru perlu mengisi dan mempublish buku penghubung terlebih dahulu.</div>
+    <div class="empty-state"><div class="empty-icon">📋</div><p>Laporan akan muncul di sini setelah guru mempublish</p></div>`;
+    return;
+  }
+
+  badgeEl.innerHTML = '<span class="badge badge-approved">✅ Sudah Dipublish</span>';
+  let html = `<div class="success-banner">✅ Laporan aktivitas <strong>${currentAnakOrtu}</strong> di sekolah telah dikirim guru.</div>
+  <div class="table-wrapper"><table class="buku-table">
+    <thead><tr>
+      <th style="width:32px">No</th><th>Aktivitas</th>
+      ${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}
+    </tr></thead><tbody>`;
+  let rn=1;
+  BUKU_KAT.forEach((kat,ki) => {
+    html += `<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
+    kat.items.forEach((_,ii) => {
+      html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${kat.items[ii]}</td>`;
+      HARI.forEach(h => {
+        const val = st.data[ki][ii][h]||'—';
+        const s = val==='✓'?'color:#1B5E20;font-weight:800':val==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-400)';
+        html += `<td class="hari-td" style="${s}">${val}</td>`;
+      });
+      html += '</tr>';
+    });
+  });
+  html += `<tr><td class="buku-kat-header" colspan="${2+HARI.length}">4. Taklim</td></tr>
+  <tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn}</td><td style="font-size:12px">Tema Taklim</td>`;
+  HARI.forEach(h => {
+    const t = st.taklim[h]||{tema:'—',val:'—'};
+    const s = t.val==='✓'?'color:#1B5E20;font-weight:800':t.val==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-400)';
+    html += `<td class="hari-td"><div style="font-size:10px;color:var(--gray-700)">${t.tema||'—'}</div><div style="${s}">${t.val}</div></td>`;
+  });
+  html += '</tr></tbody></table></div>';
+  el.innerHTML = html;
+}
+
+function renderBukuOrtuForm() {
+  const el = document.getElementById('buku-ortu-form');
+  let html = `<div class="table-wrapper"><table class="buku-table" id="ortu-buku-table">
+    <thead><tr>
+      <th style="width:32px">No</th><th>Aktivitas</th>
+      ${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}
+    </tr></thead><tbody>`;
+  let rn=1;
+  BUKU_KAT.forEach((kat,ki) => {
+    html += `<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
+    kat.items.forEach((_,ii) => {
+      html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td>
+        <td style="font-size:12px">${kat.items[ii]}</td>`;
+      HARI.forEach(h => {
+        html += `<td class="hari-td">
+          <select class="day-sel v-minus" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="styleDay(this)">
+            ${bpOpts()}
+          </select>
+        </td>`;
+      });
+      html += '</tr>';
+    });
+  });
+  html += `<tr><td class="buku-kat-header" colspan="${2+HARI.length}">4. Taklim</td></tr>
+  <tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn}</td><td style="font-size:12px">Tema Taklim</td>`;
+  HARI.forEach(h => {
+    html += `<td class="hari-td" style="min-width:72px">
+      <input type="text" class="taklim-input" placeholder="Tema" data-taklim-tema="${h}" />
+      <select class="day-sel v-minus" data-taklim-val="${h}" onchange="styleDay(this)">${bpOpts()}</select>
+    </td>`;
+  });
+  html += '</tr></tbody></table></div>';
+  el.innerHTML = html;
+}
+
+function submitBukuOrtu() {
+  const tbl = document.getElementById('ortu-buku-table');
+  if (!tbl) return;
+  const entryData = {};
+  BUKU_KAT.forEach((kat,ki) => {
+    entryData[ki] = {};
+    kat.items.forEach((_,ii) => {
+      entryData[ki][ii] = {};
+      HARI.forEach(h => { entryData[ki][ii][h] = '—'; });
+    });
+  });
+  tbl.querySelectorAll('select.day-sel[data-ki]').forEach(sel => {
+    entryData[sel.dataset.ki][sel.dataset.ii][sel.dataset.h] = sel.value;
+  });
+  const taklim = {};
+  HARI.forEach(h => {
+    const tema = tbl.querySelector(`[data-taklim-tema="${h}"]`);
+    const val  = tbl.querySelector(`[data-taklim-val="${h}"]`);
+    taklim[h] = { tema: tema?tema.value:'', val: val?val.value:'—' };
+  });
+  if (!bukuOrtuState[currentAnakOrtu]) bukuOrtuState[currentAnakOrtu] = [];
+  bukuOrtuState[currentAnakOrtu].unshift({ tanggal: TODAY_STR, data: entryData, taklim });
+  renderBukuOrtuForm();
+
+  toast('📤 Mengirim...');
+  apiCall('saveBukuOrtu', {
+    siswa: currentAnakOrtu,
+    tanggal: TODAY_STR,
+    data: JSON.stringify(entryData),
+    taklim: JSON.stringify(taklim),
+  }).then(res => {
+    if (res._offline) { toast('📤 Laporan ' + currentAnakOrtu + ' dikirim ke guru! (mode offline)'); return; }
+    if (res.ok) showApiStatus('📤 Laporan rumah ' + currentAnakOrtu + ' tersimpan di Google Sheets!');
+    else showApiStatus('⚠️ Gagal kirim: ' + res.error, true);
+  });
+}
+
+function renderLaporanRekap() {
+  const el = document.getElementById('laporan-rekap-content');
+  const gs = bukuGuruState[currentAnakOrtu];
+  const oe = bukuOrtuState[currentAnakOrtu];
+
+  let gCheck=0, gTotal=0;
+  if (gs && gs.published) {
+    BUKU_KAT.forEach((kat,ki) => kat.items.forEach((_,ii) => HARI.forEach(h => {
+      const v = gs.data[ki][ii][h]; gTotal++;
+      if (v==='✓') gCheck++;
+    })));
+  }
+  let oCheck=0, oTotal=0;
+  if (oe && oe[0]) {
+    BUKU_KAT.forEach((kat,ki) => kat.items.forEach((_,ii) => HARI.forEach(h => {
+      const v = oe[0].data[ki][ii][h]; oTotal++;
+      if (v==='✓') oCheck++;
+    })));
+  }
+  const gPct = gTotal ? Math.round(gCheck/gTotal*100) : 0;
+  const oPct = oTotal ? Math.round(oCheck/oTotal*100) : 0;
+
+  el.innerHTML = `
+  <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr));margin-bottom:18px">
+    <div class="stat-card"><div class="stat-value">${gs&&gs.published?gPct+'%':'—'}</div><div class="stat-label">✅ di Sekolah</div></div>
+    <div class="stat-card blue"><div class="stat-value">${oe&&oe.length?oPct+'%':'—'}</div><div class="stat-label">✅ di Rumah</div></div>
+    <div class="stat-card orange"><div class="stat-value">${oe?oe.length:0}</div><div class="stat-label">Laporan Dikirim</div></div>
+  </div>
+  <div style="background:var(--gray-100);border-radius:10px;padding:14px 16px;font-size:13px;line-height:2;color:var(--gray-700)">
+    <div style="font-weight:800;color:var(--primary-dark);margin-bottom:6px">📈 Ringkasan Minggu Ini — ${currentAnakOrtu}</div>
+    <div>🏫 Laporan sekolah: <strong style="color:${gs&&gs.published?'var(--success)':'var(--warning)'}">${gs&&gs.published?'✅ Sudah diterima dari guru':'⏳ Menunggu guru publish'}</strong></div>
+    <div>🏠 Laporan rumah: <strong style="color:${oe&&oe.length?'var(--success)':'var(--warning)'}">${oe&&oe.length?'✅ '+oe.length+' laporan terkirim':'⏳ Belum ada laporan'}</strong></div>
+  </div>`;
+}
+
+/* ========================
+   PORTAL PIMPINAN
+======================== */
+function populateFilters() {
+  const sel = document.getElementById('filter-karyawan');
+  sel.innerHTML = '<option value="">Semua Karyawan</option>';
+  KARYAWAN_LIST.forEach(k => { sel.innerHTML += `<option value="${k.nama}">${k.nama}</option>`; });
+}
+
+function renderPimpinanStats() {
+  let selesai=0, onprog=0, pending=0, skorSum=0, skorN=0;
+  KARYAWAN_LIST.forEach(k => {
+    const kd = allJobData[k.nama]; if (!kd) return;
+    kd.tasks.forEach(t => {
+      if (t.status==='Selesai') { selesai++; if(t.skor){skorSum+=t.skor;skorN++;} }
+      else if (t.status==='OnProgress') onprog++;
+      else pending++;
+    });
+  });
+  const avgSkor = skorN ? Math.round(skorSum/skorN) : 0;
+  const published = SISWA_LIST.filter(s => bukuGuruState[s]&&bukuGuruState[s].published).length;
+
+  document.getElementById('pimpinan-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-value">${KARYAWAN_LIST.length}</div><div class="stat-label">Total Karyawan</div></div>
+    <div class="stat-card"><div class="stat-value">${selesai}</div><div class="stat-label">Tugas Selesai</div></div>
+    <div class="stat-card orange"><div class="stat-value">${onprog}</div><div class="stat-label">On Progress</div></div>
+    <div class="stat-card red"><div class="stat-value">${pending}</div><div class="stat-label">Pending</div></div>
+    <div class="stat-card blue"><div class="stat-value">${avgSkor||'—'}</div><div class="stat-label">Avg Skor</div></div>
+    <div class="stat-card purple"><div class="stat-value">${published}/${SISWA_LIST.length}</div><div class="stat-label">Buku Penghubung Aktif</div></div>
+  `;
+}
+
+function renderPimpinanJob() {
+  const tb = document.getElementById('pimpinan-job-tbody');
+  const filterNama   = document.getElementById('filter-karyawan').value;
+  const filterStatus = document.getElementById('filter-status').value;
+  tb.innerHTML = '';
+  let any = false;
+  KARYAWAN_LIST.forEach(k => {
+    if (filterNama && k.nama !== filterNama) return;
+    const kd = allJobData[k.nama];
+    const tasks = (kd && kd.tasks || []).filter(t => !filterStatus || t.status===filterStatus);
+    if (!tasks.length) return;
+    tasks.forEach((t, ti) => {
+      any = true;
+      const sc = t.skor;
+      const sc_color = sc>=80?'var(--success)':sc>=50?'var(--warning)':sc===0?'var(--gray-500)':'var(--danger)';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-weight:${ti===0?'800':'400'};color:${ti===0?'var(--primary-dark)':'transparent'}">${ti===0?k.nama:''}</td>
+        <td style="color:var(--gray-500);font-size:12px">${ti===0?k.jabatan:''}</td>
+        <td>${t.agenda}</td>
+        <td>${badge(t.status)}</td>
+        <td style="font-size:12px;color:var(--gray-700)">${t.target||'—'}</td>
+        <td style="font-weight:800;color:${sc_color}">${sc||'—'}</td>
+        <td style="color:var(--gray-500);font-size:12px">${t.catatan||'—'}</td>`;
+      tb.appendChild(tr);
+    });
+    const sep = document.createElement('tr'); sep.className='sep-row';
+    sep.innerHTML = '<td colspan="7"></td>'; tb.appendChild(sep);
+  });
+  if (!any) {
+    tb.innerHTML = `<tr><td colspan="7"><div class="empty-state" style="padding:24px"><div class="empty-icon">📋</div><p>Belum ada data job tracker</p></div></td></tr>`;
+  }
+}
+
+function renderRekapTable(mode) {
+  const el = document.getElementById('rekap-table-container');
+  const mult = mode==='mingguan'?5:mode==='bulanan'?22:1;
+  const period = mode==='harian'?'Hari Ini (26 Mei 2026)':mode==='mingguan'?'Minggu Ini (26–30 Mei 2026)':'Bulan Ini (Mei 2026)';
+
+  const rows = KARYAWAN_LIST.map(k => {
+    const kd = allJobData[k.nama];
+    if (!kd||!kd.tasks.length) return { nama:k.nama, jabatan:k.jabatan, total:0, selesai:0, onprog:0, pending:0, skor:0 };
+    const s = kd.tasks.filter(t=>t.status==='Selesai').length;
+    const o = kd.tasks.filter(t=>t.status==='OnProgress').length;
+    const p = kd.tasks.filter(t=>t.status==='Pending').length;
+    const skors = kd.tasks.filter(t=>t.skor>0).map(t=>t.skor);
+    const skor = skors.length ? Math.round(skors.reduce((a,b)=>a+b,0)/skors.length) : 0;
+    return { nama:k.nama, jabatan:k.jabatan, total:kd.tasks.length*mult, selesai:s*mult, onprog:o*mult, pending:p*mult, skor };
+  });
+
+  let html = `<div style="font-size:12px;color:var(--gray-500);margin-bottom:12px">Periode: <strong>${period}</strong></div>
+  <table><thead><tr>
+    <th style="width:32px">No</th>
+    <th>Nama Karyawan</th>
+    <th>Jabatan</th>
+    <th style="width:75px;text-align:center">Total</th>
+    <th style="width:72px;text-align:center">Selesai</th>
+    <th style="width:72px;text-align:center">On Prog</th>
+    <th style="width:72px;text-align:center">Pending</th>
+    <th style="width:65px;text-align:center">Avg Skor</th>
+    <th style="width:140px">Progres</th>
+    <th>Predikat</th>
+  </tr></thead><tbody>`;
+
+  rows.forEach((r,i) => {
+    const pct = r.total ? Math.round(r.selesai/r.total*100) : 0;
+    const pred = r.skor>=90?['⭐ Sangat Baik','var(--primary)']:r.skor>=80?['✅ Baik','var(--success)']:r.skor>=70?['🔵 Cukup','var(--info)']:['⚠️ Perlu Perhatian','var(--warning)'];
+    html += `<tr>
+      <td style="text-align:center;font-weight:800">${i+1}</td>
+      <td style="font-weight:700">${r.nama}</td>
+      <td style="color:var(--gray-500);font-size:12px">${r.jabatan}</td>
+      <td style="text-align:center">${r.total}</td>
+      <td style="text-align:center;color:var(--success);font-weight:700">${r.selesai}</td>
+      <td style="text-align:center;color:var(--warning);font-weight:700">${r.onprog}</td>
+      <td style="text-align:center;color:#6A1B9A;font-weight:700">${r.pending}</td>
+      <td style="text-align:center;font-weight:800;color:${r.skor>=80?'var(--success)':'var(--warning)'}">${r.skor||'—'}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:${pct}%;background:${pred[1]}"></div></div>
+          <span style="font-size:11px;font-weight:800;min-width:30px">${pct}%</span>
+        </div>
+      </td>
+      <td style="font-weight:800;color:${pred[1]};font-size:12px">${r.skor>0?pred[0]:'—'}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+function renderPimpinanBuku() {
+  // Guru buku status per siswa
+  const tbl = document.getElementById('pimpinan-buku-table');
+  let html = `<table><thead><tr>
+    <th style="width:32px">No</th>
+    <th>Nama Siswa</th>
+    <th style="width:160px">Status Laporan Guru</th>
+    <th>Ringkasan Sekolah</th>
+    <th style="width:160px">Status Laporan Rumah</th>
+    <th>Ringkasan Rumah</th>
+  </tr></thead><tbody>`;
+  SISWA_LIST.forEach((s,i) => {
+    const gs = bukuGuruState[s];
+    const oe = bukuOrtuState[s];
+    let gCheck=0, gTotal=0;
+    if (gs) {
+      BUKU_KAT.forEach((kat,ki) => kat.items.forEach((_,ii) => HARI.forEach(h => {
+        gTotal++; if(gs.data[ki][ii][h]==='✓') gCheck++;
+      })));
+    }
+    const gPct = gTotal ? Math.round(gCheck/gTotal*100) : 0;
+    const ortuN = oe ? oe.length : 0;
+    html += `<tr>
+      <td style="text-align:center;font-weight:800">${i+1}</td>
+      <td style="font-weight:700">${s}</td>
+      <td>${gs?(gs.published?'<span class="badge badge-approved">✅ Published</span>':'<span class="badge badge-draft">✏️ Draft</span>'):'<span class="badge badge-pending">— Belum Diisi</span>'}</td>
+      <td style="font-size:12px;color:var(--gray-700)">${gs?gPct+'% aktivitas ✓ ('+gCheck+'/'+gTotal+')':'—'}</td>
+      <td>${ortuN?'<span class="badge badge-selesai">✅ Ada</span>':'<span class="badge badge-pending">— Belum Ada</span>'}</td>
+      <td style="font-size:12px;color:var(--gray-700)">${ortuN?ortuN+' laporan dikirim':'—'}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  tbl.innerHTML = html;
+
+  // Ortu submissions table
+  const otbl = document.getElementById('pimpinan-ortu-table');
+  let html2 = `<table><thead><tr>
+    <th>Nama Siswa</th>
+    <th style="width:160px">Tgl Terakhir Kirim</th>
+    <th style="width:100px;text-align:center">Jml Laporan</th>
+    <th>Aktivitas ✓ (Senin)</th>
+  </tr></thead><tbody>`;
+  let hasOrtu = false;
+  SISWA_LIST.forEach(s => {
+    const oe = bukuOrtuState[s]; if (!oe||!oe.length) return;
+    hasOrtu = true;
+    const e = oe[0];
+    let mCheck = 0;
+    BUKU_KAT.forEach((kat,ki) => kat.items.forEach((_,ii) => { if(e.data[ki][ii]['Senin']==='✓') mCheck++; }));
+    html2 += `<tr>
+      <td style="font-weight:700">${s}</td>
+      <td>${e.tanggal}</td>
+      <td style="text-align:center;font-weight:700">${oe.length}</td>
+      <td style="font-size:12px;color:var(--gray-700)">Senin: ${mCheck} aktivitas ✓</td>
+    </tr>`;
+  });
+  if (!hasOrtu) html2 += `<tr><td colspan="4"><div class="empty-state" style="padding:16px"><div class="empty-icon">📭</div><p>Belum ada laporan dari orangtua</p></div></td></tr>`;
+  html2 += '</tbody></table>';
+  otbl.innerHTML = html2;
+}
+</script>
+</body>
+</html>
