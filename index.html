@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal — Sekolah Alam Al-Karim</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green:  #1B4332; --green2: #2D6A4F; --green3: #52B788;
+  --cream:  #F8F4E9; --tan:    #E9E2CC; --border: #D4C9A8;
+  --brown:  #4A3728; --muted:  #7A6A50; --light:  #F0EBD8;
+  --gold:   #D4A017; --white:  #FEFEFE;
+  --success:#2D6A4F; --success-bg:#E8F5EE;
+  --danger: #C84B2F; --danger-bg:#FEF3F2;
+  --warn:   #B8860B; --warn-bg: #FFFBEB;
+  --blue:   #1B4F72; --blue-bg: #EAF2FF;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:"Plus Jakarta Sans",sans-serif; background:var(--cream); color:var(--brown); min-height:100vh; }
+header { background:var(--green); padding:0 1.25rem; display:flex; align-items:center; justify-content:space-between; height:56px; position:sticky; top:0; z-index:50; box-shadow:0 2px 12px rgba(27,67,50,.25); }
+.logo { display:flex; align-items:center; gap:10px; }
+.logo-icon { width:36px; height:36px; background:var(--green3); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+.logo-text { font-size:13px; font-weight:700; color:#fff; line-height:1.2; }
+.logo-sub  { font-size:10px; color:rgba(255,255,255,.5); font-weight:400; }
+.hero { background:linear-gradient(135deg,var(--green) 0%,var(--green2) 100%); color:#fff; padding:1.75rem 1.25rem 1.5rem; }
+.hero h1 { font-size:clamp(18px,4vw,24px); font-weight:700; margin-bottom:4px; }
+.hero p  { font-size:13px; color:rgba(255,255,255,.6); }
+.hero-chip { display:inline-flex; align-items:center; gap:6px; background:rgba(82,183,136,.2); border:1px solid rgba(82,183,136,.3); border-radius:20px; padding:4px 12px; font-size:12px; color:var(--green3); margin-top:10px; }
+main { max-width:720px; margin:0 auto; padding:1.5rem 1rem 5rem; }
+.card { background:var(--white); border:1px solid var(--border); border-radius:14px; padding:1.25rem; margin-bottom:1rem; box-shadow:0 1px 4px rgba(27,67,50,.06); }
+.card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; padding-bottom:.75rem; border-bottom:1px solid var(--light); }
+.card-title { font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.field { display:flex; flex-direction:column; gap:5px; }
+.field.full { grid-column:1/-1; }
+label { font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
+select, input[type=text], input[type=number], input[type=date], input[type=time], input[type=month], input[type=password], textarea {
+  font-family:"Plus Jakarta Sans",sans-serif; font-size:14px; color:var(--brown);
+  background:#F9F7F0; border:1.5px solid var(--border); border-radius:8px;
+  padding:9px 12px; width:100%; outline:none; -webkit-appearance:none;
+  transition:border-color .15s;
+}
+select:focus, input:focus, textarea:focus { border-color:var(--green2); box-shadow:0 0 0 3px rgba(45,106,79,.1); background:var(--white); }
+input::placeholder, textarea::placeholder { color:#C0B48A; }
+textarea { resize:vertical; min-height:80px; line-height:1.6; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+thead tr { background:var(--green); }
+thead th { padding:10px 12px; text-align:left; font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:rgba(255,255,255,.8); white-space:nowrap; }
+tbody tr { border-bottom:1px solid var(--light); }
+tbody tr:hover { background:#F9F7F0; }
+tbody td { padding:10px 12px; color:var(--brown); vertical-align:middle; }
+.td-muted { color:var(--muted); font-size:12px; }
+.table-wrap { overflow-x:auto; }
+.badge { display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:600; }
+.badge-belum    { background:var(--warn-bg);    color:var(--warn); }
+.badge-menunggu { background:var(--blue-bg);    color:var(--blue); }
+.badge-lunas    { background:var(--success-bg); color:var(--success); }
+.badge-pagi     { background:var(--blue-bg);    color:var(--blue); }
+.badge-selesai  { background:var(--success-bg); color:var(--success); }
+.badge-A { background:#E8F5EE; color:#1B4332; font-size:13px; padding:4px 12px; }
+.badge-B { background:#EEF4FF; color:#1B4F72; font-size:13px; padding:4px 12px; }
+.badge-C { background:#FFFBEB; color:#7A5000; font-size:13px; padding:4px 12px; }
+.badge-D { background:#FEF3F2; color:#C84B2F; font-size:13px; padding:4px 12px; }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:9px 16px; border-radius:8px; font-size:13px; font-weight:600; font-family:"Plus Jakarta Sans",sans-serif; cursor:pointer; border:none; transition:transform .1s; }
+.btn:active { transform:scale(.97); }
+.btn:disabled { opacity:.4; cursor:not-allowed; }
+.btn-primary { background:var(--green); color:#fff; }
+.btn-primary:hover:not(:disabled) { background:var(--green2); }
+.btn-gold    { background:var(--gold);  color:#fff; }
+.btn-outline { background:var(--white); border:1.5px solid var(--border); color:var(--brown); }
+.btn-outline:hover:not(:disabled) { background:var(--light); }
+.btn-danger  { background:var(--danger); color:#fff; }
+.btn-success { background:var(--success); color:#fff; }
+.btn-wa      { background:#25D366; color:#fff; }
+.btn-sm { padding:5px 10px; font-size:12px; border-radius:6px; }
+.add-form { background:var(--light); border:1px dashed var(--border); border-radius:10px; padding:1.25rem; margin-top:1rem; display:none; }
+.add-form.open { display:block; }
+.spinner { display:inline-block; border-radius:50%; animation:spin .6s linear infinite; }
+.spinner.light { width:14px; height:14px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; }
+.spinner.dark  { width:14px; height:14px; border:2px solid rgba(27,67,50,.15); border-top-color:var(--green); }
+@keyframes spin { to { transform:rotate(360deg); } }
+.empty { text-align:center; padding:2rem 1rem; color:var(--muted); font-size:13px; }
+#toast { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%) translateY(80px); background:var(--green); color:#fff; padding:10px 20px; border-radius:100px; font-size:13px; font-weight:500; pointer-events:none; transition:transform .3s cubic-bezier(.34,1.56,.64,1), opacity .25s; opacity:0; white-space:nowrap; z-index:999; }
+#toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+#modal-overlay { display:none; position:fixed; inset:0; background:rgba(27,67,50,.4); z-index:200; align-items:center; justify-content:center; padding:1rem; }
+#modal-overlay.open { display:flex; }
+.modal-box { background:var(--white); border-radius:16px; padding:1.5rem; width:100%; max-width:440px; max-height:90vh; overflow-y:auto; }
+.modal-box h3 { font-size:16px; font-weight:700; margin-bottom:1rem; }
+.tab-bar { background:var(--green2); display:flex; overflow-x:auto; scrollbar-width:none; }
+.tab-bar::-webkit-scrollbar { display:none; }
+.tab-btn { flex-shrink:0; padding:11px 14px; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; background:transparent; border:none; color:rgba(255,255,255,.5); cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; font-family:"Plus Jakarta Sans",sans-serif; }
+.tab-btn.active { color:#fff; border-bottom-color:var(--green3); background:rgba(27,67,50,.3); }
+.page { display:none; }
+.page.active { display:block; }
+.kpi-nilai-card { text-align:center; padding:1.5rem; }
+.kpi-nilai-big { font-size:56px; font-weight:800; line-height:1; }
+.kpi-nilai-A { color:var(--green); }
+.kpi-nilai-B { color:var(--blue); }
+.kpi-nilai-C { color:var(--gold); }
+.kpi-nilai-D { color:var(--danger); }
+.agenda-item { display:flex; align-items:flex-start; gap:10px; padding:10px 12px; background:var(--light); border-radius:8px; margin-bottom:8px; }
+.agenda-num { width:24px; height:24px; background:var(--green); border-radius:50%; color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+.agenda-info { flex:1; }
+.agenda-title { font-size:14px; font-weight:600; }
+.agenda-target { font-size:12px; color:var(--muted); margin-top:2px; }
+.check-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--light); }
+.check-row:last-child { border-bottom:none; }
+@media (max-width:520px) { .g2 { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌱</div>
+    <div><div class="logo-text">Sekolah Alam Al-Karim</div><div class="logo-sub">Pilih Portal</div></div>
+  </div>
+
+</header>
+<div class="hero">
+  <h1>Sekolah Alam Al-Karim 🌱</h1>
+  <p>Platform pembelajaran & manajemen bimbel terpadu</p>
+  <div class="hero-chip">Sekolah Alam Al-Karim · Cirebon</div>
+</div>
+<main>
+  <div style="display:flex;flex-direction:column;gap:12px;margin-top:.5rem">
+
+    <a href="guru.html" style="background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:1.25rem 1.25rem 1.25rem 1rem;display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;position:relative;overflow:hidden;transition:border-color .15s,box-shadow .15s">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--green3);border-radius:4px 0 0 4px"></div>
+      <div style="width:50px;height:50px;border-radius:12px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">👨‍🏫</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:700;margin-bottom:3px">Portal Guru / Karyawan</div>
+        <div style="font-size:12px;color:var(--muted)">Isi laporan murid & agenda kerja harian (KPI)</div>
+      </div>
+      <span style="color:var(--border);font-size:18px">›</span>
+    </a>
+
+    <a href="ortu.html" style="background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:1.25rem 1.25rem 1.25rem 1rem;display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;position:relative;overflow:hidden;transition:border-color .15s,box-shadow .15s">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold);border-radius:4px 0 0 4px"></div>
+      <div style="width:50px;height:50px;border-radius:12px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">👨‍👩‍👧</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:700;margin-bottom:3px">Portal Orang Tua</div>
+        <div style="font-size:12px;color:var(--muted)">Lihat laporan belajar & invoice tagihan</div>
+      </div>
+      <span style="color:var(--border);font-size:18px">›</span>
+    </a>
+
+    <a href="admin.html" style="background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:1.25rem 1.25rem 1.25rem 1rem;display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;position:relative;overflow:hidden;transition:border-color .15s,box-shadow .15s">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--brown);border-radius:4px 0 0 4px"></div>
+      <div style="width:50px;height:50px;border-radius:12px;background:var(--brown);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">⚙️</div>
+      <div style="flex:1">
+        <div style="font-size:15px;font-weight:700;margin-bottom:3px">Panel Admin / Pimpinan</div>
+        <div style="font-size:12px;color:var(--muted)">Kelola murid, karyawan, invoice, rekap KPI</div>
+      </div>
+      <span style="color:var(--border);font-size:18px">›</span>
+    </a>
+
+  </div>
+
+  <div style="margin-top:1.5rem;padding:12px 14px;background:var(--light);border-radius:10px;font-size:12px;color:var(--muted);line-height:1.6">
+    <b style="color:var(--green)">📍 Sekolah Alam Al-Karim</b><br>
+    Jln. Elang RT.02 Kel. Pinang Jaya, Kec. Kemiling, Kota Bandar Lampung
+  </div>
+</main>
+<div id="toast"></div>
+</body></html>
