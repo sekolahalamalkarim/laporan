@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Orangtua — Sekolah Alam Al-Karim</title>
+  <style>
+    :root{--primary:#2E7D32;--primary-light:#4CAF50;--primary-dark:#1B5E20;--secondary:#E8F5E9;--accent:#81C784;--gray-100:#f5f5f5;--gray-200:#eeeeee;--gray-300:#e0e0e0;--gray-500:#9e9e9e;--gray-700:#616161;--gray-900:#212121;--danger:#c62828;--warning:#e65100;--success:#2e7d32;--info:#1565c0;}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gray-100);color:var(--gray-900);min-height:100vh}
+    .app-layout{min-height:100vh;display:flex;flex-direction:column}
+    .top-nav{background:var(--primary);color:white;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:62px;box-shadow:0 2px 10px rgba(0,0,0,.15);position:sticky;top:0;z-index:100}
+    .top-nav .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px}
+    .top-nav .user-area{display:flex;align-items:center;gap:10px}
+    .user-pill{background:rgba(255,255,255,.18);padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600}
+    .btn-logout{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:white;padding:6px 14px;border-radius:7px;font-size:13px;cursor:pointer;font-weight:600}
+    .btn-logout:hover{background:rgba(255,255,255,.22)}
+    .content-area{flex:1;padding:28px 24px;max-width:900px;margin:0 auto;width:100%}
+    .section-header{margin-bottom:22px}
+    .section-header h2{font-size:21px;font-weight:800;color:var(--primary-dark)}
+    .section-header p{font-size:13px;color:var(--gray-500);margin-top:4px}
+    .tab-nav{display:flex;gap:4px;background:white;padding:6px;border-radius:11px;box-shadow:0 1px 5px rgba(0,0,0,.08);margin-bottom:20px;flex-wrap:wrap}
+    .tab-btn{padding:9px 20px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;background:transparent;color:var(--gray-500);transition:all .2s;font-family:inherit}
+    .tab-btn.active{background:var(--primary);color:white;box-shadow:0 2px 6px rgba(46,125,50,.35)}
+    .tab-btn:hover:not(.active){background:var(--secondary);color:var(--primary)}
+    .tab-content{display:none}.tab-content.active{display:block}
+    .card{background:white;border-radius:13px;padding:22px;box-shadow:0 1px 6px rgba(0,0,0,.08);margin-bottom:20px}
+    .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+    .card-title{font-size:15px;font-weight:800;color:var(--gray-900)}
+    .table-wrapper{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead th{background:var(--secondary);color:var(--primary-dark);font-weight:700;padding:11px 12px;text-align:left;border-bottom:2px solid var(--accent);white-space:nowrap}
+    tbody td{padding:10px 12px;border-bottom:1px solid var(--gray-200);vertical-align:middle}
+    tbody tr:last-child td{border-bottom:none}
+    tbody tr:hover td{background:#F9FBE7}
+    .badge{display:inline-block;padding:3px 11px;border-radius:20px;font-size:11px;font-weight:800}
+    .badge-approved{background:#E8F5E9;color:#1B5E20}
+    .badge-pending{background:#F3E5F5;color:#6A1B9A}
+    .btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;border:none;font-family:inherit}
+    .btn-green{background:var(--primary);color:white}.btn-green:hover{background:var(--primary-dark)}
+    .btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--primary)}.btn-outline:hover{background:var(--secondary)}
+    .date-badge{background:var(--secondary);border:1.5px solid var(--accent);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;color:var(--primary-dark);white-space:nowrap}
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;margin-bottom:20px}
+    .stat-card{background:white;border-radius:12px;padding:18px;box-shadow:0 1px 5px rgba(0,0,0,.08);border-left:4px solid var(--primary)}
+    .stat-value{font-size:28px;font-weight:900;color:var(--primary-dark)}
+    .stat-label{font-size:12px;color:var(--gray-500);margin-top:4px;font-weight:600}
+    .stat-card.blue{border-color:#1565C0}.stat-card.blue .stat-value{color:#1565C0}
+    .stat-card.orange{border-color:#FF6D00}.stat-card.orange .stat-value{color:#E65100}
+    .info-banner{background:#E3F2FD;border-left:4px solid #1565C0;padding:10px 16px;border-radius:0 8px 8px 0;font-size:13px;color:#1565C0;margin-bottom:16px;font-weight:600}
+    .warn-banner{background:#FFF3E0;border-left:4px solid #FF6D00;padding:10px 16px;border-radius:0 8px 8px 0;font-size:13px;color:#E65100;margin-bottom:16px;font-weight:600}
+    .success-banner{background:#E8F5E9;border-left:4px solid var(--primary);padding:10px 16px;border-radius:0 8px 8px 0;font-size:13px;color:var(--primary-dark);margin-bottom:16px;font-weight:600}
+    .empty-state{text-align:center;padding:36px 20px;color:var(--gray-500)}
+    .empty-state .empty-icon{font-size:44px;margin-bottom:10px}
+    .day-sel{-webkit-appearance:none;appearance:none;width:46px;height:32px;border-radius:7px;border:1.5px solid var(--gray-300);background:var(--gray-100);font-size:15px;text-align:center;cursor:pointer;outline:none;font-family:inherit}
+    .day-sel.v-check{background:#E8F5E9;border-color:#4CAF50;color:#1B5E20}
+    .day-sel.v-cross{background:#FFEBEE;border-color:#EF9A9A;color:#C62828}
+    .day-sel.v-minus{background:var(--gray-100);border-color:#BDBDBD;color:#757575}
+    .buku-table th.hari-th{text-align:center;width:60px}
+    .buku-table td.hari-td{text-align:center;padding:5px 3px}
+    .buku-kat-header td{background:var(--secondary)!important;font-weight:800;color:var(--primary-dark);font-size:12px;padding:7px 12px!important}
+    .taklim-input{width:100%;padding:4px 6px;border:1.5px solid var(--gray-300);border-radius:6px;font-size:11px;outline:none;font-family:inherit;margin-bottom:3px}
+    .taklim-input:focus{border-color:var(--primary)}
+    .anak-header{background:var(--secondary);border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+    .anak-avatar{width:44px;height:44px;background:var(--primary);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+    #toast{position:fixed;bottom:24px;right:24px;background:#1B5E20;color:white;padding:13px 22px;border-radius:11px;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.2);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none}
+    #toast.show{transform:translateY(0);opacity:1}
+    @media(max-width:768px){.content-area{padding:16px}}
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <nav class="top-nav">
+    <div class="brand"><span style="font-size:24px">🏫</span> Portal Sekolah</div>
+    <div class="user-area">
+      <div class="user-pill" id="user-pill">👨‍👩‍👧 Orangtua</div>
+      <button class="btn-logout" onclick="logout()">Keluar</button>
+    </div>
+  </nav>
+  <div class="content-area">
+    <div class="section-header">
+      <h2 id="page-title">Portal Orangtua</h2>
+      <p id="page-subtitle">Pantau perkembangan anak &amp; isi laporan aktivitas di rumah</p>
+    </div>
+
+    <div class="anak-header">
+      <div class="anak-avatar">👧</div>
+      <div>
+        <div style="font-weight:800;font-size:16px" id="anak-nama">—</div>
+        <div style="font-size:13px;color:var(--gray-700)" id="anak-info">—</div>
+      </div>
+    </div>
+
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('buku',this)">📖 Buku Penghubung</button>
+      <button class="tab-btn" onclick="switchTab('laporan',this)">📊 Laporan Perkembangan</button>
+    </div>
+
+    <!-- BUKU PENGHUBUNG -->
+    <div id="tab-buku" class="tab-content active">
+      <!-- Laporan dari Guru -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 Laporan dari Guru (Aktivitas di Sekolah)</div>
+          <div id="guru-badge"></div>
+        </div>
+        <div id="laporan-guru-view">
+          <div class="empty-state"><div class="empty-icon">⏳</div><p>Memuat laporan dari guru...</p></div>
+        </div>
+      </div>
+      <!-- Laporan Rumah -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🏠 Laporan Aktivitas di Rumah</div>
+          <span class="date-badge" id="tanggal-badge">📅 Hari ini</span>
+        </div>
+        <div class="info-banner">✏️ Isi aktivitas anak di rumah minggu ini, lalu kirim ke guru.</div>
+        <div id="buku-ortu-form"></div>
+        <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px">
+          <button class="btn btn-outline" onclick="renderBukuOrtuForm()">↺ Reset</button>
+          <button class="btn btn-green" onclick="submitBukuOrtu()">📤 Kirim ke Guru</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAPORAN PERKEMBANGAN -->
+    <div id="tab-laporan" class="tab-content">
+      <div id="laporan-rekap"></div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbwaUZAm8zoxvCfKo8xgOU7goa3GZYXH-IkcVZ2Yb1Xw6wvbIXPEB-b8wL_p6HVU5Qav/exec';
+const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat'];
+const HARI_SHORT = ['Sen','Sel','Rab','Kam','Jum'];
+const BUKU_KAT = [
+  { no:1, label:'Pembiasaan Ibadah Harian', items:['Shalat Subuh','Shalat Dzuhur','Shalat Ashar','Shalat Maghrib','Shalat Isya','Shalat Dhuha','Shalat Tahajud','Membaca Dzikir Pagi dan Petang','Murajaah Hafalan Alquran','Membaca Alquran ½ juz per hari'] },
+  { no:2, label:'Kedisiplinan', items:['Tidur maksimal pukul 21.00 WIB','Bangun tidur sebelum adzan subuh / maks. 05.30 WIB','Membawa bekal makanan sehat dan bergizi seimbang','Penggunaan HP/TV maksimal 30 menit','Belajar minimal 15–30 menit selama di rumah'] },
+  { no:3, label:'Memuliakan Orangtua', items:['Merapikan tempat tidur','Mencuci piring setelah makan','Menyapu / mengepel lantai','Memijat orangtua (minimal 1 pekan sekali)'] },
+];
+
+// Session check
+const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+if (!currentUser || currentUser.role !== 'ortu') window.location.href = 'index.html';
+
+const namaAnak = currentUser.namaAnak || '—';
+const jenjang  = currentUser.jenjang  || '—';
+const TODAY    = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+document.getElementById('user-pill').textContent = '👨‍👩‍👧 ' + currentUser.nama;
+document.getElementById('page-title').textContent = 'Portal Orangtua — ' + currentUser.nama;
+document.getElementById('anak-nama').textContent  = namaAnak;
+document.getElementById('anak-info').textContent  = 'Jenjang ' + jenjang + '  |  ' + TODAY;
+document.getElementById('tanggal-badge').textContent = '📅 ' + TODAY;
+
+let bukuGuruState = null, bukuOrtuHistory = [];
+
+function toast(msg, err=false){const t=document.getElementById('toast');t.textContent=msg;t.style.background=err?'#C62828':'#1B5E20';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+function switchTab(tab,btn){document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+tab).classList.add('active');if(btn)btn.classList.add('active');if(tab==='laporan')renderLaporanRekap();}
+function logout(){sessionStorage.removeItem('currentUser');window.location.href='index.html';}
+function bpOpts(){return['—','✓','✗'].map(o=>`<option value="${o}">${o}</option>`).join('');}
+function styleDay(sel){sel.className='day-sel '+(sel.value==='✓'?'v-check':sel.value==='✗'?'v-cross':'v-minus');}
+function apiCall(action,payload={}){return fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action,...payload})}).then(r=>r.json()).catch(()=>({ok:false,error:'Koneksi gagal'}));}
+
+// Load data on start
+apiCall('getBukuGuru',{siswa:namaAnak}).then(res=>{
+  if(res.ok&&res.data){bukuGuruState=res.data;}
+  renderLaporanGuru();
+  renderBukuOrtuForm();
+});
+apiCall('getBukuOrtu',{siswa:namaAnak}).then(res=>{
+  if(res.ok&&res.data){bukuOrtuHistory=res.data;}
+});
+
+/* LAPORAN GURU */
+function renderLaporanGuru(){
+  const el=document.getElementById('laporan-guru-view');
+  const badgeEl=document.getElementById('guru-badge');
+  const st=bukuGuruState;
+  if(!st||!st.published){
+    badgeEl.innerHTML='<span class="badge badge-pending">⏳ Menunggu Guru</span>';
+    el.innerHTML=`<div class="warn-banner">⏳ Laporan dari guru belum tersedia. Guru perlu mengisi dan publish buku penghubung terlebih dahulu.</div>
+    <div class="empty-state"><div class="empty-icon">📋</div><p>Laporan akan muncul di sini setelah guru publish</p></div>`;
+    return;
+  }
+  badgeEl.innerHTML='<span class="badge badge-approved">✅ Sudah Dipublish</span>';
+  let html=`<div class="success-banner">✅ Laporan aktivitas <strong>${namaAnak}</strong> di sekolah sudah tersedia.</div>
+  <div class="table-wrapper"><table class="buku-table">
+    <thead><tr><th style="width:32px">No</th><th>Aktivitas</th>${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}</tr></thead><tbody>`;
+  let rn=1;
+  BUKU_KAT.forEach((kat,ki)=>{
+    html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
+    kat.items.forEach((_,ii)=>{
+      html+=`<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${kat.items[ii]}</td>`;
+      HARI.forEach(h=>{const val=st.data[ki]&&st.data[ki][ii]?st.data[ki][ii][h]||'—':'—';const s=val==='✓'?'color:#1B5E20;font-weight:800':val==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-400)';html+=`<td class="hari-td" style="${s}">${val}</td>`;});
+      html+='</tr>';
+    });
+  });
+  html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">4. Taklim</td></tr>
+  <tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn}</td><td style="font-size:12px">Tema Taklim</td>`;
+  HARI.forEach(h=>{const t=st.taklim&&st.taklim[h]?st.taklim[h]:{tema:'—',val:'—'};const s=t.val==='✓'?'color:#1B5E20;font-weight:800':t.val==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-400)';html+=`<td class="hari-td"><div style="font-size:10px;color:var(--gray-700)">${t.tema||'—'}</div><div style="${s}">${t.val}</div></td>`;});
+  html+='</tr></tbody></table></div>';
+  el.innerHTML=html;
+}
+
+/* BUKU ORTU FORM */
+function renderBukuOrtuForm(){
+  const el=document.getElementById('buku-ortu-form');
+  let html=`<div class="table-wrapper"><table class="buku-table" id="ortu-buku-table">
+    <thead><tr><th style="width:32px">No</th><th>Aktivitas</th>${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}</tr></thead><tbody>`;
+  let rn=1;
+  BUKU_KAT.forEach((kat,ki)=>{
+    html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
+    kat.items.forEach((_,ii)=>{
+      html+=`<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${kat.items[ii]}</td>`;
+      HARI.forEach(h=>{html+=`<td class="hari-td"><select class="day-sel v-minus" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="styleDay(this)">${bpOpts()}</select></td>`;});
+      html+='</tr>';
+    });
+  });
+  html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">4. Taklim</td></tr>
+  <tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn}</td><td style="font-size:12px">Tema Taklim</td>`;
+  HARI.forEach(h=>{html+=`<td class="hari-td" style="min-width:72px"><input type="text" class="taklim-input" placeholder="Tema" data-taklim-tema="${h}"/><select class="day-sel v-minus" data-taklim-val="${h}" onchange="styleDay(this)">${bpOpts()}</select></td>`;});
+  html+='</tr></tbody></table></div>';
+  el.innerHTML=html;
+}
+
+function submitBukuOrtu(){
+  const tbl=document.getElementById('ortu-buku-table'); if(!tbl) return;
+  const entryData={};
+  BUKU_KAT.forEach((kat,ki)=>{entryData[ki]={};kat.items.forEach((_,ii)=>{entryData[ki][ii]={};HARI.forEach(h=>{entryData[ki][ii][h]='—';});});});
+  tbl.querySelectorAll('select.day-sel[data-ki]').forEach(sel=>{entryData[sel.dataset.ki][sel.dataset.ii][sel.dataset.h]=sel.value;});
+  const taklim={};
+  HARI.forEach(h=>{const tema=tbl.querySelector(`[data-taklim-tema="${h}"]`);const val=tbl.querySelector(`[data-taklim-val="${h}"]`);taklim[h]={tema:tema?tema.value:'',val:val?val.value:'—'};});
+  bukuOrtuHistory.unshift({siswa:namaAnak,tanggal:TODAY,data:entryData,taklim});
+  renderBukuOrtuForm();
+  toast('📤 Mengirim...');
+  apiCall('saveBukuOrtu',{siswa:namaAnak,tanggal:TODAY,data:JSON.stringify(entryData),taklim:JSON.stringify(taklim)})
+  .then(res=>{res.ok?toast('📤 Laporan berhasil dikirim ke guru!'):toast('⚠️ '+res.error,true);});
+}
+
+/* LAPORAN REKAP */
+function renderLaporanRekap(){
+  const el=document.getElementById('laporan-rekap');
+  const gs=bukuGuruState; const oe=bukuOrtuHistory;
+  let gCheck=0,gTotal=0,oCheck=0,oTotal=0;
+  if(gs&&gs.published){BUKU_KAT.forEach((kat,ki)=>kat.items.forEach((_,ii)=>HARI.forEach(h=>{gTotal++;if(gs.data[ki]&&gs.data[ki][ii]&&gs.data[ki][ii][h]==='✓')gCheck++;})));}
+  if(oe&&oe[0]){BUKU_KAT.forEach((kat,ki)=>kat.items.forEach((_,ii)=>HARI.forEach(h=>{oTotal++;if(oe[0].data[ki]&&oe[0].data[ki][ii]&&oe[0].data[ki][ii][h]==='✓')oCheck++;})));}
+  const gPct=gTotal?Math.round(gCheck/gTotal*100):0;
+  const oPct=oTotal?Math.round(oCheck/oTotal*100):0;
+  el.innerHTML=`
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-value">${gs&&gs.published?gPct+'%':'—'}</div><div class="stat-label">✅ di Sekolah</div></div>
+    <div class="stat-card blue"><div class="stat-value">${oe&&oe.length?oPct+'%':'—'}</div><div class="stat-label">✅ di Rumah</div></div>
+    <div class="stat-card orange"><div class="stat-value">${oe?oe.length:0}</div><div class="stat-label">Laporan Dikirim</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:14px">📈 Ringkasan Minggu Ini — ${namaAnak}</div>
+    <div style="font-size:13px;color:var(--gray-700);line-height:2.2">
+      <div>🏫 Laporan sekolah: <strong style="color:${gs&&gs.published?'var(--success)':'var(--warning)'}">${gs&&gs.published?'✅ Sudah diterima dari guru':'⏳ Menunggu guru publish'}</strong></div>
+      <div>🏠 Laporan rumah: <strong style="color:${oe&&oe.length?'var(--success)':'var(--warning)'}">${oe&&oe.length?'✅ '+oe.length+' laporan terkirim':'⏳ Belum ada laporan'}</strong></div>
+    </div>
+  </div>
+  ${oe&&oe.length?`<div class="card">
+    <div class="card-title" style="margin-bottom:14px">📅 Riwayat Laporan Rumah</div>
+    <div class="table-wrapper"><table><thead><tr>
+      <th>Tanggal Kirim</th><th style="text-align:center">Total Aktivitas ✓</th>
+    </tr></thead><tbody>
+    ${oe.map(e=>{let c=0;BUKU_KAT.forEach((kat,ki)=>kat.items.forEach((_,ii)=>HARI.forEach(h=>{if(e.data[ki]&&e.data[ki][ii]&&e.data[ki][ii][h]==='✓')c++;})));return`<tr><td>${e.tanggal}</td><td style="text-align:center;font-weight:800;color:var(--success)">${c}</td></tr>`;}).join('')}
+    </tbody></table></div>
+  </div>`:''}`;
+}
+</script>
+</body>
+</html>

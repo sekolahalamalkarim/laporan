@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Guru — Sekolah Alam Al-Karim</title>
+  <style>
+    :root {
+      --primary:#2E7D32;--primary-light:#4CAF50;--primary-dark:#1B5E20;
+      --secondary:#E8F5E9;--accent:#81C784;
+      --gray-100:#f5f5f5;--gray-200:#eeeeee;--gray-300:#e0e0e0;
+      --gray-500:#9e9e9e;--gray-700:#616161;--gray-900:#212121;
+      --danger:#c62828;--warning:#e65100;--success:#2e7d32;--info:#1565c0;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gray-100);color:var(--gray-900);min-height:100vh}
+    .app-layout{min-height:100vh;display:flex;flex-direction:column}
+    .top-nav{background:var(--primary);color:white;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:62px;box-shadow:0 2px 10px rgba(0,0,0,.15);position:sticky;top:0;z-index:100}
+    .top-nav .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px}
+    .top-nav .user-area{display:flex;align-items:center;gap:10px}
+    .user-pill{background:rgba(255,255,255,.18);padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600}
+    .btn-logout{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:white;padding:6px 14px;border-radius:7px;font-size:13px;cursor:pointer;font-weight:600}
+    .btn-logout:hover{background:rgba(255,255,255,.22)}
+    .content-area{flex:1;padding:28px 24px;max-width:1200px;margin:0 auto;width:100%}
+    .section-header{margin-bottom:22px}
+    .section-header h2{font-size:21px;font-weight:800;color:var(--primary-dark)}
+    .section-header p{font-size:13px;color:var(--gray-500);margin-top:4px}
+    .tab-nav{display:flex;gap:4px;background:white;padding:6px;border-radius:11px;box-shadow:0 1px 5px rgba(0,0,0,.08);margin-bottom:20px;flex-wrap:wrap}
+    .tab-btn{padding:9px 20px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;background:transparent;color:var(--gray-500);transition:all .2s;font-family:inherit}
+    .tab-btn.active{background:var(--primary);color:white;box-shadow:0 2px 6px rgba(46,125,50,.35)}
+    .tab-btn:hover:not(.active){background:var(--secondary);color:var(--primary)}
+    .tab-content{display:none}.tab-content.active{display:block}
+    .card{background:white;border-radius:13px;padding:22px;box-shadow:0 1px 6px rgba(0,0,0,.08);margin-bottom:20px}
+    .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+    .card-title{font-size:15px;font-weight:800;color:var(--gray-900)}
+    .table-wrapper{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead th{background:var(--secondary);color:var(--primary-dark);font-weight:700;padding:11px 12px;text-align:left;border-bottom:2px solid var(--accent);white-space:nowrap}
+    tbody td{padding:10px 12px;border-bottom:1px solid var(--gray-200);vertical-align:middle}
+    tbody tr:last-child td{border-bottom:none}
+    tbody tr:hover td{background:#F9FBE7}
+    td select,td input[type=text],td input[type=date],td textarea{width:100%;padding:6px 9px;border:1.5px solid var(--gray-300);border-radius:7px;font-size:12px;outline:none;font-family:inherit}
+    td select:focus,td input:focus{border-color:var(--primary)}
+    td input[type=range]{width:75px;cursor:pointer;accent-color:var(--primary)}
+    .score-val{font-weight:800;color:var(--primary);font-size:13px;min-width:28px;display:inline-block;text-align:right}
+    .badge{display:inline-block;padding:3px 11px;border-radius:20px;font-size:11px;font-weight:800}
+    .badge-onprogress{background:#FFF3E0;color:#BF360C}
+    .badge-pending{background:#F3E5F5;color:#6A1B9A}
+    .badge-selesai{background:#E8F5E9;color:#1B5E20}
+    .badge-approved{background:#E8F5E9;color:#1B5E20}
+    .badge-draft{background:#FFF3E0;color:#BF360C}
+    .btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;border:none;font-family:inherit}
+    .btn-green{background:var(--primary);color:white}.btn-green:hover{background:var(--primary-dark)}
+    .btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--primary)}.btn-outline:hover{background:var(--secondary)}
+    .btn-red{background:transparent;color:var(--danger);border:1.5px solid #EF9A9A}.btn-red:hover{background:#FFEBEE}
+    .btn-blue{background:#1565C0;color:white;border:none}.btn-blue:hover{background:#0D47A1}
+    .btn-sm{padding:4px 10px;font-size:11px}
+    .date-badge{background:var(--secondary);border:1.5px solid var(--accent);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;color:var(--primary-dark);white-space:nowrap}
+    .selector-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+    .selector-row label{font-weight:700;color:var(--gray-700);font-size:14px}
+    .selector-row select{padding:8px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:14px;outline:none;min-width:200px;font-family:inherit}
+    .progress-bar{width:100%;height:9px;background:var(--gray-200);border-radius:5px;overflow:hidden}
+    .progress-fill{height:100%;background:var(--primary);border-radius:5px;transition:width .4s}
+    .info-banner{background:#E3F2FD;border-left:4px solid #1565C0;padding:10px 16px;border-radius:0 8px 8px 0;font-size:13px;color:#1565C0;margin-bottom:16px;font-weight:600}
+    .success-banner{background:#E8F5E9;border-left:4px solid var(--primary);padding:10px 16px;border-radius:0 8px 8px 0;font-size:13px;color:var(--primary-dark);margin-bottom:16px;font-weight:600}
+    .empty-state{text-align:center;padding:36px 20px;color:var(--gray-500)}
+    .empty-state .empty-icon{font-size:44px;margin-bottom:10px}
+    .file-wrap input[type=file]{display:none}
+    .file-label{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--secondary);border:1px solid var(--accent);border-radius:6px;font-size:11px;color:var(--primary);cursor:pointer;font-weight:700}
+    .file-label:hover{background:var(--primary);color:white}
+    .file-name{font-size:10px;color:var(--gray-500);margin-top:2px;max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .day-sel{-webkit-appearance:none;appearance:none;width:46px;height:32px;border-radius:7px;border:1.5px solid var(--gray-300);background:var(--gray-100);font-size:15px;text-align:center;cursor:pointer;outline:none;font-family:inherit}
+    .day-sel.v-check{background:#E8F5E9;border-color:#4CAF50;color:#1B5E20}
+    .day-sel.v-cross{background:#FFEBEE;border-color:#EF9A9A;color:#C62828}
+    .day-sel.v-minus{background:var(--gray-100);border-color:#BDBDBD;color:#757575}
+    .buku-table th.hari-th{text-align:center;width:60px}
+    .buku-table td.hari-td{text-align:center;padding:5px 3px}
+    .buku-kat-header td{background:var(--secondary)!important;font-weight:800;color:var(--primary-dark);font-size:12px;padding:7px 12px!important}
+    tr.sep-row td{background:var(--gray-100)!important;padding:3px!important}
+    .approval-bar{display:flex;align-items:center;justify-content:space-between;background:var(--gray-100);border-radius:10px;padding:12px 16px;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+    .taklim-input{width:100%;padding:4px 6px;border:1.5px solid var(--gray-300);border-radius:6px;font-size:11px;outline:none;font-family:inherit;margin-bottom:3px}
+    .taklim-input:focus{border-color:var(--primary)}
+    #toast{position:fixed;bottom:24px;right:24px;background:#1B5E20;color:white;padding:13px 22px;border-radius:11px;font-size:14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.2);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none}
+    #toast.show{transform:translateY(0);opacity:1}
+    @media(max-width:768px){.content-area{padding:16px}}
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <nav class="top-nav">
+    <div class="brand"><span style="font-size:24px">🏫</span> Portal Sekolah</div>
+    <div class="user-area">
+      <div class="user-pill" id="user-pill">🧑‍🏫 Guru</div>
+      <button class="btn-logout" onclick="logout()">Keluar</button>
+    </div>
+  </nav>
+  <div class="content-area">
+    <div class="section-header">
+      <h2 id="page-title">Portal Guru</h2>
+      <p id="page-subtitle">Selasa, 26 Mei 2026</p>
+    </div>
+
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('job',this)">📋 Job Tracker</button>
+      <button class="tab-btn" onclick="switchTab('buku',this)">📖 Buku Penghubung</button>
+      <button class="tab-btn" onclick="switchTab('kpi',this)">🎯 Agenda KPI</button>
+    </div>
+
+    <!-- JOB TRACKER -->
+    <div id="tab-job" class="tab-content active">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📋 Job Tracker Harian — Input Mandiri</div>
+            <div style="margin-top:6px"><span class="date-badge" id="tanggal-badge">📅 Hari ini</span></div>
+          </div>
+          <button class="btn btn-green" onclick="addJobRow()">+ Tambah Tugas</button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr>
+              <th style="width:36px">No</th><th>Tugas / Agenda</th>
+              <th style="width:150px">Status</th><th style="width:120px">Target Selesai</th>
+              <th style="width:110px">Skor</th><th style="width:100px">Bukti</th>
+              <th>Catatan</th><th style="width:42px"></th>
+            </tr></thead>
+            <tbody id="job-tbody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:10px">
+          <button class="btn btn-outline" onclick="toast('📥 Draft tersimpan')">💾 Simpan Draft</button>
+          <button class="btn btn-green" onclick="submitJobTracker()">📤 Submit ke Pimpinan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUKU PENGHUBUNG -->
+    <div id="tab-buku" class="tab-content">
+      <div class="info-banner">📌 Isi laporan aktivitas siswa di sekolah, lalu klik <strong>Publish ke Orangtua</strong>.</div>
+      <div class="card">
+        <div class="card-header">
+          <div class="selector-row" style="margin:0">
+            <label>Pilih Siswa :</label>
+            <select id="siswa-select" onchange="loadBukuGuru()">
+              <option value="">-- Pilih Nama Siswa --</option>
+            </select>
+          </div>
+          <span class="date-badge">📅 Minggu Ini</span>
+        </div>
+        <div id="buku-guru-content">
+          <div class="empty-state"><div class="empty-icon">👆</div><p>Pilih nama siswa untuk mulai mengisi laporan</p></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📩 Laporan dari Orangtua (di Rumah)</div></div>
+        <div id="catatan-ortu-view">
+          <div class="empty-state"><div class="empty-icon">📬</div><p>Pilih siswa untuk melihat laporan orangtua</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI -->
+    <div id="tab-kpi" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🎯 Agenda KPI — Mei 2026</div>
+          <button class="btn btn-green" onclick="addKpiRow()">+ Tambah KPI</button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr>
+              <th style="width:36px">No</th><th>Indikator KPI</th>
+              <th style="width:85px">Target</th><th style="width:85px">Capaian</th>
+              <th style="width:130px">Progres</th><th style="width:120px">Status</th>
+              <th>Keterangan</th><th style="width:42px"></th>
+            </tr></thead>
+            <tbody id="kpi-tbody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:16px;display:flex;justify-content:flex-end">
+          <button class="btn btn-green" onclick="saveKpiToApi()">💾 Simpan KPI</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbwaUZAm8zoxvCfKo8xgOU7goa3GZYXH-IkcVZ2Yb1Xw6wvbIXPEB-b8wL_p6HVU5Qav/exec';
+const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat'];
+const HARI_SHORT = ['Sen','Sel','Rab','Kam','Jum'];
+const BUKU_KAT = [
+  { no:1, label:'Pembiasaan Ibadah Harian', items:['Shalat Subuh','Shalat Dzuhur','Shalat Ashar','Shalat Maghrib','Shalat Isya','Shalat Dhuha','Shalat Tahajud','Membaca Dzikir Pagi dan Petang','Murajaah Hafalan Alquran','Membaca Alquran ½ juz per hari'] },
+  { no:2, label:'Kedisiplinan', items:['Tidur maksimal pukul 21.00 WIB','Bangun tidur sebelum adzan subuh / maks. 05.30 WIB','Membawa bekal makanan sehat dan bergizi seimbang','Penggunaan HP/TV maksimal 30 menit','Belajar minimal 15–30 menit selama di rumah'] },
+  { no:3, label:'Memuliakan Orangtua', items:['Merapikan tempat tidur','Mencuci piring setelah makan','Menyapu / mengepel lantai','Memijat orangtua (minimal 1 pekan sekali)'] },
+];
+
+// Session check
+const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+if (!currentUser || currentUser.role !== 'guru') {
+  window.location.href = 'index.html';
+}
+
+let jobRows = [], kpiRows = [], bukuGuruState = {}, bukuOrtuState = {};
+const TODAY = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+// Init
+document.getElementById('user-pill').textContent = '🧑‍🏫 ' + currentUser.nama;
+document.getElementById('page-title').textContent = 'Portal Guru — ' + currentUser.nama;
+document.getElementById('page-subtitle').textContent = (currentUser.jabatan||'') + '  |  ' + TODAY;
+document.getElementById('tanggal-badge').textContent = '📅 ' + TODAY;
+
+// Load murid list from API
+apiCall('getMurid').then(res => {
+  if (!res.ok) return;
+  const sel = document.getElementById('siswa-select');
+  (res.data || []).forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.nama; opt.textContent = m.nama + ' (' + m.kelas + ')';
+    sel.appendChild(opt);
+  });
+});
+
+// Load existing job tracker
+apiCall('getJobTracker', { karyawan: currentUser.nama }).then(res => {
+  if (res.ok && res.data && res.data.tasks) { jobRows = res.data.tasks; renderJobTracker(); }
+  else { jobRows = [{ agenda:'', status:'Pending', target:new Date().toISOString().split('T')[0], skor:0, file:'', catatan:'' }]; renderJobTracker(); }
+});
+
+/* HELPERS */
+function toast(msg, err=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.background = err ? '#C62828' : '#1B5E20';
+  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2800);
+}
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+function logout() { sessionStorage.removeItem('currentUser'); window.location.href = 'index.html'; }
+function bpOpts() { return ['—','✓','✗'].map(o => `<option value="${o}">${o}</option>`).join(''); }
+function styleDay(sel) { sel.className = 'day-sel ' + (sel.value==='✓'?'v-check':sel.value==='✗'?'v-cross':'v-minus'); }
+function apiCall(action, payload={}) {
+  return fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({ action, ...payload }) })
+    .then(r => r.json()).catch(() => ({ ok:false, error:'Koneksi gagal' }));
+}
+function emptyBukuData() {
+  const data = {};
+  BUKU_KAT.forEach((kat,ki) => { data[ki]={}; kat.items.forEach((_,ii) => { data[ki][ii]={}; HARI.forEach(h => { data[ki][ii][h]='—'; }); }); });
+  const taklim = {}; HARI.forEach(h => { taklim[h]={tema:'',val:'—'}; });
+  return { data, taklim };
+}
+
+/* JOB TRACKER */
+function renderJobTracker() {
+  const tb = document.getElementById('job-tbody'); tb.innerHTML = '';
+  jobRows.forEach((r,i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="text-align:center;font-weight:800">${i+1}</td>
+      <td><input type="text" value="${r.agenda||''}" placeholder="Tulis agenda..." onchange="jobRows[${i}].agenda=this.value"/></td>
+      <td><select onchange="jobRows[${i}].status=this.value;renderJobTracker()">
+        <option ${r.status==='Pending'?'selected':''}>Pending</option>
+        <option ${r.status==='OnProgress'?'selected':''}>OnProgress</option>
+        <option ${r.status==='Selesai'?'selected':''}>Selesai</option>
+      </select></td>
+      <td><input type="date" value="${r.target||''}" onchange="jobRows[${i}].target=this.value"/></td>
+      <td style="white-space:nowrap">
+        <input type="range" min="0" max="100" value="${r.skor||0}" oninput="jobRows[${i}].skor=+this.value;this.nextElementSibling.textContent=this.value"/>
+        <span class="score-val">${r.skor||0}</span>
+      </td>
+      <td><div class="file-wrap">
+        <label class="file-label" for="jf${i}">📎 Bukti</label>
+        <input type="file" id="jf${i}" accept="image/*,.pdf" onchange="handleFile(${i},this)">
+        <div class="file-name" id="jfn${i}">${r.file||''}</div>
+      </div></td>
+      <td><input type="text" value="${r.catatan||''}" placeholder="Catatan..." onchange="jobRows[${i}].catatan=this.value"/></td>
+      <td><button class="btn btn-red btn-sm" onclick="jobRows.splice(${i},1);renderJobTracker()">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+function addJobRow() { jobRows.push({ agenda:'', status:'Pending', target:new Date().toISOString().split('T')[0], skor:0, file:'', catatan:'' }); renderJobTracker(); }
+function handleFile(i,el) { if(el.files[0]){jobRows[i].file=el.files[0].name;document.getElementById('jfn'+i).textContent=el.files[0].name;} }
+function submitJobTracker() {
+  toast('📤 Mengirim...');
+  apiCall('saveJobTracker',{ karyawan:currentUser.nama, jabatan:currentUser.jabatan, tanggal:new Date().toISOString().split('T')[0], tasks:JSON.stringify(jobRows) })
+  .then(res => { res.ok ? toast('📤 Job tracker berhasil dikirim ke pimpinan!') : toast('⚠️ '+res.error, true); });
+}
+
+/* KPI */
+function renderKpi() {
+  if (!kpiRows.length) kpiRows = [
+    {ind:'Kehadiran Mengajar',target:'22',capaian:'20',pct:91,status:'OnProgress',ket:''},
+    {ind:'Nilai Rata-rata Kelas',target:'80',capaian:'78',pct:97,status:'OnProgress',ket:'Mendekati target'},
+    {ind:'Laporan Bulanan',target:'1',capaian:'1',pct:100,status:'Selesai',ket:'Sudah dikumpulkan'},
+  ];
+  const tb = document.getElementById('kpi-tbody'); tb.innerHTML = '';
+  kpiRows.forEach((r,i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="text-align:center;font-weight:800">${i+1}</td>
+      <td><input type="text" value="${r.ind}" onchange="kpiRows[${i}].ind=this.value"/></td>
+      <td><input type="text" value="${r.target}" onchange="kpiRows[${i}].target=this.value;recalcKpi(${i})"/></td>
+      <td><input type="text" value="${r.capaian}" onchange="kpiRows[${i}].capaian=this.value;recalcKpi(${i})"/></td>
+      <td><div style="display:flex;align-items:center;gap:6px">
+        <div class="progress-bar" style="flex:1"><div class="progress-fill" id="kb${i}" style="width:${r.pct}%"></div></div>
+        <span style="font-weight:800;color:var(--primary);font-size:12px;min-width:34px" id="kp${i}">${r.pct}%</span>
+      </div></td>
+      <td><select onchange="kpiRows[${i}].status=this.value">
+        <option ${r.status==='Pending'?'selected':''}>Pending</option>
+        <option ${r.status==='OnProgress'?'selected':''}>OnProgress</option>
+        <option ${r.status==='Selesai'?'selected':''}>Selesai</option>
+      </select></td>
+      <td><input type="text" value="${r.ket}" placeholder="Keterangan..." onchange="kpiRows[${i}].ket=this.value"/></td>
+      <td><button class="btn btn-red btn-sm" onclick="kpiRows.splice(${i},1);renderKpi()">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+function recalcKpi(i){const t=parseFloat(kpiRows[i].target),c=parseFloat(kpiRows[i].capaian);if(!isNaN(t)&&!isNaN(c)&&t>0){kpiRows[i].pct=Math.min(100,Math.round(c/t*100));const b=document.getElementById('kb'+i),p=document.getElementById('kp'+i);if(b)b.style.width=kpiRows[i].pct+'%';if(p)p.textContent=kpiRows[i].pct+'%';}}
+function addKpiRow(){kpiRows.push({ind:'',target:'',capaian:'',pct:0,status:'Pending',ket:''});renderKpi();}
+function saveKpiToApi(){
+  toast('💾 Menyimpan...');
+  apiCall('saveKpi',{guru:currentUser.nama,jabatan:currentUser.jabatan,rows:JSON.stringify(kpiRows)})
+  .then(res => { res.ok ? toast('✅ KPI tersimpan!') : toast('⚠️ '+res.error,true); });
+}
+
+/* BUKU GURU */
+function loadBukuGuru(){
+  const siswa = document.getElementById('siswa-select').value; if(!siswa) return;
+  if(!bukuGuruState[siswa]){
+    const d = emptyBukuData(); d.published=false; bukuGuruState[siswa]=d;
+    apiCall('getBukuGuru',{siswa}).then(res=>{
+      if(res.ok&&res.data){bukuGuruState[siswa]={...res.data};} renderBukuGuruForm(siswa);
+    });
+  } else { renderBukuGuruForm(siswa); }
+  apiCall('getBukuOrtu',{siswa}).then(res=>{
+    if(res.ok&&res.data){bukuOrtuState[siswa]=res.data;} renderCatatanOrtu(siswa);
+  });
+}
+
+function renderBukuGuruForm(siswa){
+  const el=document.getElementById('buku-guru-content'); const st=bukuGuruState[siswa];
+  let html=`<div class="approval-bar">
+    <div><div style="font-size:14px;font-weight:800">📚 ${siswa}</div>
+    <div style="margin-top:4px">${st.published?'<span class="badge badge-approved">✅ Sudah Dipublish</span>':'<span class="badge badge-draft">⏳ Draft</span>'}</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-outline" onclick="saveBukuDraft('${siswa}')">💾 Simpan Draft</button>
+      <button class="btn ${st.published?'btn-green':'btn-blue'}" onclick="publishBuku('${siswa}')">
+        ${st.published?'✅ Re-publish':'📤 Publish ke Orangtua'}</button>
+    </div></div>
+  <div class="table-wrapper"><table class="buku-table">
+    <thead><tr><th style="width:32px">No</th><th>Aktivitas</th>
+    ${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}</tr></thead><tbody>`;
+  let rn=1;
+  BUKU_KAT.forEach((kat,ki)=>{
+    html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
+    kat.items.forEach((_,ii)=>{
+      html+=`<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${kat.items[ii]}</td>`;
+      HARI.forEach(h=>{
+        const val=st.data[ki]&&st.data[ki][ii]?st.data[ki][ii][h]||'—':'—';
+        const cls=val==='✓'?'v-check':val==='✗'?'v-cross':'v-minus';
+        html+=`<td class="hari-td"><select class="day-sel ${cls}" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="setBukuGuru('${siswa}',${ki},${ii},'${h}',this.value);styleDay(this)">${bpOpts()}</select></td>`;
+      }); html+='</tr>';
+    });
+  });
+  html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">4. Taklim</td></tr><tr>
+    <td style="text-align:center;color:var(--gray-500);font-size:12px">${rn}</td><td style="font-size:12px">Tema Taklim</td>`;
+  HARI.forEach(h=>{
+    const t=st.taklim[h]||{tema:'',val:'—'};const cls=t.val==='✓'?'v-check':t.val==='✗'?'v-cross':'v-minus';
+    html+=`<td class="hari-td" style="min-width:72px">
+      <input type="text" class="taklim-input" value="${t.tema}" placeholder="Tema" onchange="setTaklimGuru('${siswa}','${h}','tema',this.value)"/>
+      <select class="day-sel ${cls}" data-taklim="${h}" onchange="setTaklimGuru('${siswa}','${h}','val',this.value);styleDay(this)">${bpOpts()}</select></td>`;
+  });
+  html+='</tr></tbody></table></div>';
+  el.innerHTML=html;
+  el.querySelectorAll('select.day-sel[data-ki]').forEach(sel=>{
+    sel.value=st.data[sel.dataset.ki]&&st.data[sel.dataset.ki][sel.dataset.ii]?st.data[sel.dataset.ki][sel.dataset.ii][sel.dataset.h]||'—':'—';styleDay(sel);
+  });
+  el.querySelectorAll('select.day-sel[data-taklim]').forEach(sel=>{
+    sel.value=st.taklim[sel.dataset.taklim]?st.taklim[sel.dataset.taklim].val:'—';styleDay(sel);
+  });
+}
+function setBukuGuru(siswa,ki,ii,h,val){if(bukuGuruState[siswa]){bukuGuruState[siswa].data[ki][ii][h]=val;bukuGuruState[siswa].published=false;}}
+function setTaklimGuru(siswa,h,field,val){if(!bukuGuruState[siswa])return;if(!bukuGuruState[siswa].taklim[h])bukuGuruState[siswa].taklim[h]={tema:'',val:'—'};bukuGuruState[siswa].taklim[h][field]=val;}
+function saveBukuDraft(siswa){
+  const st=bukuGuruState[siswa];
+  apiCall('saveBukuGuru',{siswa,minggu:'Minggu Ini',data:JSON.stringify(st.data),taklim:JSON.stringify(st.taklim)})
+  .then(res=>{res.ok?toast('✅ Draft tersimpan!'):toast('⚠️ '+res.error,true);});
+}
+function publishBuku(siswa){
+  const st=bukuGuruState[siswa]; toast('📤 Menyimpan...');
+  apiCall('saveBukuGuru',{siswa,minggu:'Minggu Ini',data:JSON.stringify(st.data),taklim:JSON.stringify(st.taklim)})
+  .then(()=>apiCall('publishBukuGuru',{siswa}))
+  .then(res=>{
+    if(res.ok){st.published=true;renderBukuGuruForm(siswa);toast('📤 Buku '+siswa+' dipublish ke orangtua!');}
+    else toast('⚠️ '+res.error,true);
+  });
+}
+function renderCatatanOrtu(siswa){
+  const el=document.getElementById('catatan-ortu-view');
+  const entries=bukuOrtuState[siswa];
+  if(!entries||!entries.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">📭</div><p>Belum ada laporan dari orangtua ${siswa}</p></div>`;return;}
+  const e=entries[0];
+  let html=`<div style="font-size:12px;color:var(--gray-500);margin-bottom:10px">Terakhir dikirim: <strong>${e.tanggal}</strong></div>
+  <div class="table-wrapper"><table class="buku-table"><thead><tr><th style="width:32px">No</th><th>Aktivitas</th>
+  ${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}</tr></thead><tbody>`;
+  let rn=1;
+  BUKU_KAT.forEach((kat,ki)=>{
+    html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
+    kat.items.forEach((_,ii)=>{
+      html+=`<tr><td style="text-align:center;color:var(--gray-500);font-size:11px">${rn++}</td><td style="font-size:11px">${kat.items[ii]}</td>`;
+      HARI.forEach(h=>{const val=(e.data&&e.data[ki]&&e.data[ki][ii]&&e.data[ki][ii][h])||'—';const s=val==='✓'?'color:#1B5E20;font-weight:800':val==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-400)';html+=`<td class="hari-td" style="${s}">${val}</td>`;});
+      html+='</tr>';
+    });
+  });
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
+}
+
+// Init render
+renderKpi();
+</script>
+</body>
+</html>
