@@ -33,6 +33,7 @@
     .card{background:white;border-radius:13px;padding:22px;box-shadow:0 1px 6px rgba(0,0,0,.08);margin-bottom:20px}
     .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
     .card-title{font-size:15px;font-weight:800;color:var(--gray-900)}
+    .card-subtitle{font-size:12px;color:var(--gray-500);margin-top:3px}
     .table-wrapper{overflow-x:auto}
     table{width:100%;border-collapse:collapse;font-size:13px}
     thead th{background:var(--secondary);color:var(--primary-dark);font-weight:700;padding:11px 12px;text-align:left;border-bottom:2px solid var(--accent);white-space:nowrap}
@@ -41,12 +42,10 @@
     tbody tr:hover td{background:#F9FBE7}
     td select,td input[type=text],td input[type=date],td textarea{width:100%;padding:6px 9px;border:1.5px solid var(--gray-300);border-radius:7px;font-size:12px;outline:none;font-family:inherit}
     td select:focus,td input:focus{border-color:var(--primary)}
-    td input[type=range]{width:75px;cursor:pointer;accent-color:var(--primary)}
-    .score-val{font-weight:800;color:var(--primary);font-size:13px;min-width:28px;display:inline-block;text-align:right}
     .badge{display:inline-block;padding:3px 11px;border-radius:20px;font-size:11px;font-weight:800}
-    .badge-onprogress{background:#FFF3E0;color:#BF360C}
-    .badge-pending{background:#F3E5F5;color:#6A1B9A}
     .badge-selesai{background:#E8F5E9;color:#1B5E20}
+    .badge-onprogres{background:#FFF3E0;color:#BF360C}
+    .badge-tidak{background:#FFEBEE;color:#C62828}
     .badge-approved{background:#E8F5E9;color:#1B5E20}
     .badge-draft{background:#FFF3E0;color:#BF360C}
     .btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;border:none;font-family:inherit}
@@ -55,6 +54,7 @@
     .btn-red{background:transparent;color:var(--danger);border:1.5px solid #EF9A9A}.btn-red:hover{background:#FFEBEE}
     .btn-blue{background:#1565C0;color:white;border:none}.btn-blue:hover{background:#0D47A1}
     .btn-sm{padding:4px 10px;font-size:11px}
+    .btn:disabled,.btn[disabled]{opacity:.5;cursor:not-allowed!important}
     .date-badge{background:var(--secondary);border:1.5px solid var(--accent);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;color:var(--primary-dark);white-space:nowrap}
     .selector-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
     .selector-row label{font-weight:700;color:var(--gray-700);font-size:14px}
@@ -62,16 +62,28 @@
     .progress-bar{width:100%;height:9px;background:var(--gray-200);border-radius:5px;overflow:hidden}
     .progress-fill{height:100%;background:var(--primary);border-radius:5px;transition:width .4s}
     .info-banner{background:#E3F2FD;border-left:4px solid #1565C0;padding:10px 16px;border-radius:0 8px 8px 0;font-size:13px;color:#1565C0;margin-bottom:16px;font-weight:600}
-    .warn-banner{background:#FFF3E0;border-left:4px solid #FF6D00;padding:10px 16px;border-radius:0 8px 8px 0;font-size:13px;color:#E65100;font-weight:600}
-    .success-banner{background:#E8F5E9;border-left:4px solid var(--primary);padding:10px 16px;border-radius:0 8px 8px 0;font-size:13px;color:var(--primary-dark);font-weight:600}
-    .badge-pimpinan-task{background:#F3E5F5;color:#6A1B9A;display:inline-block;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:800;margin-left:6px}
-    .success-banner{background:#E8F5E9;border-left:4px solid var(--primary);padding:10px 16px;border-radius:0 8px 8px 0;font-size:13px;color:var(--primary-dark);margin-bottom:16px;font-weight:600}
+    .warn-banner{background:#FFF3E0;border-left:4px solid #FF6D00;padding:10px 16px;border-radius:0 8px 8px 0;font-size:13px;color:#E65100;font-weight:600;margin-bottom:12px}
+    .success-banner{background:#E8F5E9;border-left:4px solid var(--primary);padding:10px 16px;border-radius:0 8px 8px 0;font-size:13px;color:var(--primary-dark);margin-bottom:12px;font-weight:600}
+    .danger-banner{background:#FFEBEE;border-left:4px solid var(--danger);padding:10px 16px;border-radius:0 8px 8px 0;font-size:13px;color:var(--danger);margin-bottom:12px;font-weight:600}
+    .section-divider{border:none;border-top:2px dashed var(--gray-200);margin:20px 0}
+    .sesi-label{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+    .sesi-label .sesi-badge{background:var(--secondary);border:1.5px solid var(--accent);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;color:var(--primary-dark)}
+    .sesi-label .jam-info{font-size:12px;color:var(--gray-500)}
+    .rekap-box{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-top:16px}
+    .rekap-item{background:var(--gray-100);border-radius:10px;padding:14px;text-align:center}
+    .rekap-val{font-size:26px;font-weight:900}
+    .rekap-lbl{font-size:11px;color:var(--gray-500);font-weight:700;margin-top:4px}
+    .rekap-item.selesai .rekap-val{color:var(--success)}
+    .rekap-item.onprog .rekap-val{color:var(--warning)}
+    .rekap-item.tidak .rekap-val{color:var(--danger)}
+    .rekap-item.nilai{background:var(--secondary);border:2px solid var(--accent)}
+    .rekap-item.nilai .rekap-val{color:var(--primary-dark)}
+    .kpi-toggle{display:flex;gap:8px;align-items:center}
+    .kpi-toggle button{padding:5px 12px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;border:2px solid var(--gray-300);background:white;color:var(--gray-700);font-family:inherit}
+    .kpi-toggle button.ya{border-color:var(--primary);background:var(--secondary);color:var(--primary-dark)}
+    .kpi-toggle button.tidak{border-color:#EF9A9A;background:#FFEBEE;color:var(--danger)}
     .empty-state{text-align:center;padding:36px 20px;color:var(--gray-500)}
     .empty-state .empty-icon{font-size:44px;margin-bottom:10px}
-    .file-wrap input[type=file]{display:none}
-    .file-label{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--secondary);border:1px solid var(--accent);border-radius:6px;font-size:11px;color:var(--primary);cursor:pointer;font-weight:700}
-    .file-label:hover{background:var(--primary);color:white}
-    .file-name{font-size:10px;color:var(--gray-500);margin-top:2px;max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .day-sel{-webkit-appearance:none;appearance:none;width:46px;height:32px;border-radius:7px;border:1.5px solid var(--gray-300);background:var(--gray-100);font-size:15px;text-align:center;cursor:pointer;outline:none;font-family:inherit}
     .day-sel.v-check{background:#E8F5E9;border-color:#4CAF50;color:#1B5E20}
     .day-sel.v-cross{background:#FFEBEE;border-color:#EF9A9A;color:#C62828}
@@ -100,45 +112,83 @@
   <div class="content-area">
     <div class="section-header">
       <h2 id="page-title">Portal Guru</h2>
-      <p id="page-subtitle">Selasa, 26 Mei 2026</p>
+      <p id="page-subtitle">—</p>
     </div>
 
-    <div class="tab-nav">
-      <button class="tab-btn active" onclick="switchTab('job',this)">📋 Job Tracker</button>
-      <button class="tab-btn" onclick="switchTab('buku',this)">📖 Buku Penghubung</button>
-      <button class="tab-btn" onclick="switchTab('kpi',this)">🎯 Agenda KPI</button>
+    <div class="tab-nav" id="tab-nav">
+      <button class="tab-btn active" id="btn-tab-rencana" onclick="switchTab('rencana',this)">📋 Rencana Kerja</button>
+      <button class="tab-btn" id="btn-tab-buku" onclick="switchTab('buku',this)">📖 Buku Penghubung</button>
+      <button class="tab-btn" id="btn-tab-kpi" onclick="switchTab('kpi',this)">⭐ KPI Harian</button>
     </div>
 
-    <!-- JOB TRACKER -->
-    <div id="tab-job" class="tab-content active">
-      <div class="card">
+    <!-- ========== RENCANA KERJA ========== -->
+    <div id="tab-rencana" class="tab-content active">
+
+      <!-- Sesi Pagi -->
+      <div class="card" id="card-pagi">
         <div class="card-header">
           <div>
-            <div class="card-title">📋 Job Tracker Harian — Input Mandiri</div>
-            <div style="margin-top:6px"><span class="date-badge" id="tanggal-badge">📅 Hari ini</span></div>
+            <div class="card-title">📋 Sesi Pagi — Rencana Kerja</div>
+            <div class="card-subtitle">Isi rencana tugas hari ini lalu submit ke pimpinan • <span id="jam-pagi-label">05:00–08:00</span></div>
           </div>
-          <button class="btn btn-green" id="btn-add-job" onclick="addJobRow()">+ Tambah Tugas</button>
+          <div id="pagi-badge"></div>
         </div>
+        <div id="pagi-banner"></div>
         <div class="table-wrapper">
           <table>
             <thead><tr>
-              <th style="width:36px">No</th><th>Tugas / Agenda</th>
-              <th style="width:150px">Status</th><th style="width:120px">Target Selesai</th>
-              <th style="width:110px">Skor</th><th style="width:100px">Bukti</th>
-              <th>Catatan</th><th style="width:42px"></th>
+              <th style="width:36px">No</th>
+              <th>Tugas / Agenda</th>
+              <th style="width:130px">Target Selesai</th>
+              <th style="width:42px"></th>
             </tr></thead>
-            <tbody id="job-tbody"></tbody>
+            <tbody id="pagi-tbody"></tbody>
           </table>
         </div>
-        <div id="agenda-status-banner" style="display:none;margin-top:12px"></div>
-        <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:10px">
-          <button class="btn btn-outline" onclick="toast('📥 Draft tersimpan')">💾 Simpan Draft</button>
-          <button class="btn btn-green" id="btn-submit-job" onclick="submitJobTracker()">📤 Submit ke Pimpinan</button>
+        <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <button class="btn btn-outline btn-sm" id="btn-add-pagi" onclick="addPagiRow()">+ Tambah Tugas</button>
+          <button class="btn btn-green" id="btn-submit-pagi" onclick="submitPagi()">📤 Submit Rencana Pagi</button>
         </div>
       </div>
+
+      <!-- Sesi Sore -->
+      <div class="card" id="card-sore" style="display:none">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📊 Sesi Sore — Laporan Hasil</div>
+            <div class="card-subtitle">Perbarui status setiap tugas • <span id="jam-sore-label">15:00–17:00</span></div>
+          </div>
+          <div id="sore-badge"></div>
+        </div>
+        <div class="info-banner" style="margin-bottom:12px">
+          ℹ️ Status <strong>On Progres</strong> tidak dihitung dalam nilai. Hanya <strong>Selesai (100)</strong> dan <strong>Tidak Selesai (0)</strong> yang masuk rekap.
+        </div>
+        <div id="sore-banner"></div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr>
+              <th style="width:36px">No</th>
+              <th>Tugas / Agenda</th>
+              <th style="width:160px">Status Akhir</th>
+              <th>Catatan</th>
+            </tr></thead>
+            <tbody id="sore-tbody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px;display:flex;justify-content:flex-end">
+          <button class="btn btn-green" id="btn-submit-sore" onclick="submitSore()">📤 Submit Laporan Sore</button>
+        </div>
+      </div>
+
+      <!-- Rekap Nilai -->
+      <div class="card" id="card-rekap" style="display:none">
+        <div class="card-title" style="margin-bottom:16px">📈 Rekap Nilai Hari Ini</div>
+        <div id="rekap-content"></div>
+      </div>
+
     </div>
 
-    <!-- BUKU PENGHUBUNG -->
+    <!-- ========== BUKU PENGHUBUNG ========== -->
     <div id="tab-buku" class="tab-content">
       <div class="info-banner">📌 Isi laporan aktivitas siswa di sekolah, lalu klik <strong>Publish ke Orangtua</strong>.</div>
       <div class="card">
@@ -163,29 +213,41 @@
       </div>
     </div>
 
-    <!-- KPI -->
+    <!-- ========== KPI HARIAN ========== -->
     <div id="tab-kpi" class="tab-content">
       <div class="card">
         <div class="card-header">
-          <div class="card-title">🎯 Agenda KPI — Mei 2026</div>
-          <button class="btn btn-green" onclick="addKpiRow()">+ Tambah KPI</button>
+          <div>
+            <div class="card-title">⭐ KPI Harian — Self-Assessment</div>
+            <div class="card-subtitle">Isi penilaian mandiri 6 item KPI hari ini, lalu simpan</div>
+          </div>
+          <span class="date-badge" id="kpi-tanggal-badge">📅 Hari ini</span>
         </div>
+        <div id="kpi-harian-banner"></div>
         <div class="table-wrapper">
           <table>
             <thead><tr>
-              <th style="width:36px">No</th><th>Indikator KPI</th>
-              <th style="width:85px">Target</th><th style="width:85px">Capaian</th>
-              <th style="width:130px">Progres</th><th style="width:120px">Status</th>
-              <th>Keterangan</th><th style="width:42px"></th>
+              <th style="width:36px">No</th>
+              <th>Item KPI</th>
+              <th style="width:160px;text-align:center">Penilaian</th>
+              <th style="width:60px;text-align:center">Nilai</th>
             </tr></thead>
-            <tbody id="kpi-tbody"></tbody>
+            <tbody id="kpi-harian-tbody"></tbody>
           </table>
         </div>
-        <div style="margin-top:16px;display:flex;justify-content:flex-end">
-          <button class="btn btn-green" onclick="saveKpiToApi()">💾 Simpan KPI</button>
+        <div id="kpi-total-row" style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div style="font-size:13px;color:var(--gray-700)">Total nilai KPI: <strong id="kpi-total-val" style="font-size:18px;color:var(--primary-dark)">—</strong>/100</div>
+          <button class="btn btn-green" id="btn-submit-kpi" onclick="submitKpiHarian()">💾 Simpan KPI Hari Ini</button>
         </div>
       </div>
+
+      <!-- Rekap KPI -->
+      <div class="card" id="card-kpi-rekap" style="display:none">
+        <div class="card-title" style="margin-bottom:14px">📊 Rekap KPI Hari Ini</div>
+        <div id="kpi-rekap-content"></div>
+      </div>
     </div>
+
   </div>
 </div>
 <div id="toast"></div>
@@ -199,162 +261,341 @@ const BUKU_KAT = [
   { no:2, label:'Kedisiplinan', items:['Tidur maksimal pukul 21.00 WIB','Bangun tidur sebelum adzan subuh / maks. 05.30 WIB','Membawa bekal makanan sehat dan bergizi seimbang','Penggunaan HP/TV maksimal 30 menit','Belajar minimal 15–30 menit selama di rumah'] },
   { no:3, label:'Memuliakan Orangtua', items:['Merapikan tempat tidur','Mencuci piring setelah makan','Menyapu / mengepel lantai','Memijat orangtua (minimal 1 pekan sekali)'] },
 ];
+const KPI_HARIAN_ITEMS = [
+  'Mengisi absensi hadir tepat waktu',
+  'Berpakaian rapi, sopan, dan sesuai ketentuan sekolah',
+  'Mengikuti kelas inspirasi pagi',
+  'Menggunakan ID Card/atribut lengkap',
+  'Mengisi Absen mengajar harian',
+  'Menjaga sikap, adab, dan komunikasi selama di sekolah',
+];
 
-// Session check
+// ── Session check ──────────────────────────────
 const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
-if (!currentUser || currentUser.role !== 'guru') {
-  window.location.href = 'index.html';
-}
+if (!currentUser || currentUser.role !== 'guru') window.location.href = 'index.html';
 
-let jobRows = [], kpiRows = [], bukuGuruState = {}, bukuOrtuState = {};
-const TODAY = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+const tipeGuru = currentUser.tipeGuru || 'kelas'; // 'kelas' or 'mapel'
 
-// Init
+// ── State ──────────────────────────────────────
+let jadwal = { jamBuka:'05:00', jamTutup:'08:00', jamBukaSore:'15:00', jamTutupSore:'17:00' };
+let pagiRows = [];
+let soreRows = [];
+let kpiHarianRows = KPI_HARIAN_ITEMS.map(lbl => ({ label: lbl, nilai: null }));
+let bukuGuruState = {}, bukuOrtuState = {};
+
+const TODAY_ISO = new Date().toISOString().split('T')[0];
+const TODAY_LABEL = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+// ── Init UI ────────────────────────────────────
 document.getElementById('user-pill').textContent = '🧑‍🏫 ' + currentUser.nama;
 document.getElementById('page-title').textContent = 'Portal Guru — ' + currentUser.nama;
-document.getElementById('page-subtitle').textContent = (currentUser.jabatan||'') + '  |  ' + TODAY;
-document.getElementById('tanggal-badge').textContent = '📅 ' + TODAY;
+document.getElementById('page-subtitle').textContent = (currentUser.jabatan||'') + '  |  ' + TODAY_LABEL;
+document.getElementById('kpi-tanggal-badge').textContent = '📅 ' + TODAY_LABEL;
 
-// Load murid list from API
-apiCall('getMurid').then(res => {
-  if (!res.ok) return;
-  const sel = document.getElementById('siswa-select');
-  (res.data || []).forEach(m => {
-    const opt = document.createElement('option');
-    opt.value = m.nama; opt.textContent = m.nama + ' (' + m.kelas + ')';
-    sel.appendChild(opt);
-  });
-});
-
-// Load existing job tracker
-apiCall('getJobTracker', { karyawan: currentUser.nama }).then(res => {
-  if (res.ok && res.data && res.data.tasks) { jobRows = res.data.tasks; renderJobTracker(); }
-  else { jobRows = [{ agenda:'', status:'Pending', target:new Date().toISOString().split('T')[0], skor:0, file:'', catatan:'' }]; renderJobTracker(); }
-});
-
-/* HELPERS */
-function toast(msg, err=false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.style.background = err ? '#C62828' : '#1B5E20';
-  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2800);
-}
-function switchTab(tab, btn) {
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  if (btn) btn.classList.add('active');
-}
-function logout() { sessionStorage.removeItem('currentUser'); window.location.href = 'index.html'; }
-function bpOpts() { return ['—','✓','✗'].map(o => `<option value="${o}">${o}</option>`).join(''); }
-function styleDay(sel) { sel.className = 'day-sel ' + (sel.value==='✓'?'v-check':sel.value==='✗'?'v-cross':'v-minus'); }
-function apiCall(action, payload={}) {
-  return fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({ action, ...payload }) })
-    .then(r => r.json()).catch(() => ({ ok:false, error:'Koneksi gagal' }));
-}
-function emptyBukuData() {
-  const data = {};
-  BUKU_KAT.forEach((kat,ki) => { data[ki]={}; kat.items.forEach((_,ii) => { data[ki][ii]={}; HARI.forEach(h => { data[ki][ii][h]='—'; }); }); });
-  const taklim = {}; HARI.forEach(h => { taklim[h]={tema:'',val:'—'}; });
-  return { data, taklim };
+// Hide buku tab for guru mapel
+if (tipeGuru === 'mapel') {
+  document.getElementById('btn-tab-buku').style.display = 'none';
 }
 
-/* JOB TRACKER */
-function renderJobTracker() {
-  const tb = document.getElementById('job-tbody'); tb.innerHTML = '';
-  jobRows.forEach((r,i) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="text-align:center;font-weight:800">${i+1}</td>
-      <td><input type="text" value="${r.agenda||''}" placeholder="Tulis agenda..." onchange="jobRows[${i}].agenda=this.value"/></td>
-      <td><select onchange="jobRows[${i}].status=this.value;renderJobTracker()">
-        <option ${r.status==='Pending'?'selected':''}>Pending</option>
-        <option ${r.status==='OnProgress'?'selected':''}>OnProgress</option>
-        <option ${r.status==='Selesai'?'selected':''}>Selesai</option>
-      </select></td>
-      <td><input type="date" value="${r.target||''}" onchange="jobRows[${i}].target=this.value"/></td>
-      <td style="white-space:nowrap">
-        <input type="range" min="0" max="100" value="${r.skor||0}" oninput="jobRows[${i}].skor=+this.value;this.nextElementSibling.textContent=this.value"/>
-        <span class="score-val">${r.skor||0}</span>
-      </td>
-      <td><div class="file-wrap">
-        <label class="file-label" for="jf${i}">📎 Bukti</label>
-        <input type="file" id="jf${i}" accept="image/*,.pdf" onchange="handleFile(${i},this)">
-        <div class="file-name" id="jfn${i}">${r.file||''}</div>
-      </div></td>
-      <td><input type="text" value="${r.catatan||''}" placeholder="Catatan..." onchange="jobRows[${i}].catatan=this.value"/></td>
-      <td><button class="btn btn-red btn-sm" onclick="jobRows.splice(${i},1);renderJobTracker()">✕</button></td>`;
-    tb.appendChild(tr);
-  });
-}
-function addJobRow() { jobRows.push({ agenda:'', status:'Pending', target:new Date().toISOString().split('T')[0], skor:0, file:'', catatan:'' }); renderJobTracker(); }
-function handleFile(i,el) { if(el.files[0]){jobRows[i].file=el.files[0].name;document.getElementById('jfn'+i).textContent=el.files[0].name;} }
-function submitJobTracker() {
-  if (!isAgendaOpen())   { toast('🔒 Di luar jam pengisian agenda!', true); return; }
-  if (checkTodaySubmitted()) { toast('✅ Sudah disubmit hari ini!', true); return; }
-  toast('📤 Mengirim...');
-  apiCall('saveJobTracker',{ karyawan:currentUser.nama, jabatan:currentUser.jabatan, tanggal:new Date().toISOString().split('T')[0], tasks:JSON.stringify(jobRows) })
-  .then(res => {
-    if (res.ok) {
-      markTodaySubmitted();
-      renderJobLockState();
-      toast('📤 Job tracker berhasil dikirim ke pimpinan!');
-    } else { toast('⚠️ '+res.error, true); }
-  });
-}
-
-/* KPI */
-function renderKpi() {
-  if (!kpiRows.length) kpiRows = [
-    {ind:'Kehadiran Mengajar',target:'22',capaian:'20',pct:91,status:'OnProgress',ket:''},
-    {ind:'Nilai Rata-rata Kelas',target:'80',capaian:'78',pct:97,status:'OnProgress',ket:'Mendekati target'},
-    {ind:'Laporan Bulanan',target:'1',capaian:'1',pct:100,status:'Selesai',ket:'Sudah dikumpulkan'},
-  ];
-  const tb = document.getElementById('kpi-tbody'); tb.innerHTML = '';
-  kpiRows.forEach((r,i) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="text-align:center;font-weight:800">${i+1}</td>
-      <td><input type="text" value="${r.ind}" onchange="kpiRows[${i}].ind=this.value"/></td>
-      <td><input type="text" value="${r.target}" onchange="kpiRows[${i}].target=this.value;recalcKpi(${i})"/></td>
-      <td><input type="text" value="${r.capaian}" onchange="kpiRows[${i}].capaian=this.value;recalcKpi(${i})"/></td>
-      <td><div style="display:flex;align-items:center;gap:6px">
-        <div class="progress-bar" style="flex:1"><div class="progress-fill" id="kb${i}" style="width:${r.pct}%"></div></div>
-        <span style="font-weight:800;color:var(--primary);font-size:12px;min-width:34px" id="kp${i}">${r.pct}%</span>
-      </div></td>
-      <td><select onchange="kpiRows[${i}].status=this.value">
-        <option ${r.status==='Pending'?'selected':''}>Pending</option>
-        <option ${r.status==='OnProgress'?'selected':''}>OnProgress</option>
-        <option ${r.status==='Selesai'?'selected':''}>Selesai</option>
-      </select></td>
-      <td><input type="text" value="${r.ket}" placeholder="Keterangan..." onchange="kpiRows[${i}].ket=this.value"/></td>
-      <td><button class="btn btn-red btn-sm" onclick="kpiRows.splice(${i},1);renderKpi()">✕</button></td>`;
-    tb.appendChild(tr);
-  });
-}
-function recalcKpi(i){const t=parseFloat(kpiRows[i].target),c=parseFloat(kpiRows[i].capaian);if(!isNaN(t)&&!isNaN(c)&&t>0){kpiRows[i].pct=Math.min(100,Math.round(c/t*100));const b=document.getElementById('kb'+i),p=document.getElementById('kp'+i);if(b)b.style.width=kpiRows[i].pct+'%';if(p)p.textContent=kpiRows[i].pct+'%';}}
-function addKpiRow(){kpiRows.push({ind:'',target:'',capaian:'',pct:0,status:'Pending',ket:''});renderKpi();}
-function saveKpiToApi(){
-  toast('💾 Menyimpan...');
-  apiCall('saveKpi',{guru:currentUser.nama,jabatan:currentUser.jabatan,rows:JSON.stringify(kpiRows)})
-  .then(res => { res.ok ? toast('✅ KPI tersimpan!') : toast('⚠️ '+res.error,true); });
-}
-
-/* BUKU GURU */
-function loadBukuGuru(){
-  const siswa = document.getElementById('siswa-select').value; if(!siswa) return;
-  if(!bukuGuruState[siswa]){
-    const d = emptyBukuData(); d.published=false; bukuGuruState[siswa]=d;
-    apiCall('getBukuGuru',{siswa}).then(res=>{
-      if(res.ok&&res.data){bukuGuruState[siswa]={...res.data};} renderBukuGuruForm(siswa);
+// Load murid for buku penghubung (only kelas)
+if (tipeGuru === 'kelas') {
+  apiCall('getMurid').then(res => {
+    if (!res.ok) return;
+    const sel = document.getElementById('siswa-select');
+    (res.data||[]).forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.nama; opt.textContent = m.nama + ' (' + m.kelas + ')';
+      sel.appendChild(opt);
     });
-  } else { renderBukuGuruForm(siswa); }
-  apiCall('getBukuOrtu',{siswa}).then(res=>{
-    if(res.ok&&res.data){bukuOrtuState[siswa]=res.data;} renderCatatanOrtu(siswa);
   });
 }
 
+// ── Helpers ────────────────────────────────────
+function toast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.style.background=err?'#C62828':'#1B5E20';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+function logout(){sessionStorage.removeItem('currentUser');window.location.href='index.html';}
+function switchTab(tab,btn){document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+tab).classList.add('active');if(btn)btn.classList.add('active');}
+function bpOpts(){return['—','✓','✗'].map(o=>`<option value="${o}">${o}</option>`).join('');}
+function styleDay(sel){sel.className='day-sel '+(sel.value==='✓'?'v-check':sel.value==='✗'?'v-cross':'v-minus');}
+function apiCall(action,payload={}){return fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action,...payload})}).then(r=>r.json()).catch(()=>({ok:false,error:'Koneksi gagal'}));}
+function emptyBukuData(){const data={};BUKU_KAT.forEach((kat,ki)=>{data[ki]={};kat.items.forEach((_,ii)=>{data[ki][ii]={};HARI.forEach(h=>{data[ki][ii][h]='—';});});});const taklim={};HARI.forEach(h=>{taklim[h]={tema:'',val:'—'};});return{data,taklim};}
+function timeToMin(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
+function isWindowOpen(buka,tutup){const now=new Date();const hhmm=now.getHours()*60+now.getMinutes();const b=timeToMin(buka),c=timeToMin(tutup);if(b>c)return hhmm>=b||hhmm<c;return hhmm>=b&&hhmm<c;}
+function lsKey(prefix){return prefix+'_'+currentUser.nama+'_'+TODAY_ISO;}
+function isPagiSubmitted(){return localStorage.getItem(lsKey('pagi'))==='1';}
+function isSoreSubmitted(){return localStorage.getItem(lsKey('sore'))==='1';}
+function isKpiSubmitted(){return localStorage.getItem(lsKey('kpi'))==='1';}
+function markPagi(tasks){localStorage.setItem(lsKey('pagi'),'1');localStorage.setItem(lsKey('pagi_tasks'),JSON.stringify(tasks));}
+function markSore(){localStorage.setItem(lsKey('sore'),'1');}
+function markKpi(){localStorage.setItem(lsKey('kpi'),'1');}
+function getSavedPagiTasks(){try{return JSON.parse(localStorage.getItem(lsKey('pagi_tasks')))||[];}catch(e){return[];}}
+
+// ══════════════════════════════════════════
+//  RENCANA KERJA — SESI PAGI
+// ══════════════════════════════════════════
+function renderPagi() {
+  const open      = isWindowOpen(jadwal.jamBuka, jadwal.jamTutup);
+  const submitted = isPagiSubmitted();
+  const banner    = document.getElementById('pagi-banner');
+  const addBtn    = document.getElementById('btn-add-pagi');
+  const submitBtn = document.getElementById('btn-submit-pagi');
+  const badge     = document.getElementById('pagi-badge');
+
+  document.getElementById('jam-pagi-label').textContent = jadwal.jamBuka + '–' + jadwal.jamTutup;
+
+  if (submitted) {
+    badge.innerHTML = '<span class="badge badge-selesai">✅ Sudah Submit</span>';
+    banner.className = 'success-banner';
+    banner.innerHTML = '✅ Rencana pagi sudah disubmit ke pimpinan. Isi laporan sore mulai pukul ' + jadwal.jamBukaSore + '.';
+    addBtn.disabled = true; submitBtn.disabled = true;
+    document.querySelectorAll('#pagi-tbody input, #pagi-tbody select').forEach(el=>el.disabled=true);
+    // Show sore section
+    showSoreSection();
+  } else if (!open) {
+    badge.innerHTML = '<span class="badge badge-draft">🔒 Terkunci</span>';
+    banner.className = 'warn-banner';
+    banner.innerHTML = `🔒 Pengisian rencana pagi hanya bisa dilakukan pukul <strong>${jadwal.jamBuka}</strong>–<strong>${jadwal.jamTutup}</strong>.`;
+    addBtn.disabled = true; submitBtn.disabled = true;
+    document.querySelectorAll('#pagi-tbody input, #pagi-tbody select').forEach(el=>el.disabled=true);
+  } else {
+    badge.innerHTML = '<span class="badge badge-onprogres">🟢 Buka</span>';
+    banner.innerHTML = '';
+    addBtn.disabled = false; submitBtn.disabled = false;
+  }
+}
+
+function renderPagiTable() {
+  const tb = document.getElementById('pagi-tbody'); tb.innerHTML = '';
+  pagiRows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="text-align:center;font-weight:800">${i+1}</td>
+      <td><input type="text" value="${r.agenda||''}" placeholder="Tulis agenda/tugas..." onchange="pagiRows[${i}].agenda=this.value"/></td>
+      <td><input type="date" value="${r.target||TODAY_ISO}" onchange="pagiRows[${i}].target=this.value"/></td>
+      <td><button class="btn btn-red btn-sm" onclick="pagiRows.splice(${i},1);renderPagiTable()">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function addPagiRow() {
+  pagiRows.push({ agenda:'', target:TODAY_ISO });
+  renderPagiTable();
+}
+
+function submitPagi() {
+  if (!isWindowOpen(jadwal.jamBuka, jadwal.jamTutup)) { toast('🔒 Di luar jam pengisian pagi!', true); return; }
+  if (isPagiSubmitted()) { toast('✅ Rencana pagi sudah disubmit!'); return; }
+  const valid = pagiRows.filter(r => r.agenda.trim());
+  if (!valid.length) { toast('⚠️ Tambahkan minimal 1 tugas terlebih dahulu', true); return; }
+  toast('📤 Mengirim rencana pagi...');
+  apiCall('saveJobTracker', {
+    karyawan: currentUser.nama, jabatan: currentUser.jabatan,
+    tanggal: TODAY_ISO, tasks: JSON.stringify(valid), sesi: 'pagi'
+  }).then(res => {
+    if (res.ok) {
+      markPagi(valid);
+      soreRows = valid.map(t => ({ agenda: t.agenda, target: t.target, status: 'On Progres', catatan: '' }));
+      renderPagi();
+      renderSoreTable();
+      toast('📤 Rencana pagi terkirim ke pimpinan!');
+    } else { toast('⚠️ ' + res.error, true); }
+  });
+}
+
+// ══════════════════════════════════════════
+//  RENCANA KERJA — SESI SORE
+// ══════════════════════════════════════════
+function showSoreSection() {
+  document.getElementById('card-sore').style.display = 'block';
+  renderSore();
+}
+
+function renderSore() {
+  const open      = isWindowOpen(jadwal.jamBukaSore, jadwal.jamTutupSore);
+  const submitted = isSoreSubmitted();
+  const banner    = document.getElementById('sore-banner');
+  const submitBtn = document.getElementById('btn-submit-sore');
+  const badge     = document.getElementById('sore-badge');
+
+  document.getElementById('jam-sore-label').textContent = jadwal.jamBukaSore + '–' + jadwal.jamTutupSore;
+
+  if (submitted) {
+    badge.innerHTML = '<span class="badge badge-selesai">✅ Sudah Submit</span>';
+    banner.className = 'success-banner';
+    banner.innerHTML = '✅ Laporan sore sudah disubmit. Lihat rekap nilai di bawah.';
+    submitBtn.disabled = true;
+    document.querySelectorAll('#sore-tbody select, #sore-tbody input').forEach(el=>el.disabled=true);
+    showRekapNilai();
+  } else if (!open) {
+    badge.innerHTML = '<span class="badge badge-draft">🔒 Terkunci</span>';
+    banner.className = 'warn-banner';
+    banner.innerHTML = `🔒 Laporan sore hanya bisa diisi pukul <strong>${jadwal.jamBukaSore}</strong>–<strong>${jadwal.jamTutupSore}</strong>.`;
+    submitBtn.disabled = true;
+    document.querySelectorAll('#sore-tbody select, #sore-tbody input').forEach(el=>el.disabled=true);
+  } else {
+    badge.innerHTML = '<span class="badge badge-onprogres">🟢 Buka</span>';
+    banner.innerHTML = '';
+    submitBtn.disabled = false;
+  }
+}
+
+function renderSoreTable() {
+  const tb = document.getElementById('sore-tbody'); tb.innerHTML = '';
+  soreRows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    const badgeMap = { Selesai:'badge-selesai', 'On Progres':'badge-onprogres', 'Tidak Selesai':'badge-tidak' };
+    const labelMap = { Selesai:'✅ Selesai (100)', 'On Progres':'⏳ On Progres (—)', 'Tidak Selesai':'❌ Tidak Selesai (0)' };
+    tr.innerHTML = `
+      <td style="text-align:center;font-weight:800">${i+1}</td>
+      <td style="font-size:13px">${r.agenda}</td>
+      <td><select onchange="soreRows[${i}].status=this.value;renderSoreTable()">
+        <option ${r.status==='On Progres'?'selected':''} value="On Progres">⏳ On Progres (—)</option>
+        <option ${r.status==='Selesai'?'selected':''} value="Selesai">✅ Selesai (100)</option>
+        <option ${r.status==='Tidak Selesai'?'selected':''} value="Tidak Selesai">❌ Tidak Selesai (0)</option>
+      </select></td>
+      <td><input type="text" value="${r.catatan||''}" placeholder="Catatan..." onchange="soreRows[${i}].catatan=this.value"/></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function submitSore() {
+  if (!isWindowOpen(jadwal.jamBukaSore, jadwal.jamTutupSore)) { toast('🔒 Di luar jam laporan sore!', true); return; }
+  if (isSoreSubmitted()) { toast('✅ Laporan sore sudah disubmit!'); return; }
+  if (!isPagiSubmitted()) { toast('⚠️ Submit rencana pagi dahulu!', true); return; }
+  if (!soreRows.length) { toast('⚠️ Tidak ada tugas untuk dilaporkan', true); return; }
+  toast('📤 Mengirim laporan sore...');
+  apiCall('saveJobTracker', {
+    karyawan: currentUser.nama, jabatan: currentUser.jabatan,
+    tanggal: TODAY_ISO, tasks: JSON.stringify(soreRows), sesi: 'sore'
+  }).then(res => {
+    if (res.ok) {
+      markSore();
+      renderSore();
+      showRekapNilai(res.nilaiRekap);
+      toast('📤 Laporan sore terkirim! Nilai rekap: ' + res.nilaiRekap);
+    } else { toast('⚠️ ' + res.error, true); }
+  });
+}
+
+function showRekapNilai(nilaiRekap) {
+  const card = document.getElementById('card-rekap');
+  card.style.display = 'block';
+
+  const tasks = soreRows.length ? soreRows : getSavedPagiTasks();
+  const selesai      = tasks.filter(t => t.status === 'Selesai').length;
+  const onProgres    = tasks.filter(t => t.status === 'On Progres').length;
+  const tidakSelesai = tasks.filter(t => t.status === 'Tidak Selesai').length;
+  const totalHitung  = selesai + tidakSelesai;
+
+  // Recalculate if nilaiRekap not provided (e.g. on page reload after submission)
+  if (nilaiRekap === undefined || nilaiRekap === null) {
+    nilaiRekap = totalHitung > 0 ? Math.round(selesai / totalHitung * 100) : 0;
+  }
+
+  const pred = nilaiRekap >= 90 ? ['⭐ Sangat Baik','var(--primary)']
+             : nilaiRekap >= 80 ? ['✅ Baik','var(--success)']
+             : nilaiRekap >= 70 ? ['🔵 Cukup','var(--info)']
+             : ['⚠️ Perlu Perhatian','var(--warning)'];
+
+  document.getElementById('rekap-content').innerHTML = `
+    <div class="rekap-box">
+      <div class="rekap-item selesai"><div class="rekap-val">${selesai}</div><div class="rekap-lbl">✅ Selesai</div></div>
+      <div class="rekap-item onprog"><div class="rekap-val">${onProgres}</div><div class="rekap-lbl">⏳ On Progres<br><span style="font-size:10px;color:var(--gray-500)">(tdk dihitung)</span></div></div>
+      <div class="rekap-item tidak"><div class="rekap-val">${tidakSelesai}</div><div class="rekap-lbl">❌ Tdk Selesai</div></div>
+      <div class="rekap-item nilai"><div class="rekap-val" style="color:var(--primary-dark)">${nilaiRekap}</div><div class="rekap-lbl">Nilai Rekap<br><span style="font-size:10px">/100</span></div></div>
+    </div>
+    <div style="margin-top:14px;padding:12px 16px;background:var(--gray-100);border-radius:8px;display:flex;align-items:center;gap:10px">
+      <div style="font-size:20px">${pred[0].split(' ')[0]}</div>
+      <div>
+        <div style="font-weight:800;color:${pred[1]};font-size:15px">${pred[0]}</div>
+        <div style="font-size:12px;color:var(--gray-500)">Rumus: Selesai ÷ (Selesai + Tidak Selesai) × 100</div>
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════
+//  KPI HARIAN
+// ══════════════════════════════════════════
+function renderKpiHarianTable() {
+  const tb = document.getElementById('kpi-harian-tbody'); tb.innerHTML = '';
+  kpiHarianRows.forEach((r, i) => {
+    const isYa   = r.nilai === 100;
+    const isTdk  = r.nilai === 0;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="text-align:center;font-weight:800;color:var(--gray-500)">${i+1}</td>
+      <td style="font-size:13px">${r.label}</td>
+      <td style="text-align:center">
+        <div class="kpi-toggle">
+          <button class="${isYa?'ya':''}" onclick="setKpi(${i},100)">✅ Ya</button>
+          <button class="${isTdk?'tidak':''}" onclick="setKpi(${i},0)">❌ Tidak</button>
+        </div>
+      </td>
+      <td style="text-align:center;font-weight:800;font-size:15px;color:${isYa?'var(--success)':isTdk?'var(--danger)':'var(--gray-300)'}">
+        ${r.nilai===null?'—':r.nilai}
+      </td>`;
+    tb.appendChild(tr);
+  });
+  updateKpiTotal();
+}
+
+function setKpi(i, nilai) {
+  kpiHarianRows[i].nilai = nilai;
+  renderKpiHarianTable();
+}
+
+function updateKpiTotal() {
+  const filled = kpiHarianRows.filter(r => r.nilai !== null);
+  if (!filled.length) { document.getElementById('kpi-total-val').textContent = '—'; return; }
+  const total = Math.round(filled.reduce((s,r)=>s+r.nilai,0) / kpiHarianRows.length);
+  document.getElementById('kpi-total-val').textContent = total;
+}
+
+function submitKpiHarian() {
+  const allFilled = kpiHarianRows.every(r => r.nilai !== null);
+  if (!allFilled) { toast('⚠️ Isi semua 6 item KPI terlebih dahulu', true); return; }
+  if (isKpiSubmitted()) { toast('✅ KPI hari ini sudah disimpan!'); return; }
+  toast('💾 Menyimpan KPI...');
+  apiCall('saveKpiHarian', {
+    guru: currentUser.nama, jabatan: currentUser.jabatan,
+    tanggal: TODAY_ISO, items: JSON.stringify(kpiHarianRows)
+  }).then(res => {
+    if (res.ok) {
+      markKpi();
+      showKpiRekap(res.totalSkor);
+      document.getElementById('btn-submit-kpi').disabled = true;
+      document.querySelectorAll('#kpi-harian-tbody button').forEach(b=>b.disabled=true);
+      toast('✅ KPI harian tersimpan! Total skor: ' + res.totalSkor);
+    } else { toast('⚠️ ' + res.error, true); }
+  });
+}
+
+function showKpiRekap(totalSkor) {
+  const card = document.getElementById('card-kpi-rekap'); card.style.display='block';
+  const ya   = kpiHarianRows.filter(r=>r.nilai===100).length;
+  const tdk  = kpiHarianRows.filter(r=>r.nilai===0).length;
+  const pred = totalSkor>=90?['⭐ Sangat Baik','var(--primary)']:totalSkor>=80?['✅ Baik','var(--success)']:totalSkor>=60?['🔵 Cukup','var(--info)']:['⚠️ Perlu Peningkatan','var(--warning)'];
+  document.getElementById('kpi-rekap-content').innerHTML = `
+    <div class="rekap-box">
+      <div class="rekap-item selesai"><div class="rekap-val">${ya}</div><div class="rekap-lbl">✅ Ya (100)</div></div>
+      <div class="rekap-item tidak"><div class="rekap-val">${tdk}</div><div class="rekap-lbl">❌ Tidak (0)</div></div>
+      <div class="rekap-item nilai"><div class="rekap-val">${totalSkor}</div><div class="rekap-lbl">Total Skor KPI<br><span style="font-size:10px">/100</span></div></div>
+    </div>
+    <div style="margin-top:12px;padding:10px 14px;background:var(--gray-100);border-radius:8px;font-weight:800;color:${pred[1]}">${pred[0]}</div>`;
+}
+
+// ══════════════════════════════════════════
+//  BUKU PENGHUBUNG GURU
+// ══════════════════════════════════════════
+function loadBukuGuru(){
+  const siswa=document.getElementById('siswa-select').value;if(!siswa)return;
+  if(!bukuGuruState[siswa]){
+    const d=emptyBukuData();d.published=false;bukuGuruState[siswa]=d;
+    apiCall('getBukuGuru',{siswa}).then(res=>{if(res.ok&&res.data){bukuGuruState[siswa]={...res.data};}renderBukuGuruForm(siswa);});
+  }else{renderBukuGuruForm(siswa);}
+  apiCall('getBukuOrtu',{siswa}).then(res=>{if(res.ok&&res.data){bukuOrtuState[siswa]=res.data;}renderCatatanOrtu(siswa);});
+}
 function renderBukuGuruForm(siswa){
-  const el=document.getElementById('buku-guru-content'); const st=bukuGuruState[siswa];
+  const el=document.getElementById('buku-guru-content');const st=bukuGuruState[siswa];
   let html=`<div class="approval-bar">
     <div><div style="font-size:14px;font-weight:800">📚 ${siswa}</div>
     <div style="margin-top:4px">${st.published?'<span class="badge badge-approved">✅ Sudah Dipublish</span>':'<span class="badge badge-draft">⏳ Draft</span>'}</div></div>
@@ -371,153 +612,103 @@ function renderBukuGuruForm(siswa){
     html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
     kat.items.forEach((_,ii)=>{
       html+=`<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${kat.items[ii]}</td>`;
-      HARI.forEach(h=>{
-        const val=st.data[ki]&&st.data[ki][ii]?st.data[ki][ii][h]||'—':'—';
-        const cls=val==='✓'?'v-check':val==='✗'?'v-cross':'v-minus';
-        html+=`<td class="hari-td"><select class="day-sel ${cls}" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="setBukuGuru('${siswa}',${ki},${ii},'${h}',this.value);styleDay(this)">${bpOpts()}</select></td>`;
-      }); html+='</tr>';
+      HARI.forEach(h=>{const val=st.data[ki]&&st.data[ki][ii]?st.data[ki][ii][h]||'—':'—';const cls=val==='✓'?'v-check':val==='✗'?'v-cross':'v-minus';html+=`<td class="hari-td"><select class="day-sel ${cls}" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="setBukuGuru('${siswa}',${ki},${ii},'${h}',this.value);styleDay(this)">${bpOpts()}</select></td>`;});
+      html+='</tr>';
     });
   });
   html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">4. Taklim</td></tr><tr>
     <td style="text-align:center;color:var(--gray-500);font-size:12px">${rn}</td><td style="font-size:12px">Tema Taklim</td>`;
-  HARI.forEach(h=>{
-    const t=st.taklim[h]||{tema:'',val:'—'};const cls=t.val==='✓'?'v-check':t.val==='✗'?'v-cross':'v-minus';
-    html+=`<td class="hari-td" style="min-width:72px">
-      <input type="text" class="taklim-input" value="${t.tema}" placeholder="Tema" onchange="setTaklimGuru('${siswa}','${h}','tema',this.value)"/>
-      <select class="day-sel ${cls}" data-taklim="${h}" onchange="setTaklimGuru('${siswa}','${h}','val',this.value);styleDay(this)">${bpOpts()}</select></td>`;
-  });
+  HARI.forEach(h=>{const t=st.taklim[h]||{tema:'',val:'—'};const cls=t.val==='✓'?'v-check':t.val==='✗'?'v-cross':'v-minus';html+=`<td class="hari-td" style="min-width:72px"><input type="text" class="taklim-input" value="${t.tema}" placeholder="Tema" onchange="setTaklimGuru('${siswa}','${h}','tema',this.value)"/><select class="day-sel ${cls}" data-taklim="${h}" onchange="setTaklimGuru('${siswa}','${h}','val',this.value);styleDay(this)">${bpOpts()}</select></td>`;});
   html+='</tr></tbody></table></div>';
   el.innerHTML=html;
-  el.querySelectorAll('select.day-sel[data-ki]').forEach(sel=>{
-    sel.value=st.data[sel.dataset.ki]&&st.data[sel.dataset.ki][sel.dataset.ii]?st.data[sel.dataset.ki][sel.dataset.ii][sel.dataset.h]||'—':'—';styleDay(sel);
-  });
-  el.querySelectorAll('select.day-sel[data-taklim]').forEach(sel=>{
-    sel.value=st.taklim[sel.dataset.taklim]?st.taklim[sel.dataset.taklim].val:'—';styleDay(sel);
-  });
+  el.querySelectorAll('select.day-sel[data-ki]').forEach(sel=>{sel.value=st.data[sel.dataset.ki]&&st.data[sel.dataset.ki][sel.dataset.ii]?st.data[sel.dataset.ki][sel.dataset.ii][sel.dataset.h]||'—':'—';styleDay(sel);});
+  el.querySelectorAll('select.day-sel[data-taklim]').forEach(sel=>{sel.value=st.taklim[sel.dataset.taklim]?st.taklim[sel.dataset.taklim].val:'—';styleDay(sel);});
 }
 function setBukuGuru(siswa,ki,ii,h,val){if(bukuGuruState[siswa]){bukuGuruState[siswa].data[ki][ii][h]=val;bukuGuruState[siswa].published=false;}}
 function setTaklimGuru(siswa,h,field,val){if(!bukuGuruState[siswa])return;if(!bukuGuruState[siswa].taklim[h])bukuGuruState[siswa].taklim[h]={tema:'',val:'—'};bukuGuruState[siswa].taklim[h][field]=val;}
-function saveBukuDraft(siswa){
-  const st=bukuGuruState[siswa];
-  apiCall('saveBukuGuru',{siswa,minggu:'Minggu Ini',data:JSON.stringify(st.data),taklim:JSON.stringify(st.taklim)})
-  .then(res=>{res.ok?toast('✅ Draft tersimpan!'):toast('⚠️ '+res.error,true);});
-}
-function publishBuku(siswa){
-  const st=bukuGuruState[siswa]; toast('📤 Menyimpan...');
-  apiCall('saveBukuGuru',{siswa,minggu:'Minggu Ini',data:JSON.stringify(st.data),taklim:JSON.stringify(st.taklim)})
-  .then(()=>apiCall('publishBukuGuru',{siswa}))
-  .then(res=>{
-    if(res.ok){st.published=true;renderBukuGuruForm(siswa);toast('📤 Buku '+siswa+' dipublish ke orangtua!');}
-    else toast('⚠️ '+res.error,true);
-  });
-}
+function saveBukuDraft(siswa){const st=bukuGuruState[siswa];apiCall('saveBukuGuru',{siswa,minggu:'Minggu Ini',data:JSON.stringify(st.data),taklim:JSON.stringify(st.taklim)}).then(res=>{res.ok?toast('✅ Draft tersimpan!'):toast('⚠️ '+res.error,true);});}
+function publishBuku(siswa){const st=bukuGuruState[siswa];toast('📤 Menyimpan...');apiCall('saveBukuGuru',{siswa,minggu:'Minggu Ini',data:JSON.stringify(st.data),taklim:JSON.stringify(st.taklim)}).then(()=>apiCall('publishBukuGuru',{siswa})).then(res=>{if(res.ok){st.published=true;renderBukuGuruForm(siswa);toast('📤 Buku '+siswa+' dipublish ke orangtua!');}else toast('⚠️ '+res.error,true);});}
 function renderCatatanOrtu(siswa){
-  const el=document.getElementById('catatan-ortu-view');
-  const entries=bukuOrtuState[siswa];
+  const el=document.getElementById('catatan-ortu-view');const entries=bukuOrtuState[siswa];
   if(!entries||!entries.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">📭</div><p>Belum ada laporan dari orangtua ${siswa}</p></div>`;return;}
   const e=entries[0];
   let html=`<div style="font-size:12px;color:var(--gray-500);margin-bottom:10px">Terakhir dikirim: <strong>${e.tanggal}</strong></div>
-  <div class="table-wrapper"><table class="buku-table"><thead><tr><th style="width:32px">No</th><th>Aktivitas</th>
-  ${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}</tr></thead><tbody>`;
+  <div class="table-wrapper"><table class="buku-table"><thead><tr><th style="width:32px">No</th><th>Aktivitas</th>${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}</tr></thead><tbody>`;
   let rn=1;
   BUKU_KAT.forEach((kat,ki)=>{
     html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
-    kat.items.forEach((_,ii)=>{
-      html+=`<tr><td style="text-align:center;color:var(--gray-500);font-size:11px">${rn++}</td><td style="font-size:11px">${kat.items[ii]}</td>`;
-      HARI.forEach(h=>{const val=(e.data&&e.data[ki]&&e.data[ki][ii]&&e.data[ki][ii][h])||'—';const s=val==='✓'?'color:#1B5E20;font-weight:800':val==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-400)';html+=`<td class="hari-td" style="${s}">${val}</td>`;});
-      html+='</tr>';
-    });
+    kat.items.forEach((_,ii)=>{html+=`<tr><td style="text-align:center;color:var(--gray-500);font-size:11px">${rn++}</td><td style="font-size:11px">${kat.items[ii]}</td>`;HARI.forEach(h=>{const val=(e.data&&e.data[ki]&&e.data[ki][ii]&&e.data[ki][ii][h])||'—';const s=val==='✓'?'color:#1B5E20;font-weight:800':val==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-400)';html+=`<td class="hari-td" style="${s}">${val}</td>`;});html+='</tr>';});
   });
-  html+='</tbody></table></div>';
-  el.innerHTML=html;
+  html+='</tbody></table></div>';el.innerHTML=html;
 }
 
-/* ========================
-   JADWAL & TIME LOCK
-======================== */
-let jadwalAgenda = { jamBuka: '05:00', jamTutup: '08:00' };
-let agendaSubmittedToday = false;
-
-function isAgendaOpen() {
-  const now   = new Date();
-  const hhmm  = now.getHours() * 60 + now.getMinutes();
-  const buka  = timeToMin(jadwalAgenda.jamBuka);
-  const tutup = timeToMin(jadwalAgenda.jamTutup);
-  // Window crosses midnight (e.g., 17:00 – 08:00)
-  if (buka > tutup) return hhmm >= buka || hhmm < tutup;
-  return hhmm >= buka && hhmm < tutup;
-}
-
-function timeToMin(t) {
-  const [h, m] = t.split(':').map(Number);
-  return h * 60 + m;
-}
-
-function checkTodaySubmitted() {
-  const key = 'submitted_' + currentUser.nama + '_' + new Date().toISOString().split('T')[0];
-  return localStorage.getItem(key) === '1';
-}
-
-function markTodaySubmitted() {
-  const key = 'submitted_' + currentUser.nama + '_' + new Date().toISOString().split('T')[0];
-  localStorage.setItem(key, '1');
-}
-
-function renderJobLockState() {
-  const open      = isAgendaOpen();
-  const submitted = checkTodaySubmitted();
-  const banner    = document.getElementById('agenda-status-banner');
-  const submitBtn = document.getElementById('btn-submit-job');
-
-  if (submitted) {
-    banner.style.display = 'block';
-    banner.className = 'success-banner';
-    banner.innerHTML = '✅ Agenda hari ini sudah disubmit. Tidak dapat mengisi lagi hari ini.';
-    if (submitBtn) submitBtn.disabled = true;
-    // Lock all inputs
-    document.querySelectorAll('#job-tbody input, #job-tbody select').forEach(el => el.disabled = true);
-    document.getElementById('btn-add-job').disabled = true;
-  } else if (!open) {
-    banner.style.display = 'block';
-    banner.className = 'warn-banner';
-    banner.innerHTML = `🔒 Pengisian agenda hanya bisa dilakukan pukul <strong>${jadwalAgenda.jamBuka}</strong> – <strong>${jadwalAgenda.jamTutup}</strong>. Sekarang di luar jam pengisian.`;
-    if (submitBtn) submitBtn.disabled = true;
-    document.querySelectorAll('#job-tbody input, #job-tbody select').forEach(el => el.disabled = true);
-    document.getElementById('btn-add-job').disabled = true;
-  } else {
-    banner.style.display = 'none';
-    if (submitBtn) submitBtn.disabled = false;
-    document.getElementById('btn-add-job').disabled = false;
-  }
-}
-
-/* ========================
-   TUGAS DARI PIMPINAN
-======================== */
+// ══════════════════════════════════════════
+//  TUGAS DARI PIMPINAN
+// ══════════════════════════════════════════
 function loadTugasPimpinan() {
+  if (isPagiSubmitted()) return; // don't override after pagi submitted
   apiCall('getTugasPimpinan', { karyawan: currentUser.nama }).then(res => {
     if (!res.ok || !res.data || !res.data.length) return;
-    // Merge tugas dari pimpinan ke jobRows jika belum ada
     res.data.forEach(t => {
       const label = '📌 [Dari Pimpinan] ' + t.agenda;
-      const exists = jobRows.find(r => r.agenda === label);
-      if (!exists) {
-        jobRows.unshift({ agenda: label, status: 'Pending', target: t.deadline || '', skor: 0, file: '', catatan: t.catatan || '', dariPimpinan: true });
+      if (!pagiRows.find(r => r.agenda === label)) {
+        pagiRows.unshift({ agenda: label, target: t.deadline || TODAY_ISO, dariPimpinan: true });
       }
     });
-    renderJobTracker();
+    renderPagiTable();
   });
 }
 
-// Load jadwal & tugas pimpinan on start
-apiCall('getJadwalAgenda').then(res => {
-  if (res.ok) jadwalAgenda = { jamBuka: res.jamBuka, jamTutup: res.jamTutup };
-  renderJobLockState();
-});
-loadTugasPimpinan();
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+function init() {
+  // Load jadwal
+  apiCall('getJadwalAgenda').then(res => {
+    if (res.ok) jadwal = { jamBuka: res.jamBuka, jamTutup: res.jamTutup, jamBukaSore: res.jamBukaSore||'15:00', jamTutupSore: res.jamTutupSore||'17:00' };
 
-// Init render
-renderKpi();
+    // Init pagi rows (if not yet submitted today)
+    if (!isPagiSubmitted()) {
+      pagiRows = [{ agenda:'', target:TODAY_ISO }];
+      loadTugasPimpinan();
+    } else {
+      // Pagi already submitted — restore from localStorage or API
+      const saved = getSavedPagiTasks();
+      pagiRows = saved.length ? saved : [];
+      soreRows = saved.map(t => ({ agenda: t.agenda, target: t.target, status: 'On Progres', catatan: '' }));
+    }
+
+    // If sore already submitted, restore sore rows from API
+    if (isSoreSubmitted()) {
+      apiCall('getJobTrackerToday', { karyawan: currentUser.nama }).then(r => {
+        if (r.ok && r.sore && r.sore.tasks) {
+          soreRows = r.sore.tasks;
+          renderSoreTable();
+        }
+        showRekapNilai(r.sore ? r.sore.nilaiRekap : null);
+      });
+    }
+
+    renderPagiTable();
+    renderPagi();
+  });
+
+  // Init KPI
+  if (isKpiSubmitted()) {
+    // Reload from API
+    apiCall('getKpiHarian', { guru: currentUser.nama, tanggal: TODAY_ISO }).then(res => {
+      if (res.ok && res.data && res.data.items) {
+        kpiHarianRows = res.data.items;
+        renderKpiHarianTable();
+        showKpiRekap(res.data.totalSkor);
+        document.getElementById('btn-submit-kpi').disabled = true;
+      }
+    });
+  }
+  renderKpiHarianTable();
+}
+
+init();
 </script>
 </body>
 </html>
