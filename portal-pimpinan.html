@@ -138,9 +138,10 @@
 
     <!-- REKAP PERFORMA -->
     <div id="tab-rekap" class="tab-content">
+      <!-- Agenda Kerja Harian -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title">📊 Rekap Performa Karyawan</div>
+          <div class="card-title">📋 Rekap Agenda Kerja Harian</div>
           <div class="rekap-pills">
             <button class="rekap-pill active" onclick="switchRekap('harian',this)">Harian</button>
             <button class="rekap-pill" onclick="switchRekap('mingguan',this)">Mingguan</button>
@@ -151,6 +152,14 @@
         <div style="margin-top:14px;display:flex;justify-content:flex-end">
           <button class="btn btn-outline" onclick="toast('📥 Export...')">⬇️ Export Excel</button>
         </div>
+      </div>
+      <!-- KPI Harian -->
+      <div class="card" style="margin-top:0">
+        <div class="card-header">
+          <div class="card-title">⭐ Rekap KPI Harian Guru</div>
+          <button class="btn btn-outline btn-sm" onclick="apiCall('getAllKpiHarian').then(r=>{if(r.ok){allKpiData=r.data;renderKpiRekap();toast('✅ KPI diperbarui');}})">🔄 Refresh</button>
+        </div>
+        <div id="kpi-rekap-container"><div class="empty-state"><div class="empty-icon">⭐</div><p>Memuat data KPI...</p></div></div>
       </div>
     </div>
 
@@ -178,18 +187,36 @@
           <div class="card-title">⏰ Jadwal Pengisian Agenda Guru</div>
           <button class="btn btn-green" onclick="saveJadwal()">💾 Simpan Jadwal</button>
         </div>
-        <div class="info-banner">📌 Guru hanya bisa mengisi agenda kerja dalam rentang jam ini. Di luar jam, form dikunci otomatis.</div>
-        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+        <div class="info-banner">📌 Guru bisa mengisi <strong>rencana kerja pagi</strong> dan <strong>laporan hasil sore</strong> sesuai jam di bawah. Di luar jam, form dikunci otomatis.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex-wrap:wrap">
           <div>
-            <div style="font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:6px;text-transform:uppercase">Jam Buka</div>
-            <input type="time" id="jadwal-buka" value="05:00" style="padding:10px 14px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:15px;font-weight:700;outline:none;font-family:inherit"/>
+            <div style="font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em">📋 Sesi Pagi (Rencana Kerja)</div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div>
+                <div style="font-size:11px;color:var(--gray-500);margin-bottom:4px">Jam Buka</div>
+                <input type="time" id="jadwal-buka" value="05:00" style="padding:9px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:14px;font-weight:700;outline:none;font-family:inherit"/>
+              </div>
+              <div style="color:var(--gray-400);padding-top:14px">→</div>
+              <div>
+                <div style="font-size:11px;color:var(--gray-500);margin-bottom:4px">Jam Tutup</div>
+                <input type="time" id="jadwal-tutup" value="08:00" style="padding:9px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:14px;font-weight:700;outline:none;font-family:inherit"/>
+              </div>
+            </div>
           </div>
-          <div style="font-size:20px;color:var(--gray-500);padding-top:18px">→</div>
           <div>
-            <div style="font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:6px;text-transform:uppercase">Jam Tutup</div>
-            <input type="time" id="jadwal-tutup" value="08:00" style="padding:10px 14px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:15px;font-weight:700;outline:none;font-family:inherit"/>
+            <div style="font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em">📊 Sesi Sore (Laporan Hasil)</div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div>
+                <div style="font-size:11px;color:var(--gray-500);margin-bottom:4px">Jam Buka</div>
+                <input type="time" id="jadwal-buka-sore" value="15:00" style="padding:9px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:14px;font-weight:700;outline:none;font-family:inherit"/>
+              </div>
+              <div style="color:var(--gray-400);padding-top:14px">→</div>
+              <div>
+                <div style="font-size:11px;color:var(--gray-500);margin-bottom:4px">Jam Tutup</div>
+                <input type="time" id="jadwal-tutup-sore" value="17:00" style="padding:9px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:14px;font-weight:700;outline:none;font-family:inherit"/>
+              </div>
+            </div>
           </div>
-          <div style="font-size:13px;color:var(--gray-500);padding-top:18px">Contoh: 05:00 → 08:00 = boleh isi dari pukul 5 pagi hingga 8 pagi</div>
         </div>
       </div>
 
@@ -261,11 +288,17 @@
     </div>
     <div class="form-group"><label>Nama Lengkap</label><input type="text" id="u-nama" placeholder="Nama lengkap" /></div>
     <div id="field-jabatan" class="form-group"><label>Jabatan</label><input type="text" id="u-jabatan" placeholder="cth: Guru Kelas 1A" /></div>
+    <div id="field-tipe-guru" class="form-group"><label>Tipe Guru</label>
+      <select id="u-tipeGuru">
+        <option value="kelas">🏫 Guru Kelas (Buku Penghubung + Rencana Kerja + KPI)</option>
+        <option value="mapel">📚 Guru Mapel (Rencana Kerja + KPI)</option>
+      </select>
+    </div>
     <div id="field-anak" class="form-group" style="display:none"><label>Nama Anak</label>
       <select id="u-namaAnak"><option value="">-- Pilih Murid --</option></select>
     </div>
     <div id="field-jenjang" class="form-group" style="display:none"><label>Jenjang</label>
-      <select id="u-jenjang"><option value="">--</option><option>TK</option><option>SD</option><option>SMP</option><option>SMA</option></select>
+      <select id="u-jenjang"><option value="">--</option><option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option></select>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-user')">Batal</button>
@@ -282,7 +315,7 @@
     <div class="form-group"><label>Nama Lengkap</label><input type="text" id="m-nama" placeholder="Nama lengkap murid" /></div>
     <div class="form-group"><label>Kelas</label><input type="text" id="m-kelas" placeholder="cth: 1A, 2B, 7C" /></div>
     <div class="form-group"><label>Jenjang</label>
-      <select id="m-jenjang"><option value="">--</option><option>TK</option><option>SD</option><option>SMP</option><option>SMA</option></select>
+      <select id="m-jenjang"><option value="">--</option><option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option></select>
     </div>
     <div class="form-group"><label>Username Orangtua (opsional)</label>
       <select id="m-usernameOrtu"><option value="">-- Pilih Akun Orangtua --</option></select>
@@ -303,11 +336,11 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwaUZAm8zoxvCfKo8xgOU7g
 const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
 if (!currentUser || currentUser.role !== 'pimpinan') window.location.href = 'index.html';
 
-let allJobData = {}, allUsers = [], allMurid = [], allBukuStatus = {};
+let allJobData = {}, allKpiData = {}, allUsers = [], allMurid = [], allBukuStatus = {};
 
 function toast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.style.background=err?'#C62828':'#1B5E20';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 function logout(){sessionStorage.removeItem('currentUser');window.location.href='index.html';}
-function switchTab(tab,btn){document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+tab).classList.add('active');if(btn)btn.classList.add('active');if(tab==='data')loadManajemenData();if(tab==='buku')loadBukuStatus();}
+function switchTab(tab,btn){document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+tab).classList.add('active');if(btn)btn.classList.add('active');if(tab==='data')loadManajemenData();if(tab==='buku')loadBukuStatus();if(tab==='rekap')loadAllJob();}
 function badge(status){const cls=status==='Selesai'?'badge-selesai':status==='OnProgress'?'badge-onprogress':'badge-pending';return`<span class="badge ${cls}">${status}</span>`;}
 function apiCall(action,payload={}){return fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action,...payload})}).then(r=>r.json()).catch(()=>({ok:false,error:'Koneksi gagal'}));}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
@@ -315,16 +348,22 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 /* LOAD ALL JOB */
 function loadAllJob(){
   toast('🔄 Memuat data...');
-  apiCall('getAllJobTracker').then(res=>{
-    if(res.ok&&res.data){
-      allJobData=res.data;
-      // populate filter
+  Promise.all([
+    apiCall('getAllJobTracker'),
+    apiCall('getAllKpiHarian'),
+  ]).then(([jobRes, kpiRes])=>{
+    if(jobRes.ok&&jobRes.data){
+      allJobData=jobRes.data;
       const sel=document.getElementById('filter-karyawan');
       sel.innerHTML='<option value="">Semua Karyawan</option>';
       Object.keys(allJobData).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o);});
       renderJobTable();
       renderStats();
-    } else { toast('⚠️ Gagal memuat: '+res.error,true); }
+    } else { toast('⚠️ Gagal memuat job: '+jobRes.error,true); }
+    if(kpiRes.ok&&kpiRes.data){
+      allKpiData=kpiRes.data;
+      renderKpiRekap();
+    }
   });
 }
 
@@ -336,40 +375,64 @@ function renderJobTable(){
   Object.values(allJobData).forEach(k=>{
     if(fNama&&k.karyawan!==fNama)return;
     const tasks=(k.tasks||[]).filter(t=>!fStatus||t.status===fStatus);
-    if(!tasks.length)return;
-    tasks.forEach((t,ti)=>{
-      any=true; const sc=+t.skor;
-      const scColor=sc>=80?'var(--success)':sc>=50?'var(--warning)':sc===0?'var(--gray-500)':'var(--danger)';
+    if(!tasks.length&&!k.pagiSubmittedAt)return;
+    // Show karyawan row even if tasks filtered
+    const showTasks = tasks.length ? tasks : (k.tasks||[]);
+    showTasks.forEach((t,ti)=>{
+      any=true;
+      const statusColor = t.status==='Selesai'?'var(--success)':t.status==='Tidak Selesai'?'var(--danger)':t.status==='On Progres'?'var(--warning)':'var(--gray-500)';
       const tr=document.createElement('tr');
       tr.innerHTML=`
         <td style="font-weight:${ti===0?'800':'400'};color:${ti===0?'var(--primary-dark)':'transparent'}">${ti===0?k.karyawan:''}</td>
         <td style="color:var(--gray-500);font-size:12px">${ti===0?k.jabatan:''}</td>
-        <td>${t.agenda}</td><td>${badge(t.status)}</td>
+        <td>${t.agenda||'—'}</td>
+        <td>${badgeStatus(t.status)}</td>
         <td style="font-size:12px;color:var(--gray-700)">${t.target||'—'}</td>
-        <td style="font-weight:800;color:${scColor}">${sc||'—'}</td>
+        <td style="font-weight:800;color:${statusColor}">${t.status==='Selesai'?100:t.status==='Tidak Selesai'?0:t.status==='On Progres'?'—':'—'}</td>
         <td style="color:var(--gray-500);font-size:12px">${t.catatan||'—'}</td>`;
       tb.appendChild(tr);
     });
+    // Nilai rekap row
+    if(k.nilaiRekap!==null&&k.nilaiRekap!==undefined&&k.soreSubmittedAt){
+      const nRow=document.createElement('tr');
+      nRow.innerHTML=`<td colspan="5" style="font-size:12px;color:var(--gray-500);padding:6px 12px!important">📊 Nilai Rekap: <strong style="color:var(--primary-dark);font-size:14px">${k.nilaiRekap}</strong>/100</td><td colspan="2"></td>`;
+      tb.appendChild(nRow);
+    }
     const sep=document.createElement('tr');sep.className='sep-row';sep.innerHTML='<td colspan="7"></td>';tb.appendChild(sep);
   });
-  if(!any)tb.innerHTML='<tr><td colspan="7"><div class="empty-state" style="padding:24px"><div class="empty-icon">📋</div><p>Belum ada data job tracker</p></div></td></tr>';
+  if(!any)tb.innerHTML='<tr><td colspan="7"><div class="empty-state" style="padding:24px"><div class="empty-icon">📋</div><p>Belum ada data. Guru belum mengisi hari ini.</p></div></td></tr>';
+}
+
+function badgeStatus(status){
+  if(status==='Selesai')return'<span class="badge badge-selesai">✅ Selesai</span>';
+  if(status==='Tidak Selesai')return'<span class="badge" style="background:#FFEBEE;color:#C62828">❌ Tidak Selesai</span>';
+  if(status==='On Progres')return'<span class="badge badge-onprogress">⏳ On Progres</span>';
+  return`<span class="badge badge-pending">${status||'—'}</span>`;
 }
 
 function renderStats(){
-  let selesai=0,onprog=0,pending=0,skorSum=0,skorN=0;
-  Object.values(allJobData).forEach(k=>(k.tasks||[]).forEach(t=>{
-    if(t.status==='Selesai'){selesai++;if(+t.skor){skorSum+=+t.skor;skorN++;}}
-    else if(t.status==='OnProgress')onprog++;
-    else pending++;
-  }));
-  const avg=skorN?Math.round(skorSum/skorN):0;
+  let selesai=0, onProgres=0, tidakSelesai=0;
+  let nilaiArr=[], pagiCount=0, soreCount=0;
+  const total = Object.keys(allJobData).length;
+  Object.values(allJobData).forEach(k=>{
+    (k.tasks||[]).forEach(t=>{
+      if(t.status==='Selesai')selesai++;
+      else if(t.status==='On Progres')onProgres++;
+      else if(t.status==='Tidak Selesai')tidakSelesai++;
+    });
+    if(k.pagiSubmittedAt)pagiCount++;
+    if(k.soreSubmittedAt)soreCount++;
+    if(k.nilaiRekap!==null&&k.nilaiRekap!==undefined)nilaiArr.push(k.nilaiRekap);
+  });
+  const avgNilai = nilaiArr.length ? Math.round(nilaiArr.reduce((a,b)=>a+b,0)/nilaiArr.length) : null;
   const pub=Object.values(allBukuStatus).filter(s=>s&&s.published).length;
   document.getElementById('stats-grid').innerHTML=`
-    <div class="stat-card"><div class="stat-value">${Object.keys(allJobData).length}</div><div class="stat-label">Karyawan Aktif</div></div>
-    <div class="stat-card"><div class="stat-value">${selesai}</div><div class="stat-label">Tugas Selesai</div></div>
-    <div class="stat-card orange"><div class="stat-value">${onprog}</div><div class="stat-label">On Progress</div></div>
-    <div class="stat-card red"><div class="stat-value">${pending}</div><div class="stat-label">Pending</div></div>
-    <div class="stat-card blue"><div class="stat-value">${avg||'—'}</div><div class="stat-label">Avg Skor</div></div>
+    <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Karyawan Aktif</div></div>
+    <div class="stat-card"><div class="stat-value">${selesai}</div><div class="stat-label">✅ Tugas Selesai</div></div>
+    <div class="stat-card orange"><div class="stat-value">${onProgres}</div><div class="stat-label">⏳ On Progres</div></div>
+    <div class="stat-card red"><div class="stat-value">${tidakSelesai}</div><div class="stat-label">❌ Tidak Selesai</div></div>
+    <div class="stat-card blue"><div class="stat-value">${avgNilai!==null?avgNilai+'%':'—'}</div><div class="stat-label">Rata-rata Nilai</div></div>
+    <div class="stat-card" style="background:#E8EAF6"><div class="stat-value" style="color:#3949AB">${soreCount}/${total}</div><div class="stat-label">Selesai Sore</div></div>
     <div class="stat-card purple"><div class="stat-value">${pub}/${allMurid.length||'—'}</div><div class="stat-label">Buku Published</div></div>`;
 }
 
@@ -381,45 +444,118 @@ function switchRekap(mode,btn){
 }
 function renderRekap(mode='harian'){
   const period=mode==='harian'?'Hari Ini':mode==='mingguan'?'Minggu Ini':'Bulan Ini';
-  const mult=mode==='mingguan'?5:mode==='bulanan'?22:1;
   const rows=Object.values(allJobData).map(k=>{
     const tasks=k.tasks||[];
-    const s=tasks.filter(t=>t.status==='Selesai').length;
-    const o=tasks.filter(t=>t.status==='OnProgress').length;
-    const p=tasks.filter(t=>t.status==='Pending').length;
-    const skors=tasks.filter(t=>+t.skor>0).map(t=>+t.skor);
-    const skor=skors.length?Math.round(skors.reduce((a,b)=>a+b,0)/skors.length):0;
-    return{nama:k.karyawan,jabatan:k.jabatan,total:tasks.length*mult,selesai:s*mult,onprog:o*mult,pending:p*mult,skor};
+    const selesai      = tasks.filter(t=>t.status==='Selesai').length;
+    const onProgres    = tasks.filter(t=>t.status==='On Progres').length;
+    const tidakSelesai = tasks.filter(t=>t.status==='Tidak Selesai').length;
+    const totalHitung  = selesai + tidakSelesai;
+    const nilaiRekap   = k.nilaiRekap !== null && k.nilaiRekap !== undefined ? k.nilaiRekap
+                         : (totalHitung>0 ? Math.round(selesai/totalHitung*100) : null);
+    return { nama:k.karyawan, jabatan:k.jabatan, tipeGuru:k.tipeGuru||'kelas',
+             total:tasks.length, selesai, onProgres, tidakSelesai, nilaiRekap,
+             pagiOk:!!k.pagiSubmittedAt, soreOk:!!k.soreSubmittedAt };
   });
   if(!rows.length){document.getElementById('rekap-container').innerHTML='<div class="empty-state"><div class="empty-icon">📊</div><p>Belum ada data</p></div>';return;}
+
   let html=`<div style="font-size:12px;color:var(--gray-500);margin-bottom:12px">Periode: <strong>${period}</strong></div>
-  <table><thead><tr>
+  <div class="table-wrapper"><table><thead><tr>
     <th style="width:32px">No</th><th>Nama Karyawan</th><th>Jabatan</th>
-    <th style="width:70px;text-align:center">Total</th><th style="width:65px;text-align:center">Selesai</th>
-    <th style="width:65px;text-align:center">OnProg</th><th style="width:65px;text-align:center">Pending</th>
-    <th style="width:65px;text-align:center">Skor</th><th style="width:140px">Progres</th><th>Predikat</th>
+    <th style="width:55px;text-align:center">Total</th>
+    <th style="width:65px;text-align:center">✅ Selesai</th>
+    <th style="width:65px;text-align:center">⏳ Prog</th>
+    <th style="width:65px;text-align:center">❌ Tidak</th>
+    <th style="width:80px;text-align:center">Nilai</th>
+    <th style="width:120px">Status Submit</th><th>Predikat</th>
   </tr></thead><tbody>`;
   rows.forEach((r,i)=>{
-    const pct=r.total?Math.round(r.selesai/r.total*100):0;
-    const pred=r.skor>=90?['⭐ Sangat Baik','var(--primary)']:r.skor>=80?['✅ Baik','var(--success)']:r.skor>=70?['🔵 Cukup','var(--info)']:['⚠️ Perlu Perhatian','var(--warning)'];
+    const nr = r.nilaiRekap;
+    const pred = nr===null?['—','var(--gray-500)']:nr>=90?['⭐ Sangat Baik','var(--primary)']:nr>=80?['✅ Baik','var(--success)']:nr>=70?['🔵 Cukup','var(--info)']:['⚠️ Perlu Perhatian','var(--warning)'];
+    const submitStatus = r.soreOk
+      ? '<span style="color:var(--success);font-weight:700;font-size:12px">✅ Pagi + Sore</span>'
+      : r.pagiOk
+        ? '<span style="color:var(--warning);font-weight:700;font-size:12px">⏳ Pagi saja</span>'
+        : '<span style="color:var(--gray-500);font-size:12px">— Belum</span>';
     html+=`<tr>
       <td style="text-align:center;font-weight:800">${i+1}</td>
       <td style="font-weight:700">${r.nama}</td>
       <td style="color:var(--gray-500);font-size:12px">${r.jabatan}</td>
       <td style="text-align:center">${r.total}</td>
       <td style="text-align:center;color:var(--success);font-weight:700">${r.selesai}</td>
-      <td style="text-align:center;color:var(--warning);font-weight:700">${r.onprog}</td>
-      <td style="text-align:center;color:#6A1B9A;font-weight:700">${r.pending}</td>
-      <td style="text-align:center;font-weight:800;color:${r.skor>=80?'var(--success)':'var(--warning)'}">${r.skor||'—'}</td>
-      <td><div style="display:flex;align-items:center;gap:6px">
-        <div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:${pct}%;background:${pred[1]}"></div></div>
-        <span style="font-size:11px;font-weight:800;min-width:30px">${pct}%</span>
-      </div></td>
-      <td style="font-weight:800;color:${pred[1]};font-size:12px">${r.skor>0?pred[0]:'—'}</td>
+      <td style="text-align:center;color:var(--warning);font-weight:700">${r.onProgres}</td>
+      <td style="text-align:center;color:var(--danger);font-weight:700">${r.tidakSelesai}</td>
+      <td style="text-align:center;font-weight:900;font-size:15px;color:${pred[1]}">${nr!==null?nr:'—'}</td>
+      <td>${submitStatus}</td>
+      <td style="font-weight:700;color:${pred[1]};font-size:12px">${pred[0]}</td>
     </tr>`;
   });
-  html+='</tbody></table>';
+  html+='</tbody></table></div>';
   document.getElementById('rekap-container').innerHTML=html;
+}
+
+/* KPI HARIAN REKAP */
+function renderKpiRekap(){
+  const el=document.getElementById('kpi-rekap-container');
+  if(!el)return;
+  const rows=Object.values(allKpiData);
+  if(!rows.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><p>Belum ada data KPI hari ini</p></div>';return;}
+
+  const KPI_ITEMS=[
+    'Mengisi absensi hadir tepat waktu',
+    'Berpakaian rapi, sopan, dan sesuai ketentuan sekolah',
+    'Mengikuti kelas inspirasi pagi',
+    'Menggunakan ID Card/atribut lengkap',
+    'Mengisi Absen mengajar harian',
+    'Menjaga sikap, adab, dan komunikasi selama di sekolah',
+  ];
+
+  let html=`<div class="table-wrapper"><table><thead><tr>
+    <th style="width:32px">No</th><th>Nama Guru</th><th>Jabatan</th>`;
+  KPI_ITEMS.forEach((item,i)=>{
+    html+=`<th style="width:42px;text-align:center;font-size:10px">${i+1}</th>`;
+  });
+  html+=`<th style="width:70px;text-align:center">Total</th><th>Predikat</th>
+  </tr></thead><tbody>`;
+
+  rows.forEach((r,i)=>{
+    const ts=r.totalSkor;
+    const pred=!r.submitted?['— Belum Isi','var(--gray-500)']:ts>=90?['⭐ Sangat Baik','var(--primary)']:ts>=80?['✅ Baik','var(--success)']:ts>=60?['🔵 Cukup','var(--info)']:['⚠️ Perlu Perhatian','var(--warning)'];
+    html+=`<tr>
+      <td style="text-align:center;font-weight:800">${i+1}</td>
+      <td style="font-weight:700">${r.guru}</td>
+      <td style="color:var(--gray-500);font-size:12px">${r.jabatan}</td>`;
+    KPI_ITEMS.forEach((item,ki)=>{
+      const it = r.items && r.items[ki];
+      const val = it ? it.nilai : null;
+      const cell = val===100
+        ? '<span style="color:var(--success);font-weight:800">Ya</span>'
+        : val===0
+          ? '<span style="color:var(--danger);font-weight:800">Tdk</span>'
+          : '<span style="color:var(--gray-300)">—</span>';
+      html+=`<td style="text-align:center;font-size:12px">${cell}</td>`;
+    });
+    html+=`<td style="text-align:center;font-weight:900;font-size:15px;color:${pred[1]}">${r.submitted?ts:'—'}</td>
+      <td style="font-weight:700;font-size:12px;color:${pred[1]}">${pred[0]}</td>
+    </tr>`;
+  });
+  html+='</tbody></table></div>';
+
+  // Summary
+  const submitted=rows.filter(r=>r.submitted);
+  const avgKpi=submitted.length?Math.round(submitted.reduce((s,r)=>s+r.totalSkor,0)/submitted.length):null;
+  const perfect=submitted.filter(r=>r.totalSkor>=100).length;
+  html=`<div style="display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap">
+    <div style="background:var(--secondary);border-radius:10px;padding:10px 18px;font-size:13px">
+      <span style="color:var(--gray-500)">Sudah Isi:</span> <strong style="color:var(--primary)">${submitted.length}/${rows.length}</strong>
+    </div>
+    <div style="background:#E8F5E9;border-radius:10px;padding:10px 18px;font-size:13px">
+      <span style="color:var(--gray-500)">Avg KPI:</span> <strong style="color:var(--success)">${avgKpi!==null?avgKpi+'%':'—'}</strong>
+    </div>
+    <div style="background:#E8EAF6;border-radius:10px;padding:10px 18px;font-size:13px">
+      <span style="color:var(--gray-500)">Sempurna (100):</span> <strong style="color:#3949AB">${perfect}</strong>
+    </div>
+  </div>`+html;
+  el.innerHTML=html;
 }
 
 /* BUKU STATUS */
@@ -465,24 +601,32 @@ function renderUsersTable(){
   const el=document.getElementById('users-table');
   let html=`<table><thead><tr>
     <th>Username</th><th>Password</th><th style="width:90px">Role</th>
-    <th>Nama Lengkap</th><th>Jabatan / Nama Anak</th><th style="width:120px">Aksi</th>
+    <th>Nama Lengkap</th><th>Jabatan / Nama Anak</th>
+    <th style="width:85px;text-align:center">Tipe Guru</th>
+    <th style="width:120px">Aksi</th>
   </tr></thead><tbody>`;
   allUsers.forEach(u=>{
     const roleBadge=u.role==='guru'?'<span class="badge badge-guru">Guru</span>':u.role==='ortu'?'<span class="badge badge-ortu">Ortu</span>':'<span class="badge badge-pimpinan">Pimpinan</span>';
     const detail=u.role==='ortu'?(u.namaAnak+' ('+u.jenjang+')'):u.jabatan;
+    const tipeCell = u.role==='guru'
+      ? (u.tipeGuru==='mapel'
+          ? '<span class="badge" style="background:#FFF3E0;color:#E65100">Mapel</span>'
+          : '<span class="badge" style="background:#E8F5E9;color:#2E7D32">Kelas</span>')
+      : '<span style="color:var(--gray-300)">—</span>';
     html+=`<tr>
       <td style="font-weight:700;font-family:monospace">${u.username}</td>
       <td style="font-family:monospace;color:var(--gray-700)">${u.password}</td>
       <td>${roleBadge}</td>
       <td>${u.nama}</td>
       <td style="font-size:12px;color:var(--gray-500)">${detail||'—'}</td>
+      <td style="text-align:center">${tipeCell}</td>
       <td style="white-space:nowrap">
         <button class="btn btn-outline btn-sm" onclick="editUser('${u.username}')">✏️ Edit</button>
         ${u.username!=='admin'?`<button class="btn btn-red btn-sm" style="margin-left:4px" onclick="deleteUser('${u.username}')">✕</button>`:''}
       </td>
     </tr>`;
   });
-  if(!allUsers.length)html+='<tr><td colspan="6"><div class="empty-state" style="padding:20px"><div class="empty-icon">👤</div><p>Belum ada akun</p></div></td></tr>';
+  if(!allUsers.length)html+='<tr><td colspan="7"><div class="empty-state" style="padding:20px"><div class="empty-icon">👤</div><p>Belum ada akun</p></div></td></tr>';
   html+='</tbody></table>';
   el.innerHTML=html;
 }
@@ -523,6 +667,7 @@ function renderMuridTable(){
 function toggleRoleFields(){
   const role=document.getElementById('u-role').value;
   document.getElementById('field-jabatan').style.display=role==='ortu'?'none':'block';
+  document.getElementById('field-tipe-guru').style.display=role==='guru'?'block':'none';
   document.getElementById('field-anak').style.display=role==='ortu'?'block':'none';
   document.getElementById('field-jenjang').style.display=role==='ortu'?'block':'none';
 }
@@ -549,6 +694,7 @@ function editUser(username){
   document.getElementById('u-role').value=u.role;
   document.getElementById('u-nama').value=u.nama;
   document.getElementById('u-jabatan').value=u.jabatan||'';
+  document.getElementById('u-tipeGuru').value=u.tipeGuru||'kelas';
   toggleRoleFields();
   const sel=document.getElementById('u-namaAnak');
   sel.innerHTML='<option value="">-- Pilih Murid --</option>';
@@ -566,6 +712,7 @@ function saveUser(){
     role:document.getElementById('u-role').value,
     nama:document.getElementById('u-nama').value,
     jabatan:document.getElementById('u-jabatan').value,
+    tipeGuru:document.getElementById('u-tipeGuru').value,
     namaAnak:document.getElementById('u-namaAnak').value,
     jenjang:document.getElementById('u-jenjang').value,
   };
@@ -634,12 +781,14 @@ function deleteMurid(id,nama){
 
 /* JADWAL */
 function saveJadwal() {
-  const jamBuka  = document.getElementById('jadwal-buka').value;
-  const jamTutup = document.getElementById('jadwal-tutup').value;
-  if (!jamBuka || !jamTutup) { toast('⚠️ Jam buka dan tutup wajib diisi', true); return; }
+  const jamBuka      = document.getElementById('jadwal-buka').value;
+  const jamTutup     = document.getElementById('jadwal-tutup').value;
+  const jamBukaSore  = document.getElementById('jadwal-buka-sore').value;
+  const jamTutupSore = document.getElementById('jadwal-tutup-sore').value;
+  if (!jamBuka || !jamTutup) { toast('⚠️ Jam buka dan tutup pagi wajib diisi', true); return; }
   toast('💾 Menyimpan jadwal...');
-  apiCall('setJadwalAgenda', { jamBuka, jamTutup }).then(res => {
-    res.ok ? toast('✅ Jadwal berhasil disimpan! Guru bisa isi agenda ' + jamBuka + ' – ' + jamTutup)
+  apiCall('setJadwalAgenda', { jamBuka, jamTutup, jamBukaSore, jamTutupSore }).then(res => {
+    res.ok ? toast('✅ Jadwal disimpan! Pagi: ' + jamBuka + '–' + jamTutup + ' | Sore: ' + jamBukaSore + '–' + jamTutupSore)
            : toast('⚠️ ' + res.error, true);
   });
 }
@@ -647,8 +796,10 @@ function saveJadwal() {
 function loadJadwal() {
   apiCall('getJadwalAgenda').then(res => {
     if (res.ok) {
-      document.getElementById('jadwal-buka').value  = res.jamBuka  || '17:00';
-      document.getElementById('jadwal-tutup').value = res.jamTutup || '08:00';
+      document.getElementById('jadwal-buka').value       = res.jamBuka      || '05:00';
+      document.getElementById('jadwal-tutup').value      = res.jamTutup     || '08:00';
+      document.getElementById('jadwal-buka-sore').value  = res.jamBukaSore  || '15:00';
+      document.getElementById('jadwal-tutup-sore').value = res.jamTutupSore || '17:00';
     }
   });
 }
