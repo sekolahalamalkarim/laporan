@@ -172,6 +172,7 @@
               <th style="width:36px">No</th>
               <th>Tugas / Agenda</th>
               <th style="width:160px">Status Akhir</th>
+              <th style="width:180px">Bukti <span style="font-weight:400;color:var(--gray-500)">(opsional, link)</span></th>
               <th>Catatan</th>
             </tr></thead>
             <tbody id="sore-tbody"></tbody>
@@ -418,7 +419,7 @@ function submitPagi() {
   }).then(res => {
     if (res.ok) {
       markPagi(valid);
-      soreRows = valid.map(t => ({ agenda: t.agenda, target: t.target, status: 'On Progres', catatan: '' }));
+      soreRows = valid.map(t => ({ agenda: t.agenda, target: t.target, status: 'On Progres', bukti: '', catatan: '' }));
       renderPagi();
       renderSoreTable();
       toast('📤 Rencana pagi terkirim ke pimpinan!');
@@ -477,6 +478,7 @@ function renderSoreTable() {
         <option ${r.status==='Selesai'?'selected':''} value="Selesai">✅ Selesai (100)</option>
         <option ${r.status==='Tidak Selesai'?'selected':''} value="Tidak Selesai">❌ Tidak Selesai (0)</option>
       </select></td>
+      <td><input type="url" value="${r.bukti||''}" placeholder="https://drive.google.com/..." onchange="soreRows[${i}].bukti=this.value" style="font-size:12px"/></td>
       <td><input type="text" value="${r.catatan||''}" placeholder="Catatan..." onchange="soreRows[${i}].catatan=this.value"/></td>`;
     tb.appendChild(tr);
   });

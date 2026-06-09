@@ -210,14 +210,15 @@ function _mapMurid(m) {
     nama:         m.nama,
     kelas:        m.kelas        || '',
     jenjang:      m.jenjang      || '',
-    usernameOrtu: m.username_ortu || '',
+    namaOrtu:     m.nama_ortu    || '',
+    noHpOrtu:     m.no_hp_ortu   || '',
     pin:          m.pin          || '',
   };
 }
 
-async function _saveMurid({ id, nama, kelas, jenjang, usernameOrtu, isNew }) {
+async function _saveMurid({ id, nama, kelas, jenjang, namaOrtu, noHpOrtu, isNew }) {
   if (!nama) throw new Error('Nama murid wajib diisi');
-  const row = { nama, kelas: kelas || '', jenjang: jenjang || '', username_ortu: usernameOrtu || '', active: 'Y' };
+  const row = { nama, kelas: kelas || '', jenjang: jenjang || '', nama_ortu: namaOrtu || '', no_hp_ortu: noHpOrtu || '', active: 'Y' };
   if (isNew) {
     const { error } = await _sb.from('murid').insert(row);
     if (error) throw error;
@@ -256,6 +257,9 @@ async function _verifyPin({ muridId, pin }) {
 
 async function _saveJobTracker({ karyawan, jabatan, tanggal, tasks, sesi }) {
   if (!karyawan || !tasks) throw new Error('karyawan dan tasks wajib');
+  // tasks bisa dikirim sebagai JSON string dari portal-guru.html
+  const tasksArr = typeof tasks === 'string' ? JSON.parse(tasks) : (tasks || []);
+
   const sesiLabel = sesi === 'sore' ? 'Sore' : 'Pagi';
   const today     = tanggal || _isoToday();
   const now       = new Date().toISOString();
@@ -267,15 +271,15 @@ async function _saveJobTracker({ karyawan, jabatan, tanggal, tasks, sesi }) {
   // Hitung nilai rekap (sore only)
   let nilaiRekap = null;
   if (sesi === 'sore') {
-    const selesai      = tasks.filter(t => t.status === 'Selesai').length;
-    const tidakSelesai = tasks.filter(t => t.status === 'Tidak Selesai').length;
+    const selesai      = tasksArr.filter(t => t.status === 'Selesai').length;
+    const tidakSelesai = tasksArr.filter(t => t.status === 'Tidak Selesai').length;
     nilaiRekap = (selesai + tidakSelesai) > 0
       ? Math.round(selesai / (selesai + tidakSelesai) * 100)
       : 0;
   }
 
   // Insert baris baru
-  const rows = tasks.map((t, i) => ({
+  const rows = tasksArr.map((t, i) => ({
     tanggal: today, sesi: sesiLabel, karyawan, jabatan: jabatan || '',
     no: i + 1, agenda: t.agenda || '',
     status: sesi === 'sore' ? (t.status || 'On Progres') : 'On Progres',
@@ -283,7 +287,7 @@ async function _saveJobTracker({ karyawan, jabatan, tanggal, tasks, sesi }) {
     skor: sesi === 'sore'
       ? (t.status === 'Selesai' ? 100 : t.status === 'Tidak Selesai' ? 0 : null)
       : null,
-    bukti: t.file || '', catatan: t.catatan || '',
+    bukti: t.bukti || t.file || '', catatan: t.catatan || '',
     nilai_rekap: (i === 0 && sesi === 'sore') ? nilaiRekap : null,
   }));
 
@@ -294,13 +298,13 @@ async function _saveJobTracker({ karyawan, jabatan, tanggal, tasks, sesi }) {
 
   // KV per-sesi
   await _kvSet(`job_${sesi}_${karyawan}_${today}`,
-    { karyawan, jabatan, tanggal: today, tasks, nilaiRekap, submittedAt: now });
+    { karyawan, jabatan, tanggal: today, tasks: tasksArr, nilaiRekap, submittedAt: now });
 
   // KV master (baca dulu agar tidak menimpa sesi lain)
   const prev = (await _kvGet(`job_${karyawan}`)) || {};
   await _kvSet(`job_${karyawan}`, {
     ...prev,
-    karyawan, jabatan, tasks, tanggal: today,
+    karyawan, jabatan, tasks: tasksArr, tanggal: today,
     nilaiRekap:       sesi === 'sore'  ? nilaiRekap        : (prev.nilaiRekap       ?? null),
     pagiSubmittedAt:  sesi === 'pagi'  ? now                : (prev.pagiSubmittedAt  ?? null),
     soreSubmittedAt:  sesi === 'sore'  ? now                : (prev.soreSubmittedAt  ?? null),
@@ -743,7 +747,7 @@ async function _batchImportMurid({ rows }) {
     .filter(r => r.nama && !existingNames.includes(r.nama.toLowerCase()))
     .map(r => ({
       nama: r.nama, kelas: r.kelas || '', jenjang: r.jenjang || '',
-      username_ortu: r.usernameOrtu || '', active: 'Y',
+      nama_ortu: r.namaOrtu || '', no_hp_ortu: r.noHpOrtu || '', active: 'Y',
     }));
 
   const skipped = (rows || []).length - newRows.length;
