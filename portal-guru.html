@@ -584,7 +584,7 @@ function submitKpiHarian() {
   toast('💾 Menyimpan KPI...');
   apiCall('saveKpiHarian', {
     guru: currentUser.nama, jabatan: currentUser.jabatan,
-    tanggal: TODAY_ISO, items: JSON.stringify(kpiHarianRows)
+    tanggal: TODAY_ISO, items: kpiHarianRows
   }).then(res => {
     if (res.ok) {
       markKpi();
