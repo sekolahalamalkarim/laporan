@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login — Sekolah Alam Al-Karim</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-api.js"></script>
   <style>
     :root {
       --primary: #2E7D32; --primary-dark: #1B5E20; --primary-light: #4CAF50;
@@ -97,7 +99,6 @@
 </div>
 
 <script>
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwaUZAm8zoxvCfKo8xgOU7goa3GZYXH-IkcVZ2Yb1Xw6wvbIXPEB-b8wL_p6HVU5Qav/exec';
 
   // Jika sudah login, redirect langsung
   const saved = sessionStorage.getItem('currentUser');
@@ -139,12 +140,7 @@
 
     setLoading(true);
 
-    fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'login', username, password }),
-    })
-    .then(r => r.json())
+    apiCall('login', { username, password })
     .then(res => {
       setLoading(false);
       if (!res.ok) { showError(res.error || 'Login gagal'); return; }

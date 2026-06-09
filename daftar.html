@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar Akun — Sekolah Alam Al-Karim</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-api.js"></script>
+  <style>
+    :root {
+      --primary:#2E7D32;--primary-dark:#1B5E20;--primary-light:#4CAF50;
+      --secondary:#E8F5E9;--accent:#81C784;
+      --gray-100:#f5f5f5;--gray-200:#eeeeee;--gray-300:#e0e0e0;
+      --gray-500:#9e9e9e;--gray-700:#616161;--gray-900:#212121;
+      --danger:#c62828;--info:#1565c0;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;
+      background:linear-gradient(135deg,var(--primary-dark) 0%,var(--primary) 60%,#388E3C 100%);
+      display:flex;align-items:center;justify-content:center;padding:24px}
+
+    .card{background:white;border-radius:20px;padding:36px;width:100%;max-width:500px;
+      box-shadow:0 24px 64px rgba(0,0,0,0.3)}
+
+    .logo{text-align:center;margin-bottom:28px}
+    .logo-icon{width:64px;height:64px;background:var(--secondary);border-radius:18px;
+      display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:32px}
+    .logo h1{font-size:20px;font-weight:800;color:var(--primary-dark)}
+    .logo p{font-size:13px;color:var(--gray-500);margin-top:3px}
+
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+    .form-group{margin-bottom:12px}
+    .form-group.full{grid-column:1/-1}
+    .form-group label{display:block;font-size:11px;font-weight:700;color:var(--gray-700);
+      margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+    .form-group input,.form-group select{width:100%;padding:10px 13px;
+      border:1.5px solid var(--gray-300);border-radius:9px;font-size:14px;
+      outline:none;font-family:inherit;transition:border-color .2s,box-shadow .2s}
+    .form-group input:focus,.form-group select:focus{border-color:var(--primary);
+      box-shadow:0 0 0 3px rgba(46,125,50,.1)}
+    .form-group input.error{border-color:var(--danger)}
+
+    .role-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+    .role-card{border:2px solid var(--gray-300);border-radius:12px;padding:14px 12px;
+      text-align:center;cursor:pointer;transition:all .2s}
+    .role-card:hover,.role-card.active{border-color:var(--primary);background:var(--secondary)}
+    .role-card .role-icon{font-size:26px;margin-bottom:6px}
+    .role-card .role-label{font-weight:700;font-size:13px;color:var(--primary-dark)}
+    .role-card .role-sub{font-size:11px;color:var(--gray-500);margin-top:2px}
+
+    .extra-fields{display:none;margin-bottom:12px}
+    .extra-fields.show{display:block}
+
+    .divider{display:flex;align-items:center;gap:10px;margin:16px 0}
+    .divider span{font-size:11px;font-weight:700;text-transform:uppercase;
+      color:var(--gray-500);white-space:nowrap}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--gray-300)}
+
+    .btn-submit{width:100%;padding:13px;background:var(--primary);color:white;border:none;
+      border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s;
+      font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px}
+    .btn-submit:hover{background:var(--primary-dark)}
+    .btn-submit:disabled{opacity:.6;cursor:not-allowed}
+
+    .back-link{text-align:center;margin-top:16px;font-size:13px;color:var(--gray-500)}
+    .back-link a{color:var(--primary);font-weight:700;text-decoration:none}
+    .back-link a:hover{text-decoration:underline}
+
+    .alert{padding:12px 16px;border-radius:9px;font-size:13px;font-weight:600;margin-bottom:16px;display:none}
+    .alert.show{display:block}
+    .alert-error{background:#FFEBEE;border-left:4px solid var(--danger);color:var(--danger)}
+    .alert-success{background:#E8F5E9;border-left:4px solid var(--primary);color:var(--primary-dark)}
+
+    .pass-wrap{position:relative}
+    .pass-wrap input{padding-right:42px}
+    .pass-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);
+      background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-500)}
+
+    .strength-bar{height:4px;border-radius:2px;margin-top:5px;transition:all .3s;background:var(--gray-200)}
+    .strength-fill{height:100%;border-radius:2px;transition:all .3s;width:0}
+    .strength-text{font-size:11px;margin-top:3px}
+
+    .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);
+      border-top-color:white;border-radius:50%;animation:spin .6s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Success screen */
+    .success-screen{display:none;text-align:center;padding:20px 0}
+    .success-screen.show{display:block}
+    .success-icon{font-size:64px;margin-bottom:16px}
+    .success-screen h2{font-size:22px;font-weight:800;color:var(--primary-dark);margin-bottom:8px}
+    .success-screen p{font-size:14px;color:var(--gray-700);line-height:1.6;margin-bottom:20px}
+    .success-info{background:var(--secondary);border-radius:10px;padding:16px;
+      text-align:left;margin-bottom:20px;font-size:13px;line-height:2}
+    .success-info strong{color:var(--primary-dark)}
+
+    @media(max-width:480px){.form-row{grid-template-columns:1fr}.role-grid{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">🏫</div>
+    <h1>Daftar Akun</h1>
+    <p>Sekolah Alam Al-Karim — Sistem Informasi Terpadu</p>
+  </div>
+
+  <!-- ALERT -->
+  <div class="alert alert-error" id="alert-error"></div>
+
+  <!-- FORM -->
+  <div id="form-section">
+    <!-- Role Picker -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--gray-700);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Daftar Sebagai</div>
+      <div class="role-grid">
+        <div class="role-card" id="role-guru" onclick="pickRole('guru')">
+          <div class="role-icon">🧑‍🏫</div>
+          <div class="role-label">Guru / Karyawan</div>
+          <div class="role-sub">Staff pengajar &amp; karyawan</div>
+        </div>
+        <div class="role-card" id="role-ortu" onclick="pickRole('ortu')">
+          <div class="role-icon">👨‍👩‍👧</div>
+          <div class="role-label">Orangtua</div>
+          <div class="role-sub">Wali murid</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group full">
+        <label>Nama Lengkap *</label>
+        <input type="text" id="f-nama" placeholder="Nama lengkap sesuai identitas" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Email *</label>
+        <input type="email" id="f-email" placeholder="email@contoh.com" />
+      </div>
+      <div class="form-group">
+        <label>No. HP / WhatsApp *</label>
+        <input type="tel" id="f-nohp" placeholder="08xx-xxxx-xxxx" />
+      </div>
+    </div>
+
+    <!-- Extra: Guru -->
+    <div class="extra-fields" id="extra-guru">
+      <div class="form-group">
+        <label>Jabatan / Posisi *</label>
+        <input type="text" id="f-jabatan" placeholder="cth: Guru Kelas 1A, Staff TU" />
+      </div>
+    </div>
+
+    <!-- Extra: Ortu -->
+    <div class="extra-fields" id="extra-ortu">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nama Anak *</label>
+          <input type="text" id="f-namaAnak" placeholder="Nama lengkap anak" />
+        </div>
+        <div class="form-group">
+          <label>Jenjang</label>
+          <select id="f-jenjang">
+            <option value="">-- Pilih --</option>
+            <option>TK</option><option>SD</option>
+            <option>SMP</option><option>SMA</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"><span>Info Akun Login</span></div>
+
+    <div class="form-group">
+      <label>Username *</label>
+      <input type="text" id="f-username" placeholder="cth: bu.siti atau ortu.ahmad" autocomplete="username"
+        oninput="validateUsername(this)" />
+      <div style="font-size:11px;color:var(--gray-500);margin-top:4px">Gunakan huruf kecil, angka, dan titik. Tanpa spasi.</div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Password *</label>
+        <div class="pass-wrap">
+          <input type="password" id="f-password" placeholder="Min. 6 karakter" autocomplete="new-password"
+            oninput="checkStrength(this.value)" />
+          <button type="button" class="pass-toggle" onclick="togglePass('f-password',this)">👁</button>
+        </div>
+        <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+        <div class="strength-text" id="strength-text"></div>
+      </div>
+      <div class="form-group">
+        <label>Konfirmasi Password *</label>
+        <div class="pass-wrap">
+          <input type="password" id="f-confirm" placeholder="Ulangi password" autocomplete="new-password"
+            oninput="checkConfirm()" />
+          <button type="button" class="pass-toggle" onclick="togglePass('f-confirm',this)">👁</button>
+        </div>
+        <div style="font-size:11px;margin-top:4px" id="confirm-msg"></div>
+      </div>
+    </div>
+
+    <button class="btn-submit" id="btn-submit" onclick="doRegister()">
+      Kirim Pendaftaran →
+    </button>
+
+    <div class="back-link">
+      Sudah punya akun? <a href="index.html">Masuk di sini</a>
+    </div>
+  </div>
+
+  <!-- SUCCESS SCREEN -->
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">🎉</div>
+    <h2>Pendaftaran Terkirim!</h2>
+    <p>Pendaftaran kamu sudah diterima dan <strong>menunggu persetujuan admin</strong>.<br>
+    Kamu akan bisa login setelah admin menyetujui akun kamu.</p>
+    <div class="success-info" id="success-info"></div>
+    <a href="index.html" style="display:inline-block;background:var(--primary);color:white;
+      padding:12px 28px;border-radius:10px;font-weight:700;text-decoration:none;font-size:14px">
+      Ke Halaman Login →
+    </a>
+  </div>
+</div>
+
+<script>
+let selectedRole = '';
+
+function pickRole(role) {
+  selectedRole = role;
+  document.getElementById('role-guru').classList.toggle('active', role === 'guru');
+  document.getElementById('role-ortu').classList.toggle('active', role === 'ortu');
+  document.getElementById('extra-guru').classList.toggle('show', role === 'guru');
+  document.getElementById('extra-ortu').classList.toggle('show', role === 'ortu');
+}
+
+function togglePass(id, btn) {
+  const inp = document.getElementById(id);
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
+}
+
+function validateUsername(inp) {
+  const clean = inp.value.toLowerCase().replace(/[^a-z0-9.]/g, '');
+  inp.value = clean;
+}
+
+function checkStrength(val) {
+  const fill = document.getElementById('strength-fill');
+  const text = document.getElementById('strength-text');
+  if (!val) { fill.style.width='0'; text.textContent=''; return; }
+  let score = 0;
+  if (val.length >= 6) score++;
+  if (val.length >= 8) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const levels = [
+    { pct:'20%', color:'#EF5350', label:'Sangat Lemah' },
+    { pct:'40%', color:'#FF7043', label:'Lemah' },
+    { pct:'60%', color:'#FFA726', label:'Cukup' },
+    { pct:'80%', color:'#66BB6A', label:'Kuat' },
+    { pct:'100%', color:'#2E7D32', label:'Sangat Kuat' },
+  ];
+  const lv = levels[Math.min(score, 4)];
+  fill.style.width = lv.pct;
+  fill.style.background = lv.color;
+  text.style.color = lv.color;
+  text.textContent = lv.label;
+}
+
+function checkConfirm() {
+  const pass = document.getElementById('f-password').value;
+  const conf = document.getElementById('f-confirm').value;
+  const msg  = document.getElementById('confirm-msg');
+  if (!conf) { msg.textContent = ''; return; }
+  if (pass === conf) { msg.style.color = '#2E7D32'; msg.textContent = '✓ Password cocok'; }
+  else { msg.style.color = '#C62828'; msg.textContent = '✗ Password tidak sama'; }
+}
+
+function showError(msg) {
+  const el = document.getElementById('alert-error');
+  el.textContent = '⚠️ ' + msg;
+  el.classList.add('show');
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function hideError() { document.getElementById('alert-error').classList.remove('show'); }
+
+function setLoading(on) {
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = on;
+  btn.innerHTML = on
+    ? '<div class="spinner"></div> Mengirim...'
+    : 'Kirim Pendaftaran →';
+}
+
+function doRegister() {
+  hideError();
+
+  // Validasi
+  const nama     = document.getElementById('f-nama').value.trim();
+  const email    = document.getElementById('f-email').value.trim();
+  const noHp     = document.getElementById('f-nohp').value.trim();
+  const username = document.getElementById('f-username').value.trim();
+  const password = document.getElementById('f-password').value;
+  const confirm  = document.getElementById('f-confirm').value;
+  const jabatan  = document.getElementById('f-jabatan').value.trim();
+  const namaAnak = document.getElementById('f-namaAnak').value.trim();
+  const jenjang  = document.getElementById('f-jenjang').value;
+
+  if (!selectedRole)  { showError('Pilih role terlebih dahulu (Guru atau Orangtua)'); return; }
+  if (!nama)          { showError('Nama lengkap wajib diisi'); return; }
+  if (!email || !email.includes('@')) { showError('Email tidak valid'); return; }
+  if (!noHp)          { showError('No. HP wajib diisi'); return; }
+  if (selectedRole === 'guru' && !jabatan) { showError('Jabatan wajib diisi untuk guru/karyawan'); return; }
+  if (selectedRole === 'ortu' && !namaAnak) { showError('Nama anak wajib diisi'); return; }
+  if (!username)      { showError('Username wajib diisi'); return; }
+  if (username.length < 4) { showError('Username minimal 4 karakter'); return; }
+  if (password.length < 6) { showError('Password minimal 6 karakter'); return; }
+  if (password !== confirm) { showError('Konfirmasi password tidak cocok'); return; }
+
+  setLoading(true);
+
+  apiCall('register', { nama, email, noHp, role: selectedRole, jabatan, namaAnak, jenjang, username, password })
+  .then(res => {
+    setLoading(false);
+    if (!res.ok) { showError(res.error || 'Pendaftaran gagal'); return; }
+    showSuccess(nama, username, selectedRole);
+  })
+  .catch(() => { setLoading(false); showError('Tidak dapat terhubung ke server. Coba lagi.'); });
+}
+
+function showSuccess(nama, username, role) {
+  document.getElementById('form-section').style.display = 'none';
+  document.getElementById('success-screen').classList.add('show');
+  document.getElementById('success-info').innerHTML = `
+    <strong>Nama:</strong> ${nama}<br>
+    <strong>Username:</strong> ${username}<br>
+    <strong>Role:</strong> ${role === 'guru' ? '🧑‍🏫 Guru / Karyawan' : '👨‍👩‍👧 Orangtua'}<br>
+    <strong>Status:</strong> ⏳ Menunggu persetujuan admin
+  `;
+}
+</script>
+</body>
+</html>
