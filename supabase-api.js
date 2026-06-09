@@ -365,7 +365,8 @@ async function _getAllJobTracker() {
 async function _saveKpiHarian({ guru, jabatan, tanggal, items }) {
   if (!guru) throw new Error('Nama guru wajib');
   const today    = tanggal || _isoToday();
-  const itemArr  = items || [];
+  // items bisa dikirim sebagai JSON string dari portal-guru.html
+  const itemArr  = typeof items === 'string' ? JSON.parse(items) : (items || []);
   const totalSkor = itemArr.length
     ? Math.round(itemArr.reduce((s, it) => s + (Number(it.nilai) || 0), 0) / itemArr.length)
     : 0;
