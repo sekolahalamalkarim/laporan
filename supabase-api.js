@@ -143,18 +143,23 @@ function _mapUser(u) {
     password:  u.password,
     role:      u.role,
     nama:      u.nama,
-    jabatan:   u.jabatan   || '',
-    namaAnak:  u.nama_anak || '',
-    jenjang:   u.jenjang   || '',
+    jabatan:   u.jabatan    || '',
+    namaAnak:  u.nama_anak  || '',
+    jenjang:   u.jenjang    || '',
     active:    u.active,
     tipeGuru:  u.tipe_guru  || '',
     kelasAmpu: u.kelas_ampu || '',
   };
 }
 
+// Expose jenjang in login response for admin/pimpinan
+
+
 async function _saveUser({ username, password, role, nama, jabatan, namaAnak, jenjang, tipeGuru, kelasAmpu, isNew }) {
   if (!username || !password || !role || !nama)
     throw new Error('Field wajib tidak lengkap (username/password/role/nama)');
+  const validRoles = ['guru', 'ortu', 'pimpinan', 'admin'];
+  if (!validRoles.includes(role)) throw new Error('Role tidak valid');
 
   const row = {
     username, password, role, nama,
@@ -326,30 +331,34 @@ async function _getJobTrackerToday({ karyawan }) {
   return { ok: true, pagi, sore, tanggal: today };
 }
 
-async function _getAllJobTracker() {
+async function _getAllJobTracker({ jenjang } = {}) {
   // Ambil semua guru & semua KV job_ dalam 2 query paralel
+  let guruQuery = _sb.from('users').select('nama, jabatan, tipe_guru, kelas_ampu, jenjang')
+     .eq('role', 'guru').eq('active', 'Y');
+  if (jenjang) guruQuery = guruQuery.eq('jenjang', jenjang);
+
   const [{ data: guruList, error: e1 }, { data: kvRows, error: e2 }] = await Promise.all([
-    _sb.from('users').select('nama, jabatan, tipe_guru, kelas_ampu')
-       .eq('role', 'guru').eq('active', 'Y'),
-    _sb.from('app_config').select('key, value')
-       .like('key', 'job_%')
-       .not('key', 'like', 'job_pagi_%')
-       .not('key', 'like', 'job_sore_%'),
+    guruQuery,
+    // Ambil semua key job_* lalu filter client-side — lebih reliable daripada .not().like()
+    _sb.from('app_config').select('key, value').like('key', 'job_%'),
   ]);
   if (e1) throw e1;
   if (e2) throw e2;
 
   const kvMap = {};
-  (kvRows || []).forEach(r => { kvMap[r.key] = r.value; });
+  (kvRows || [])
+    .filter(r => !r.key.startsWith('job_pagi_') && !r.key.startsWith('job_sore_'))
+    .forEach(r => { kvMap[r.key] = r.value; });
 
   const grouped = {};
   (guruList || []).forEach(g => {
     const d = kvMap[`job_${g.nama}`] || null;
     grouped[g.nama] = {
       karyawan:        g.nama,
-      jabatan:         g.jabatan   || '',
+      jabatan:         g.jabatan    || '',
       tipeGuru:        g.tipe_guru  || 'kelas',
       kelasAmpu:       g.kelas_ampu || '',
+      jenjang:         g.jenjang    || '',
       tasks:           d ? (d.tasks || [])      : [],
       nilaiRekap:      d ? d.nilaiRekap          : null,
       pagiSubmittedAt: d ? d.pagiSubmittedAt     : null,
@@ -396,10 +405,13 @@ async function _getKpiHarian({ guru, tanggal }) {
   return { ok: true, data };
 }
 
-async function _getAllKpiHarian({ tanggal } = {}) {
+async function _getAllKpiHarian({ tanggal, jenjang } = {}) {
   const today = tanggal || _isoToday();
+  let guruQuery = _sb.from('users').select('nama, jabatan, jenjang').eq('role', 'guru').eq('active', 'Y');
+  if (jenjang) guruQuery = guruQuery.eq('jenjang', jenjang);
+
   const [{ data: guruList, error: e1 }, { data: kvRows, error: e2 }] = await Promise.all([
-    _sb.from('users').select('nama, jabatan').eq('role', 'guru').eq('active', 'Y'),
+    guruQuery,
     _sb.from('app_config').select('key, value').like('key', `kpi_harian_%_${today}`),
   ]);
   if (e1) throw e1;

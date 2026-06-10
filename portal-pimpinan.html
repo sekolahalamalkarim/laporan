@@ -99,8 +99,8 @@
   </nav>
   <div class="content-area">
     <div class="section-header">
-      <h2>Dashboard Pimpinan</h2>
-      <p>Monitoring real-time kinerja karyawan &amp; perkembangan siswa</p>
+      <h2>Dashboard Pimpinan <span id="badge-jenjang" style="display:none;font-size:14px;font-weight:600;background:var(--primary);color:#fff;padding:3px 10px;border-radius:12px;margin-left:8px;vertical-align:middle"></span></h2>
+      <p id="subtitle-jenjang">Monitoring real-time kinerja karyawan &amp; perkembangan siswa</p>
     </div>
 
     <div class="stats-grid" id="stats-grid"></div>
@@ -117,20 +117,27 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">Agenda Harian — Semua Karyawan</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <select id="filter-jenjang" style="padding:7px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;outline:none;font-family:inherit" onchange="loadAllJob()">
+              <option value="">Semua Jenjang</option>
+              <option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option>
+            </select>
             <select id="filter-karyawan" style="padding:7px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;outline:none;font-family:inherit" onchange="renderJobTable()">
               <option value="">Semua Karyawan</option>
             </select>
             <select id="filter-status" style="padding:7px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;outline:none;font-family:inherit" onchange="renderJobTable()">
               <option value="">Semua Status</option>
-              <option>Selesai</option><option>OnProgress</option><option>Pending</option>
+              <option value="Selesai">✅ Selesai</option>
+              <option value="On Progres">⏳ On Progres</option>
+              <option value="Tidak Selesai">❌ Tidak Selesai</option>
             </select>
             <button class="btn btn-outline btn-sm" onclick="loadAllJob()">🔄 Refresh</button>
           </div>
         </div>
         <div class="table-wrapper">
           <table><thead><tr>
-            <th>Karyawan</th><th>Jabatan</th><th>Tugas / Agenda</th>
+            <th>Karyawan</th><th>Jabatan</th><th style="width:60px">Jenjang</th>
+            <th style="width:90px">Tgl Submit</th><th>Tugas / Agenda</th>
             <th style="width:130px">Status</th><th style="width:110px">Target</th>
             <th style="width:60px">Skor</th><th>Catatan</th>
           </tr></thead>
@@ -160,7 +167,7 @@
       <div class="card" style="margin-top:0">
         <div class="card-header">
           <div class="card-title">⭐ Rekap KPI Harian Guru</div>
-          <button class="btn btn-outline btn-sm" onclick="apiCall('getAllKpiHarian').then(r=>{if(r.ok){allKpiData=r.data;renderKpiRekap();toast('✅ KPI diperbarui');}})">🔄 Refresh</button>
+          <button class="btn btn-outline btn-sm" onclick="apiCall('getAllKpiHarian',{jenjang:MY_JENJANG||null}).then(r=>{if(r.ok){allKpiData=r.data;renderKpiRekap();toast('✅ KPI diperbarui');}})">🔄 Refresh</button>
         </div>
         <div id="kpi-rekap-container"><div class="empty-state"><div class="empty-icon">⭐</div><p>Memuat data KPI...</p></div></div>
       </div>
@@ -312,7 +319,8 @@
         <option value="">-- Pilih Role --</option>
         <option value="guru">🧑‍🏫 Guru / Karyawan</option>
         <option value="ortu">👨‍👩‍👧 Orangtua</option>
-        <option value="pimpinan">👔 Pimpinan</option>
+        <option value="pimpinan">👔 Pimpinan Jenjang</option>
+        <option value="admin">🔑 Admin (Akses Penuh)</option>
       </select>
     </div>
     <div class="form-group"><label>Nama Lengkap</label><input type="text" id="u-nama" placeholder="Nama lengkap" /></div>
@@ -366,74 +374,138 @@
 <div id="toast"></div>
 
 <script>
-// Session check
+// Session check — allow pimpinan and admin
 const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
-if (!currentUser || currentUser.role !== 'pimpinan') window.location.href = 'index.html';
+if (!currentUser || !['pimpinan','admin'].includes(currentUser.role)) window.location.href = 'index.html';
+
+// Jenjang filter: pimpinan sees own jenjang, admin sees all
+const IS_ADMIN = currentUser.role === 'admin';
+const MY_JENJANG = IS_ADMIN ? '' : (currentUser.jenjang || '');
 
 let allJobData = {}, allKpiData = {}, allUsers = [], allMurid = [], allBukuStatus = {};
 
 function toast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.style.background=err?'#C62828':'#1B5E20';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 function logout(){sessionStorage.removeItem('currentUser');window.location.href='index.html';}
 function switchTab(tab,btn){document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+tab).classList.add('active');if(btn)btn.classList.add('active');if(tab==='data')loadManajemenData();if(tab==='buku')loadBukuStatus();if(tab==='rekap')loadAllJob();}
-function badge(status){const cls=status==='Selesai'?'badge-selesai':status==='OnProgress'?'badge-onprogress':'badge-pending';return`<span class="badge ${cls}">${status}</span>`;}
+function badge(status){const cls=status==='Selesai'?'badge-selesai':status==='On Progres'?'badge-onprogress':'badge-pending';return`<span class="badge ${cls}">${status}</span>`;}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 /* LOAD ALL JOB */
-function loadAllJob(){
-  toast('🔄 Memuat data...');
+function loadAllJob(silent=false){
+  if(!silent) toast('🔄 Memuat data...');
+  const jenjangFilter = document.getElementById('filter-jenjang')?.value || MY_JENJANG;
   Promise.all([
-    apiCall('getAllJobTracker'),
-    apiCall('getAllKpiHarian'),
+    apiCall('getAllJobTracker', { jenjang: jenjangFilter || null }),
+    apiCall('getAllKpiHarian',  { jenjang: jenjangFilter || null }),
   ]).then(([jobRes, kpiRes])=>{
-    if(jobRes.ok&&jobRes.data){
-      allJobData=jobRes.data;
-      const sel=document.getElementById('filter-karyawan');
-      sel.innerHTML='<option value="">Semua Karyawan</option>';
-      Object.keys(allJobData).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o);});
+    if(jobRes.ok && jobRes.data){
+      allJobData = jobRes.data;
+      // Perbarui dropdown filter karyawan
+      const prevVal = document.getElementById('filter-karyawan').value;
+      const sel = document.getElementById('filter-karyawan');
+      sel.innerHTML = '<option value="">Semua Karyawan</option>';
+      Object.keys(allJobData).forEach(k=>{
+        const o=document.createElement('option'); o.value=k; o.textContent=k;
+        if(k===prevVal) o.selected=true;
+        sel.appendChild(o);
+      });
       renderJobTable();
       renderStats();
-    } else { toast('⚠️ Gagal memuat job: '+jobRes.error,true); }
-    if(kpiRes.ok&&kpiRes.data){
-      allKpiData=kpiRes.data;
-      renderKpiRekap();
+      if(!silent) toast('✅ Data berhasil dimuat');
+    } else {
+      console.error('getAllJobTracker error:', jobRes.error);
+      if(!silent) toast('⚠️ Gagal memuat job tracker: '+(jobRes.error||'Unknown error'), true);
     }
+    if(kpiRes.ok && kpiRes.data){
+      allKpiData = kpiRes.data;
+      renderKpiRekap();
+    } else if(kpiRes.error){
+      console.error('getAllKpiHarian error:', kpiRes.error);
+    }
+  }).catch(err=>{
+    console.error('loadAllJob exception:', err);
+    if(!silent) toast('⚠️ Error: '+err.message, true);
   });
 }
+
+// Auto-refresh setiap 2 menit (silent — tidak tampilkan toast)
+setInterval(()=>loadAllJob(true), 2*60*1000);
 
 function renderJobTable(){
   const tb=document.getElementById('job-tbody');
   const fNama=document.getElementById('filter-karyawan').value;
   const fStatus=document.getElementById('filter-status').value;
-  tb.innerHTML=''; let any=false;
-  Object.values(allJobData).forEach(k=>{
+  tb.innerHTML='';
+  const allList = Object.values(allJobData);
+  if(!allList.length){
+    tb.innerHTML='<tr><td colspan="9"><div class="empty-state" style="padding:24px"><div class="empty-icon">📋</div><p>Tidak ada karyawan terdaftar.</p></div></td></tr>';
+    return;
+  }
+  allList.forEach(k=>{
     if(fNama&&k.karyawan!==fNama)return;
+    const hasTasks = (k.tasks||[]).length > 0;
+    const submitted = !!k.pagiSubmittedAt;
+
+    // Guru belum submit sama sekali — tampilkan baris "Belum Submit"
+    if(!submitted && !hasTasks){
+      if(fStatus)return; // jika filter status aktif, sembunyikan yang belum submit
+      const tr=document.createElement('tr');
+      tr.style.opacity='0.55';
+      tr.innerHTML=`
+        <td style="font-weight:800;color:var(--primary-dark)">${k.karyawan}</td>
+        <td style="color:var(--gray-500);font-size:12px">${k.jabatan}</td>
+        <td style="font-size:11px;text-align:center;color:var(--gray-500)">${k.jenjang||'—'}</td>
+        <td style="font-size:11px;color:var(--gray-500)">—</td>
+        <td colspan="5" style="color:var(--gray-400);font-style:italic;font-size:13px">⏳ Belum mengisi rencana kerja hari ini</td>`;
+      tb.appendChild(tr);
+      const sep=document.createElement('tr');sep.className='sep-row';sep.innerHTML='<td colspan="9"></td>';tb.appendChild(sep);
+      return;
+    }
+
+    // Guru sudah submit — tampilkan tugas-tugasnya
     const tasks=(k.tasks||[]).filter(t=>!fStatus||t.status===fStatus);
-    if(!tasks.length&&!k.pagiSubmittedAt)return;
-    // Show karyawan row even if tasks filtered
-    const showTasks = tasks.length ? tasks : (k.tasks||[]);
-    showTasks.forEach((t,ti)=>{
-      any=true;
-      const statusColor = t.status==='Selesai'?'var(--success)':t.status==='Tidak Selesai'?'var(--danger)':t.status==='On Progres'?'var(--warning)':'var(--gray-500)';
+    // Jika filter status aktif tapi tidak ada task yang cocok, tetap tampilkan baris header dengan keterangan
+    const showTasks = tasks.length ? tasks : (fStatus ? [] : (k.tasks||[]));
+    const tglLabel = k.tanggal ? k.tanggal : '—';
+    const soreLabel = k.soreSubmittedAt
+      ? `<span style="font-size:11px;color:var(--success)">✅ Pagi+Sore</span>`
+      : `<span style="font-size:11px;color:var(--warning)">⏳ Pagi saja</span>`;
+
+    if(showTasks.length === 0 && fStatus){
+      // Ada tugas tapi tidak ada yang cocok filter
       const tr=document.createElement('tr');
       tr.innerHTML=`
-        <td style="font-weight:${ti===0?'800':'400'};color:${ti===0?'var(--primary-dark)':'transparent'}">${ti===0?k.karyawan:''}</td>
-        <td style="color:var(--gray-500);font-size:12px">${ti===0?k.jabatan:''}</td>
-        <td>${t.agenda||'—'}</td>
-        <td>${badgeStatus(t.status)}</td>
-        <td style="font-size:12px;color:var(--gray-700)">${t.target||'—'}</td>
-        <td style="font-weight:800;color:${statusColor}">${t.status==='Selesai'?100:t.status==='Tidak Selesai'?0:t.status==='On Progres'?'—':'—'}</td>
-        <td style="color:var(--gray-500);font-size:12px">${t.catatan||'—'}</td>`;
+        <td style="font-weight:800;color:var(--primary-dark)">${k.karyawan}</td>
+        <td style="color:var(--gray-500);font-size:12px">${k.jabatan}</td>
+        <td style="font-size:11px;text-align:center;color:var(--gray-500)">${k.jenjang||'—'}</td>
+        <td style="font-size:11px">${tglLabel}<br>${soreLabel}</td>
+        <td colspan="5" style="color:var(--gray-400);font-style:italic;font-size:13px">Tidak ada tugas dengan status "${fStatus}"</td>`;
       tb.appendChild(tr);
-    });
-    // Nilai rekap row
-    if(k.nilaiRekap!==null&&k.nilaiRekap!==undefined&&k.soreSubmittedAt){
-      const nRow=document.createElement('tr');
-      nRow.innerHTML=`<td colspan="5" style="font-size:12px;color:var(--gray-500);padding:6px 12px!important">📊 Nilai Rekap: <strong style="color:var(--primary-dark);font-size:14px">${k.nilaiRekap}</strong>/100</td><td colspan="2"></td>`;
-      tb.appendChild(nRow);
+    } else {
+      showTasks.forEach((t,ti)=>{
+        const statusColor = t.status==='Selesai'?'var(--success)':t.status==='Tidak Selesai'?'var(--danger)':t.status==='On Progres'?'var(--warning)':'var(--gray-500)';
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td style="font-weight:${ti===0?'800':'400'};color:${ti===0?'var(--primary-dark)':'transparent'}">${ti===0?k.karyawan:''}</td>
+          <td style="color:var(--gray-500);font-size:12px">${ti===0?k.jabatan:''}</td>
+          <td style="font-size:11px;text-align:center;color:var(--gray-500)">${ti===0?(k.jenjang||'—'):''}</td>
+          <td style="font-size:11px">${ti===0?tglLabel+`<br>${soreLabel}`:''}</td>
+          <td>${t.agenda||'—'}</td>
+          <td>${badgeStatus(t.status)}</td>
+          <td style="font-size:12px;color:var(--gray-700)">${t.target||'—'}</td>
+          <td style="font-weight:800;color:${statusColor}">${t.status==='Selesai'?100:t.status==='Tidak Selesai'?0:'—'}</td>
+          <td style="color:var(--gray-500);font-size:12px">${t.catatan||'—'}</td>`;
+        tb.appendChild(tr);
+      });
+      // Nilai rekap row
+      if(k.nilaiRekap!==null&&k.nilaiRekap!==undefined&&k.soreSubmittedAt){
+        const nRow=document.createElement('tr');
+        nRow.innerHTML=`<td colspan="7" style="font-size:12px;color:var(--gray-500);padding:6px 12px!important">📊 Nilai Rekap: <strong style="color:var(--primary-dark);font-size:14px">${k.nilaiRekap}</strong>/100</td><td colspan="2"></td>`;
+        tb.appendChild(nRow);
+      }
     }
-    const sep=document.createElement('tr');sep.className='sep-row';sep.innerHTML='<td colspan="7"></td>';tb.appendChild(sep);
+    const sep=document.createElement('tr');sep.className='sep-row';sep.innerHTML='<td colspan="9"></td>';tb.appendChild(sep);
   });
-  if(!any)tb.innerHTML='<tr><td colspan="7"><div class="empty-state" style="padding:24px"><div class="empty-icon">📋</div><p>Belum ada data. Guru belum mengisi hari ini.</p></div></td></tr>';
 }
 
 function badgeStatus(status){
@@ -709,7 +781,15 @@ function toggleRoleFields(){
   document.getElementById('field-tipe-guru').style.display=role==='guru'?'block':'none';
   document.getElementById('field-kelas-ampu').style.display=role==='guru'?'block':'none';
   document.getElementById('field-anak').style.display=role==='ortu'?'block':'none';
-  document.getElementById('field-jenjang').style.display=role==='ortu'?'block':'none';
+  // Jenjang: tampil untuk guru (jenjang mengajar), pimpinan (jenjang yg dikelola), dan ortu
+  document.getElementById('field-jenjang').style.display=['guru','pimpinan','ortu'].includes(role)?'block':'none';
+  // Label jenjang sesuai role
+  const jLabel = document.querySelector('#field-jenjang label');
+  if(jLabel){
+    if(role==='pimpinan') jLabel.textContent='Jenjang yang Dikelola';
+    else if(role==='guru') jLabel.textContent='Jenjang Mengajar';
+    else jLabel.textContent='Jenjang';
+  }
 }
 function openUserModal(){
   document.getElementById('modal-user-title').textContent='Tambah Akun';
@@ -883,7 +963,27 @@ function generatePinMurid(id, nama) {
   });
 }
 
-// Init on load
+// Init on load — set default jenjang filter sesuai role
+(function initJenjangFilter(){
+  const sel = document.getElementById('filter-jenjang');
+  if (sel && MY_JENJANG) sel.value = MY_JENJANG;
+  // Pimpinan per-jenjang: disable filter (tidak bisa ubah ke jenjang lain)
+  // Admin tetap bisa ganti filter
+  if (!IS_ADMIN && MY_JENJANG && sel) {
+    sel.disabled = true;
+    sel.title = 'Anda hanya bisa melihat jenjang ' + MY_JENJANG;
+  }
+  // Tampilkan badge jenjang di header
+  const badge = document.getElementById('badge-jenjang');
+  const sub   = document.getElementById('subtitle-jenjang');
+  if (IS_ADMIN) {
+    if (badge) { badge.textContent = '👑 ADMIN'; badge.style.display='inline'; badge.style.background='#6c3483'; }
+    if (sub)   sub.textContent = 'Akses penuh semua jenjang — TK, SD, SMP, SMA, ALC';
+  } else if (MY_JENJANG) {
+    if (badge) { badge.textContent = MY_JENJANG; badge.style.display='inline'; }
+    if (sub)   sub.textContent = 'Monitoring kinerja karyawan & siswa jenjang ' + MY_JENJANG;
+  }
+})();
 loadAllJob();
 renderRekap('harian');
 
