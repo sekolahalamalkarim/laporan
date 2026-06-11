@@ -43,6 +43,7 @@ async function apiCall(action, payload = {}) {
       case 'getMuridByJenjang':  return await _getMuridByJenjang(payload);
       case 'saveMurid':          return await _saveMurid(payload);
       case 'deleteMurid':        return await _deleteMurid(payload);
+      case 'batchDeleteMurid':   return await _batchDeleteMurid(payload);
       case 'generatePin':        return await _generatePin(payload);
       case 'resetPin':           return await _generatePin(payload);
       case 'verifyPin':          return await _verifyPin(payload);
@@ -239,6 +240,13 @@ async function _deleteMurid({ id }) {
   const { error } = await _sb.from('murid').update({ active: 'N' }).eq('id', id);
   if (error) throw error;
   return { ok: true, message: 'Murid berhasil dihapus' };
+}
+
+async function _batchDeleteMurid({ ids }) {
+  if (!ids || !ids.length) throw new Error('Tidak ada ID yang diberikan');
+  const { error } = await _sb.from('murid').update({ active: 'N' }).in('id', ids);
+  if (error) throw error;
+  return { ok: true, message: `${ids.length} murid berhasil dihapus` };
 }
 
 async function _generatePin({ muridId }) {
