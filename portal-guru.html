@@ -302,35 +302,51 @@ if (tipeGuru === 'mapel') {
   document.getElementById('btn-tab-buku').style.display = 'none';
 }
 
-// Load murid for buku penghubung (only kelas) — filter sesuai kelasAmpu
+// Load murid for buku penghubung (only kelas) — filter jenjang + kelas ampu
 if (tipeGuru === 'kelas') {
   apiCall('getMurid').then(res => {
-    if (!res.ok) return;
+    if (!res.ok) { console.error('getMurid error:', res.error); return; }
     const sel = document.getElementById('siswa-select');
     let murid = res.data || [];
 
-    // Filter by kelas ampu jika ada
+    // 1. Filter by jenjang guru (jika jenjang diset)
+    const jenjangGuru = currentUser.jenjang || '';
+    if (jenjangGuru) {
+      const byJenjang = murid.filter(m => m.jenjang === jenjangGuru);
+      if (byJenjang.length > 0) murid = byJenjang;
+      // fallback: jika tidak ada yg match, tampilkan semua
+    }
+
+    // 2. Filter by kelas ampu (case-insensitive)
     if (kelasAmpuArr.length > 0) {
-      murid = murid.filter(m => kelasAmpuArr.includes(String(m.kelas).trim()));
+      const byKelas = murid.filter(m =>
+        kelasAmpuArr.some(k => k.toLowerCase() === String(m.kelas).trim().toLowerCase())
+      );
+      if (byKelas.length > 0) murid = byKelas;
+      // fallback: jika tidak ada yg match, tampilkan semua hasil filter jenjang
     }
 
     if (!murid.length) {
       const opt = document.createElement('option');
-      opt.value = ''; opt.textContent = '— Belum ada siswa di kelas Anda —';
+      opt.value = ''; opt.textContent = '— Belum ada siswa terdaftar —';
       opt.disabled = true; sel.appendChild(opt);
     } else {
       murid.forEach(m => {
         const opt = document.createElement('option');
-        opt.value = m.nama; opt.textContent = m.nama + ' (' + m.kelas + ')';
+        opt.value = m.nama;
+        opt.textContent = m.nama + ' (' + (m.kelas || m.jenjang || '?') + ')';
         sel.appendChild(opt);
       });
     }
 
-    // Tampilkan info kelas ampu di header buku
-    if (kelasAmpuArr.length > 0) {
-      const badge = document.createElement('div');
-      badge.style.cssText = 'font-size:12px;color:#1565C0;background:#E3F2FD;padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:8px;font-weight:700';
-      badge.textContent = '📚 Kelas Ampu: ' + kelasAmpuArr.join(', ');
+    // Badge info kelas/jenjang
+    const badge = document.createElement('div');
+    badge.style.cssText = 'font-size:12px;color:#1565C0;background:#E3F2FD;padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:8px;font-weight:700';
+    const parts = [];
+    if (jenjangGuru) parts.push('Jenjang: ' + jenjangGuru);
+    if (kelasAmpuArr.length) parts.push('Kelas: ' + kelasAmpuArr.join(', '));
+    if (parts.length) {
+      badge.textContent = '📚 ' + parts.join(' · ');
       const header = document.querySelector('#tab-buku .card-title')?.parentElement;
       if (header) header.appendChild(badge);
     }

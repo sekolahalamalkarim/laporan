@@ -166,10 +166,11 @@ function styleDay(sel){sel.className='day-sel '+(sel.value==='✓'?'v-check':sel
 apiCall('getBukuGuru',{siswa:namaAnak}).then(res=>{
   if(res.ok&&res.data){bukuGuruState=res.data;}
   renderLaporanGuru();
-  renderBukuOrtuForm();
-});
-apiCall('getBukuOrtu',{siswa:namaAnak}).then(res=>{
-  if(res.ok&&res.data){bukuOrtuHistory=res.data;}
+  // Load isian ortu dulu, baru render form (agar bisa prefill isian hari ini)
+  apiCall('getBukuOrtu',{siswa:namaAnak}).then(res2=>{
+    if(res2.ok&&res2.data){bukuOrtuHistory=res2.data;}
+    renderBukuOrtuForm();
+  });
 });
 
 /* LAPORAN GURU */
@@ -203,23 +204,45 @@ function renderLaporanGuru(){
   el.innerHTML=html;
 }
 
-/* BUKU ORTU FORM */
+/* BUKU ORTU FORM — prefill dengan isian hari ini jika sudah ada */
+function getTodayEntry(){
+  // Cari isian hari ini di history (TODAY adalah string tanggal lokal)
+  return (bukuOrtuHistory||[]).find(e=>e.tanggal===TODAY)||null;
+}
+
 function renderBukuOrtuForm(){
   const el=document.getElementById('buku-ortu-form');
-  let html=`<div class="table-wrapper"><table class="buku-table" id="ortu-buku-table">
+  const submitted=getTodayEntry();
+  const prefill=submitted?submitted.data:null;
+  const prefillTaklim=submitted?submitted.taklim:null;
+
+  // Banner jika sudah submit hari ini
+  const bannerHtml = submitted
+    ? `<div class="success-banner" style="margin-bottom:10px">✅ Laporan hari ini sudah terkirim. Anda bisa mengirim ulang untuk memperbarui.</div>`
+    : '';
+
+  let html=bannerHtml+`<div class="table-wrapper"><table class="buku-table" id="ortu-buku-table">
     <thead><tr><th style="width:32px">No</th><th>Aktivitas</th>${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}</tr></thead><tbody>`;
   let rn=1;
   BUKU_KAT.forEach((kat,ki)=>{
     html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
     kat.items.forEach((_,ii)=>{
       html+=`<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${kat.items[ii]}</td>`;
-      HARI.forEach(h=>{html+=`<td class="hari-td"><select class="day-sel v-minus" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="styleDay(this)">${bpOpts()}</select></td>`;});
+      HARI.forEach(h=>{
+        const val=(prefill&&prefill[ki]&&prefill[ki][ii])?prefill[ki][ii][h]||'—':'—';
+        const cls=val==='✓'?'v-check':val==='✗'?'v-cross':'v-minus';
+        html+=`<td class="hari-td"><select class="day-sel ${cls}" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="styleDay(this)">${['—','✓','✗'].map(o=>`<option value="${o}"${o===val?' selected':''}>${o}</option>`).join('')}</select></td>`;
+      });
       html+='</tr>';
     });
   });
   html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">4. Taklim</td></tr>
   <tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn}</td><td style="font-size:12px">Tema Taklim</td>`;
-  HARI.forEach(h=>{html+=`<td class="hari-td" style="min-width:72px"><input type="text" class="taklim-input" placeholder="Tema" data-taklim-tema="${h}"/><select class="day-sel v-minus" data-taklim-val="${h}" onchange="styleDay(this)">${bpOpts()}</select></td>`;});
+  HARI.forEach(h=>{
+    const t=(prefillTaklim&&prefillTaklim[h])?prefillTaklim[h]:{tema:'',val:'—'};
+    const cls=t.val==='✓'?'v-check':t.val==='✗'?'v-cross':'v-minus';
+    html+=`<td class="hari-td" style="min-width:72px"><input type="text" class="taklim-input" placeholder="Tema" value="${t.tema||''}" data-taklim-tema="${h}"/><select class="day-sel ${cls}" data-taklim-val="${h}" onchange="styleDay(this)">${['—','✓','✗'].map(o=>`<option value="${o}"${o===t.val?' selected':''}>${o}</option>`).join('')}</select></td>`;
+  });
   html+='</tr></tbody></table></div>';
   el.innerHTML=html;
 }
@@ -231,11 +254,28 @@ function submitBukuOrtu(){
   tbl.querySelectorAll('select.day-sel[data-ki]').forEach(sel=>{entryData[sel.dataset.ki][sel.dataset.ii][sel.dataset.h]=sel.value;});
   const taklim={};
   HARI.forEach(h=>{const tema=tbl.querySelector(`[data-taklim-tema="${h}"]`);const val=tbl.querySelector(`[data-taklim-val="${h}"]`);taklim[h]={tema:tema?tema.value:'',val:val?val.value:'—'};});
-  bukuOrtuHistory.unshift({siswa:namaAnak,tanggal:TODAY,data:entryData,taklim});
-  renderBukuOrtuForm();
+
+  // Update/tambah entry hari ini di history (tidak reset form)
+  const idx=bukuOrtuHistory.findIndex(e=>e.tanggal===TODAY);
+  const entry={siswa:namaAnak,tanggal:TODAY,data:entryData,taklim};
+  if(idx>=0) bukuOrtuHistory[idx]=entry; else bukuOrtuHistory.unshift(entry);
+
   toast('📤 Mengirim...');
   apiCall('saveBukuOrtu',{siswa:namaAnak,tanggal:TODAY,data:JSON.stringify(entryData),taklim:JSON.stringify(taklim)})
-  .then(res=>{res.ok?toast('📤 Laporan berhasil dikirim ke guru!'):toast('⚠️ '+res.error,true);});
+  .then(res=>{
+    if(res.ok){
+      toast('✅ Laporan berhasil dikirim ke guru!');
+      // Perbarui banner "sudah terkirim" tanpa reset seluruh form
+      const banner=document.querySelector('#buku-ortu-form .success-banner');
+      if(!banner){
+        const el=document.getElementById('buku-ortu-form');
+        const div=document.createElement('div');
+        div.className='success-banner';div.style.marginBottom='10px';
+        div.textContent='✅ Laporan hari ini sudah terkirim. Anda bisa mengirim ulang untuk memperbarui.';
+        el.insertBefore(div,el.firstChild);
+      }
+    } else { toast('⚠️ '+res.error,true); }
+  });
 }
 
 /* LAPORAN REKAP */

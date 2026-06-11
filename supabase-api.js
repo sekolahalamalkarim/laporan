@@ -332,18 +332,23 @@ async function _getJobTrackerToday({ karyawan }) {
 }
 
 async function _getAllJobTracker({ jenjang } = {}) {
-  // Ambil semua guru & semua KV job_ dalam 2 query paralel
-  let guruQuery = _sb.from('users').select('nama, jabatan, tipe_guru, kelas_ampu, jenjang')
-     .eq('role', 'guru').eq('active', 'Y');
-  if (jenjang) guruQuery = guruQuery.eq('jenjang', jenjang);
-
-  const [{ data: guruList, error: e1 }, { data: kvRows, error: e2 }] = await Promise.all([
-    guruQuery,
-    // Ambil semua key job_* lalu filter client-side — lebih reliable daripada .not().like()
+  // Ambil SEMUA guru aktif + semua KV job_ dalam 2 query paralel
+  // Jenjang difilter client-side agar fallback ke semua jika belum ada jenjang di DB
+  const [{ data: rawGuru, error: e1 }, { data: kvRows, error: e2 }] = await Promise.all([
+    _sb.from('users').select('nama, jabatan, tipe_guru, kelas_ampu, jenjang')
+       .eq('role', 'guru').eq('active', 'Y'),
     _sb.from('app_config').select('key, value').like('key', 'job_%'),
   ]);
   if (e1) throw e1;
   if (e2) throw e2;
+
+  // Filter jenjang client-side: hanya terapkan jika ada guru dengan jenjang tsb
+  let guruList = rawGuru || [];
+  if (jenjang) {
+    const matched = guruList.filter(g => g.jenjang === jenjang);
+    if (matched.length > 0) guruList = matched; // ada yang cocok → filter
+    // jika tidak ada yang cocok → tampilkan semua (data jenjang belum diisi)
+  }
 
   const kvMap = {};
   (kvRows || [])
@@ -351,7 +356,7 @@ async function _getAllJobTracker({ jenjang } = {}) {
     .forEach(r => { kvMap[r.key] = r.value; });
 
   const grouped = {};
-  (guruList || []).forEach(g => {
+  guruList.forEach(g => {
     const d = kvMap[`job_${g.nama}`] || null;
     grouped[g.nama] = {
       karyawan:        g.nama,
@@ -407,21 +412,26 @@ async function _getKpiHarian({ guru, tanggal }) {
 
 async function _getAllKpiHarian({ tanggal, jenjang } = {}) {
   const today = tanggal || _isoToday();
-  let guruQuery = _sb.from('users').select('nama, jabatan, jenjang').eq('role', 'guru').eq('active', 'Y');
-  if (jenjang) guruQuery = guruQuery.eq('jenjang', jenjang);
-
-  const [{ data: guruList, error: e1 }, { data: kvRows, error: e2 }] = await Promise.all([
-    guruQuery,
+  // Ambil semua guru, filter jenjang client-side (fallback jika belum ada data jenjang)
+  const [{ data: rawGuru2, error: e1 }, { data: kvRows, error: e2 }] = await Promise.all([
+    _sb.from('users').select('nama, jabatan, jenjang').eq('role', 'guru').eq('active', 'Y'),
     _sb.from('app_config').select('key, value').like('key', `kpi_harian_%_${today}`),
   ]);
   if (e1) throw e1;
   if (e2) throw e2;
 
+  let guruList = rawGuru2 || [];
+  if (jenjang) {
+    const matched = guruList.filter(g => g.jenjang === jenjang);
+    if (matched.length > 0) guruList = matched;
+    // jika tidak ada yang cocok → tampilkan semua (data jenjang belum diisi)
+  }
+
   const kvMap = {};
   (kvRows || []).forEach(r => { kvMap[r.key] = r.value; });
 
   const result = {};
-  (guruList || []).forEach(g => {
+  guruList.forEach(g => {
     const d = kvMap[`kpi_harian_${g.nama}_${today}`] || null;
     result[g.nama] = {
       guru:       g.nama,
