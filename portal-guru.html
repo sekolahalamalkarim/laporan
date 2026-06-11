@@ -302,54 +302,80 @@ if (tipeGuru === 'mapel') {
   document.getElementById('btn-tab-buku').style.display = 'none';
 }
 
-// Load murid for buku penghubung (only kelas) — filter jenjang + kelas ampu
-if (tipeGuru === 'kelas') {
+// Load murid for buku penghubung
+// Semua guru NON-mapel bisa akses (tipeGuru 'kelas', kosong, atau nilai lain selain 'mapel')
+if (tipeGuru !== 'mapel') {
   apiCall('getMurid').then(res => {
-    if (!res.ok) { console.error('getMurid error:', res.error); return; }
     const sel = document.getElementById('siswa-select');
-    let murid = res.data || [];
+
+    // Tampilkan error langsung di dropdown supaya terlihat
+    if (!res.ok) {
+      const opt = document.createElement('option');
+      opt.disabled = true;
+      opt.textContent = '⚠️ Gagal memuat siswa: ' + (res.error || 'cek koneksi internet');
+      sel.appendChild(opt);
+      return;
+    }
+
+    let allMurid = res.data || [];
+
+    if (allMurid.length === 0) {
+      const opt = document.createElement('option');
+      opt.disabled = true;
+      opt.textContent = '— Belum ada siswa. Tambahkan lewat portal pimpinan —';
+      sel.appendChild(opt);
+      return;
+    }
+
+    // Mulai dari semua siswa, lalu filter bertahap dengan fallback
+    let murid = allMurid;
+    const filterParts = [];
 
     // 1. Filter by jenjang guru (jika jenjang diset)
     const jenjangGuru = currentUser.jenjang || '';
     if (jenjangGuru) {
-      const byJenjang = murid.filter(m => m.jenjang === jenjangGuru);
-      if (byJenjang.length > 0) murid = byJenjang;
-      // fallback: jika tidak ada yg match, tampilkan semua
+      const byJenjang = allMurid.filter(m => m.jenjang === jenjangGuru);
+      if (byJenjang.length > 0) {
+        murid = byJenjang;
+        filterParts.push('Jenjang: ' + jenjangGuru);
+      }
+      // else fallback: tetap tampilkan semua
     }
 
-    // 2. Filter by kelas ampu (case-insensitive)
+    // 2. Filter by kelas ampu (case-insensitive, dari hasil filter jenjang)
     if (kelasAmpuArr.length > 0) {
       const byKelas = murid.filter(m =>
         kelasAmpuArr.some(k => k.toLowerCase() === String(m.kelas).trim().toLowerCase())
       );
-      if (byKelas.length > 0) murid = byKelas;
-      // fallback: jika tidak ada yg match, tampilkan semua hasil filter jenjang
+      if (byKelas.length > 0) {
+        murid = byKelas;
+        filterParts.push('Kelas: ' + kelasAmpuArr.join(', '));
+      }
+      // else fallback: tetap pakai hasil filter jenjang
     }
 
-    if (!murid.length) {
+    // Isi dropdown
+    murid.forEach(m => {
       const opt = document.createElement('option');
-      opt.value = ''; opt.textContent = '— Belum ada siswa terdaftar —';
-      opt.disabled = true; sel.appendChild(opt);
-    } else {
-      murid.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.nama;
-        opt.textContent = m.nama + ' (' + (m.kelas || m.jenjang || '?') + ')';
-        sel.appendChild(opt);
-      });
-    }
+      opt.value = m.nama;
+      opt.textContent = m.nama + (m.kelas ? ' (' + m.kelas + ')' : '');
+      sel.appendChild(opt);
+    });
 
-    // Badge info kelas/jenjang
-    const badge = document.createElement('div');
-    badge.style.cssText = 'font-size:12px;color:#1565C0;background:#E3F2FD;padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:8px;font-weight:700';
-    const parts = [];
-    if (jenjangGuru) parts.push('Jenjang: ' + jenjangGuru);
-    if (kelasAmpuArr.length) parts.push('Kelas: ' + kelasAmpuArr.join(', '));
-    if (parts.length) {
-      badge.textContent = '📚 ' + parts.join(' · ');
+    // Badge filter aktif (hanya jika ada filter)
+    if (filterParts.length > 0) {
+      const badge = document.createElement('div');
+      badge.style.cssText = 'font-size:12px;color:#1565C0;background:#E3F2FD;padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:8px;font-weight:700';
+      badge.textContent = '📚 ' + filterParts.join(' · ');
       const header = document.querySelector('#tab-buku .card-title')?.parentElement;
       if (header) header.appendChild(badge);
     }
+  }).catch(err => {
+    const sel = document.getElementById('siswa-select');
+    const opt = document.createElement('option');
+    opt.disabled = true;
+    opt.textContent = '⚠️ Error: ' + err.message;
+    sel.appendChild(opt);
   });
 }
 
