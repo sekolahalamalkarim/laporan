@@ -342,16 +342,26 @@ if (tipeGuru !== 'mapel') {
       // else fallback: tetap tampilkan semua
     }
 
-    // 2. Filter by kelas ampu (case-insensitive, dari hasil filter jenjang)
+    // 2. Filter by kelas ampu — pakai CONTAINS (lebih permisif dari exact match)
+    // "Diponegoro" akan cocok dgn "Kelas Diponegoro", "1-Diponegoro", dll.
     if (kelasAmpuArr.length > 0) {
-      const byKelas = murid.filter(m =>
-        kelasAmpuArr.some(k => k.toLowerCase() === String(m.kelas).trim().toLowerCase())
-      );
+      const byKelas = murid.filter(m => kelasAmpuArr.some(k => {
+        const kL = k.toLowerCase();
+        const mL = String(m.kelas).trim().toLowerCase();
+        if (!mL) return false;
+        return kL === mL || mL.includes(kL) || kL.includes(mL);
+      }));
       if (byKelas.length > 0) {
         murid = byKelas;
         filterParts.push('Kelas: ' + kelasAmpuArr.join(', '));
       }
       // else fallback: tetap pakai hasil filter jenjang
+    }
+
+    // Absolute fallback: jika setelah semua filter hasilnya kosong, tampilkan SEMUA
+    if (!murid.length) {
+      murid = allMurid;
+      filterParts.length = 0; // reset badge filter
     }
 
     // Isi dropdown
@@ -362,14 +372,18 @@ if (tipeGuru !== 'mapel') {
       sel.appendChild(opt);
     });
 
-    // Badge filter aktif (hanya jika ada filter)
+    // Info di bawah dropdown (jumlah siswa + filter aktif)
+    const infoEl = document.createElement('div');
+    infoEl.style.cssText = 'font-size:11px;margin-top:4px;padding:2px 4px;';
     if (filterParts.length > 0) {
-      const badge = document.createElement('div');
-      badge.style.cssText = 'font-size:12px;color:#1565C0;background:#E3F2FD;padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:8px;font-weight:700';
-      badge.textContent = '📚 ' + filterParts.join(' · ');
-      const header = document.querySelector('#tab-buku .card-title')?.parentElement;
-      if (header) header.appendChild(badge);
+      infoEl.style.color = '#1565C0';
+      infoEl.textContent = '📚 Filter: ' + filterParts.join(' · ') + ' — ' + murid.length + ' siswa';
+    } else {
+      infoEl.style.color = '#757575';
+      infoEl.textContent = 'Semua siswa (' + murid.length + ')';
     }
+    if (sel.parentNode) sel.parentNode.insertBefore(infoEl, sel.nextSibling);
+
   }).catch(err => {
     const sel = document.getElementById('siswa-select');
     const opt = document.createElement('option');
