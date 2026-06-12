@@ -90,6 +90,7 @@
     .day-sel.v-check{background:#E8F5E9;border-color:#4CAF50;color:#1B5E20}
     .day-sel.v-cross{background:#FFEBEE;border-color:#EF9A9A;color:#C62828}
     .day-sel.v-minus{background:var(--gray-100);border-color:#BDBDBD;color:#757575}
+    .day-sel.v-warn{background:#FFF3E0;border-color:#FFB74D;color:#E65100}
     .buku-table th.hari-th{text-align:center;width:60px}
     .buku-table td.hari-td{text-align:center;padding:5px 3px}
     .buku-kat-header td{background:var(--secondary)!important;font-weight:800;color:var(--primary-dark);font-size:12px;padding:7px 12px!important}
@@ -262,9 +263,20 @@
 const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat'];
 const HARI_SHORT = ['Sen','Sel','Rab','Kam','Jum'];
 const BUKU_KAT = [
-  { no:1, label:'Pembiasaan Ibadah Harian', items:['Shalat Subuh','Shalat Dzuhur','Shalat Ashar','Shalat Maghrib','Shalat Isya','Shalat Dhuha','Shalat Tahajud','Membaca Dzikir Pagi dan Petang','Murajaah Hafalan Alquran','Membaca Alquran ½ juz per hari'] },
-  { no:2, label:'Kedisiplinan', items:['Tidur maksimal pukul 21.00 WIB','Bangun tidur sebelum adzan subuh / maks. 05.30 WIB','Membawa bekal makanan sehat dan bergizi seimbang','Penggunaan HP/TV maksimal 30 menit','Belajar minimal 15–30 menit selama di rumah'] },
-  { no:3, label:'Memuliakan Orangtua', items:['Merapikan tempat tidur','Mencuci piring setelah makan','Menyapu / mengepel lantai','Memijat orangtua (minimal 1 pekan sekali)'] },
+  { no:1, label:'Kedisiplinan', items:[
+    { label:'Hadir tepat waktu' },
+    { label:'Membawa perlengkapan pribadi' },
+  ]},
+  { no:2, label:'Keagamaan', items:[
+    { label:'Sholat Dhuha' },
+    { label:'Sholat Zuhur' },
+    { label:'Hadis/Doa' },
+    { label:'Tahsin', opts:['—','Lancar','Tidak Lancar'] },
+    { label:'Tahfidz', opts:['—','Lancar','Tidak Lancar'] },
+  ]},
+  { no:3, label:'Pengetahuan Umum', items:[
+    { label:'Pencapaian Umum', opts:['—','A','B','C'], weekly:true },
+  ]},
 ];
 const KPI_HARIAN_ITEMS = [
   'Mengisi absensi hadir tepat waktu',
@@ -401,9 +413,11 @@ if (tipeGuru !== 'mapel') {
 function toast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.style.background=err?'#C62828':'#1B5E20';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 function logout(){sessionStorage.removeItem('currentUser');window.location.href='index.html';}
 function switchTab(tab,btn){document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+tab).classList.add('active');if(btn)btn.classList.add('active');}
-function bpOpts(){return['—','✓','✗'].map(o=>`<option value="${o}">${o}</option>`).join('');}
-function styleDay(sel){sel.className='day-sel '+(sel.value==='✓'?'v-check':sel.value==='✗'?'v-cross':'v-minus');}
-function emptyBukuData(){const data={};BUKU_KAT.forEach((kat,ki)=>{data[ki]={};kat.items.forEach((_,ii)=>{data[ki][ii]={};HARI.forEach(h=>{data[ki][ii][h]='—';});});});const taklim={};HARI.forEach(h=>{taklim[h]={tema:'',val:'—'};});return{data,taklim};}
+function iLbl(item){return typeof item==='string'?item:item.label;}
+function iOpts(item){const opts=(typeof item==='object'&&item.opts)?item.opts:['—','✓','✗'];return opts.map(o=>`<option value="${o}">${o}</option>`).join('');}
+function valCls(v){if(v==='✓'||v==='Lancar'||v==='A')return'v-check';if(v==='✗'||v==='Tidak Lancar'||v==='C')return'v-cross';if(v==='B')return'v-warn';return'v-minus';}
+function styleDay(sel){sel.className='day-sel '+valCls(sel.value);}
+function emptyBukuData(){const data={};BUKU_KAT.forEach((kat,ki)=>{data[ki]={};kat.items.forEach((item,ii)=>{data[ki][ii]={};if(item.weekly){data[ki][ii]['Senin']='—';}else{HARI.forEach(h=>{data[ki][ii][h]='—';});}});});return{data};}
 function timeToMin(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
 function isWindowOpen(buka,tutup){const now=new Date();const hhmm=now.getHours()*60+now.getMinutes();const b=timeToMin(buka),c=timeToMin(tutup);if(b>c)return hhmm>=b||hhmm<c;return hhmm>=b&&hhmm<c;}
 function lsKey(prefix){return prefix+'_'+currentUser.nama+'_'+TODAY_ISO;}
@@ -676,7 +690,7 @@ function showKpiRekap(totalSkor) {
 function loadBukuGuru(){
   const siswa=document.getElementById('siswa-select').value;if(!siswa)return;
   if(!bukuGuruState[siswa]){
-    const d=emptyBukuData();d.published=false;bukuGuruState[siswa]=d;
+    const d=emptyBukuData();d.status='Draft';bukuGuruState[siswa]=d;
     apiCall('getBukuGuru',{siswa}).then(res=>{if(res.ok&&res.data){bukuGuruState[siswa]={...res.data};}renderBukuGuruForm(siswa);});
   }else{renderBukuGuruForm(siswa);}
   apiCall('getBukuOrtu',{siswa}).then(res=>{if(res.ok&&res.data){bukuOrtuState[siswa]=res.data;}renderCatatanOrtu(siswa);});
@@ -685,11 +699,11 @@ function renderBukuGuruForm(siswa){
   const el=document.getElementById('buku-guru-content');const st=bukuGuruState[siswa];
   let html=`<div class="approval-bar">
     <div><div style="font-size:14px;font-weight:800">📚 ${siswa}</div>
-    <div style="margin-top:4px">${st.published?'<span class="badge badge-approved">✅ Sudah Dipublish</span>':'<span class="badge badge-draft">⏳ Draft</span>'}</div></div>
+    <div style="margin-top:4px">${st.status==='Published'?'<span class="badge badge-approved">✅ Sudah Dipublish</span>':'<span class="badge badge-draft">⏳ Draft</span>'}</div></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-outline" onclick="saveBukuDraft('${siswa}')">💾 Simpan Draft</button>
-      <button class="btn ${st.published?'btn-green':'btn-blue'}" onclick="publishBuku('${siswa}')">
-        ${st.published?'✅ Re-publish':'📤 Publish ke Orangtua'}</button>
+      <button class="btn ${st.status==='Published'?'btn-green':'btn-blue'}" onclick="publishBuku('${siswa}')">
+        ${st.status==='Published'?'✅ Re-publish':'📤 Publish ke Orangtua'}</button>
     </div></div>
   <div class="table-wrapper"><table class="buku-table">
     <thead><tr><th style="width:32px">No</th><th>Aktivitas</th>
@@ -697,24 +711,27 @@ function renderBukuGuruForm(siswa){
   let rn=1;
   BUKU_KAT.forEach((kat,ki)=>{
     html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
-    kat.items.forEach((_,ii)=>{
-      html+=`<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${kat.items[ii]}</td>`;
-      HARI.forEach(h=>{const val=st.data[ki]&&st.data[ki][ii]?st.data[ki][ii][h]||'—':'—';const cls=val==='✓'?'v-check':val==='✗'?'v-cross':'v-minus';html+=`<td class="hari-td"><select class="day-sel ${cls}" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="setBukuGuru('${siswa}',${ki},${ii},'${h}',this.value);styleDay(this)">${bpOpts()}</select></td>`;});
-      html+='</tr>';
+    kat.items.forEach((item,ii)=>{
+      const lbl=iLbl(item);
+      if(item.weekly){
+        const val=st.data[ki]&&st.data[ki][ii]?st.data[ki][ii]['Senin']||'—':'—';
+        const cls=valCls(val);
+        html+=`<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${lbl}</td>
+          <td class="hari-td" colspan="${HARI.length}" style="text-align:center"><select class="day-sel ${cls}" style="width:120px" data-ki="${ki}" data-ii="${ii}" data-h="Senin" onchange="setBukuGuru('${siswa}',${ki},${ii},'Senin',this.value);styleDay(this)">${iOpts(item)}</select></td></tr>`;
+      } else {
+        html+=`<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${lbl}</td>`;
+        HARI.forEach(h=>{const val=st.data[ki]&&st.data[ki][ii]?st.data[ki][ii][h]||'—':'—';const cls=valCls(val);html+=`<td class="hari-td"><select class="day-sel ${cls}" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="setBukuGuru('${siswa}',${ki},${ii},'${h}',this.value);styleDay(this)">${iOpts(item)}</select></td>`;});
+        html+='</tr>';
+      }
     });
   });
-  html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">4. Taklim</td></tr><tr>
-    <td style="text-align:center;color:var(--gray-500);font-size:12px">${rn}</td><td style="font-size:12px">Tema Taklim</td>`;
-  HARI.forEach(h=>{const t=st.taklim[h]||{tema:'',val:'—'};const cls=t.val==='✓'?'v-check':t.val==='✗'?'v-cross':'v-minus';html+=`<td class="hari-td" style="min-width:72px"><input type="text" class="taklim-input" value="${t.tema}" placeholder="Tema" onchange="setTaklimGuru('${siswa}','${h}','tema',this.value)"/><select class="day-sel ${cls}" data-taklim="${h}" onchange="setTaklimGuru('${siswa}','${h}','val',this.value);styleDay(this)">${bpOpts()}</select></td>`;});
-  html+='</tr></tbody></table></div>';
+  html+='</tbody></table></div>';
   el.innerHTML=html;
-  el.querySelectorAll('select.day-sel[data-ki]').forEach(sel=>{sel.value=st.data[sel.dataset.ki]&&st.data[sel.dataset.ki][sel.dataset.ii]?st.data[sel.dataset.ki][sel.dataset.ii][sel.dataset.h]||'—':'—';styleDay(sel);});
-  el.querySelectorAll('select.day-sel[data-taklim]').forEach(sel=>{sel.value=st.taklim[sel.dataset.taklim]?st.taklim[sel.dataset.taklim].val:'—';styleDay(sel);});
+  el.querySelectorAll('select.day-sel[data-ki]').forEach(sel=>{const ki=sel.dataset.ki,ii=sel.dataset.ii,h=sel.dataset.h;sel.value=st.data[ki]&&st.data[ki][ii]?st.data[ki][ii][h]||'—':'—';styleDay(sel);});
 }
-function setBukuGuru(siswa,ki,ii,h,val){if(bukuGuruState[siswa]){bukuGuruState[siswa].data[ki][ii][h]=val;bukuGuruState[siswa].published=false;}}
-function setTaklimGuru(siswa,h,field,val){if(!bukuGuruState[siswa])return;if(!bukuGuruState[siswa].taklim[h])bukuGuruState[siswa].taklim[h]={tema:'',val:'—'};bukuGuruState[siswa].taklim[h][field]=val;}
-function saveBukuDraft(siswa){const st=bukuGuruState[siswa];apiCall('saveBukuGuru',{siswa,minggu:'Minggu Ini',data:JSON.stringify(st.data),taklim:JSON.stringify(st.taklim)}).then(res=>{res.ok?toast('✅ Draft tersimpan!'):toast('⚠️ '+res.error,true);});}
-function publishBuku(siswa){const st=bukuGuruState[siswa];toast('📤 Menyimpan...');apiCall('saveBukuGuru',{siswa,minggu:'Minggu Ini',data:JSON.stringify(st.data),taklim:JSON.stringify(st.taklim)}).then(()=>apiCall('publishBukuGuru',{siswa})).then(res=>{if(res.ok){st.published=true;renderBukuGuruForm(siswa);toast('📤 Buku '+siswa+' dipublish ke orangtua!');}else toast('⚠️ '+res.error,true);});}
+function setBukuGuru(siswa,ki,ii,h,val){if(bukuGuruState[siswa]){bukuGuruState[siswa].data[ki][ii][h]=val;bukuGuruState[siswa].status='Draft';}}
+function saveBukuDraft(siswa){const st=bukuGuruState[siswa];apiCall('saveBukuGuru',{siswa,minggu:'Minggu Ini',data:JSON.stringify(st.data)}).then(res=>{res.ok?toast('✅ Draft tersimpan!'):toast('⚠️ '+res.error,true);});}
+function publishBuku(siswa){const st=bukuGuruState[siswa];toast('📤 Menyimpan...');apiCall('saveBukuGuru',{siswa,minggu:'Minggu Ini',data:JSON.stringify(st.data)}).then(()=>apiCall('publishBukuGuru',{siswa})).then(res=>{if(res.ok){st.status='Published';renderBukuGuruForm(siswa);toast('📤 Buku '+siswa+' dipublish ke orangtua!');}else toast('⚠️ '+res.error,true);});}
 function refreshCatatanOrtu(){
   const siswa=document.getElementById('siswa-select').value;
   if(!siswa){toast('⚠️ Pilih siswa terlebih dahulu',true);return;}
@@ -726,8 +743,7 @@ function _fmtTgl(tgl){
   if(/^\d{4}-\d{2}-\d{2}$/.test(tgl)){const d=new Date(tgl+'T00:00:00');return d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
   return tgl;
 }
-function _bpOptsGuru(){return['—','✓','✗'].map(o=>`<option value="${o}">${o}</option>`).join('');}
-function _styleDayGuru(sel){sel.className='day-sel '+(sel.value==='✓'?'v-check':sel.value==='✗'?'v-cross':'v-minus');}
+function _styleDayGuru(sel){sel.className='day-sel '+valCls(sel.value);}
 
 function renderCatatanOrtu(siswa){
   const el=document.getElementById('catatan-ortu-view');
@@ -737,7 +753,7 @@ function renderCatatanOrtu(siswa){
   let html='';
   list.forEach((e,idx)=>{
     let cek=0,tot=0;
-    BUKU_KAT.forEach((kat,ki)=>kat.items.forEach((_,ii)=>HARI.forEach(h=>{tot++;if(e.data&&e.data[ki]&&e.data[ki][ii]&&e.data[ki][ii][h]==='✓')cek++;})));
+    BUKU_KAT.forEach((kat,ki)=>kat.items.forEach((item,ii)=>{if(item.weekly){tot++;const v=e.data&&e.data[ki]&&e.data[ki][ii]?e.data[ki][ii]['Senin']||'—':'—';if(v==='A'||v==='Lancar'||v==='✓')cek++;}else{HARI.forEach(h=>{tot++;const v=e.data&&e.data[ki]&&e.data[ki][ii]?e.data[ki][ii][h]||'—':'—';if(v==='✓'||v==='Lancar'||v==='A')cek++;});}}));
     const pct=tot?Math.round(cek/tot*100):0;
     const pc=pct>=70?'#1B5E20':pct>=40?'#E65100':'#B71C1C';
     html+=`<div style="border:1px solid var(--gray-200);border-radius:8px;margin-bottom:10px;overflow:hidden">
@@ -759,7 +775,7 @@ function renderCatatanOrtu(siswa){
             <thead><tr style="background:var(--gray-100)"><th style="padding:4px 6px;text-align:left">Aktivitas</th>${HARI_SHORT.map(h=>`<th style="padding:4px 6px;text-align:center;width:36px">${h}</th>`).join('')}</tr></thead><tbody>
             ${BUKU_KAT.map((kat,ki)=>`
               <tr><td colspan="${1+HARI.length}" style="padding:4px 6px;font-weight:700;font-size:10px;color:var(--gray-500);background:var(--gray-100)">${kat.no}. ${kat.label}</td></tr>
-              ${kat.items.map((_,ii)=>`<tr><td style="padding:3px 6px;font-size:11px">${kat.items[ii]}</td>${HARI.map(h=>{const v=(e.data&&e.data[ki]&&e.data[ki][ii]&&e.data[ki][ii][h])||'—';const s=v==='✓'?'color:#1B5E20;font-weight:800':v==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-300)';return`<td style="padding:3px 6px;text-align:center;${s}">${v}</td>`;}).join('')}</tr>`).join('')}
+              ${kat.items.map((item,ii)=>{const lbl=iLbl(item);if(item.weekly){const v=(e.data&&e.data[ki]&&e.data[ki][ii])?e.data[ki][ii]['Senin']||'—':'—';const s=v==='A'?'color:#1B5E20;font-weight:800':v==='C'?'color:#C62828;font-weight:800':v==='B'?'color:#E65100;font-weight:800':'color:var(--gray-300)';return`<tr><td style="padding:3px 6px;font-size:11px">${lbl}</td><td colspan="${HARI.length}" style="padding:3px 6px;text-align:center;${s}">${v}</td></tr>`;}return`<tr><td style="padding:3px 6px;font-size:11px">${lbl}</td>${HARI.map(h=>{const v=(e.data&&e.data[ki]&&e.data[ki][ii])?e.data[ki][ii][h]||'—':'—';const s=v==='✓'||v==='Lancar'||v==='A'?'color:#1B5E20;font-weight:800':v==='✗'||v==='Tidak Lancar'||v==='C'?'color:#C62828;font-weight:800':v==='B'?'color:#E65100;font-weight:800':'color:var(--gray-300)';return`<td style="padding:3px 6px;text-align:center;${s}">${v}</td>`;}).join('')}</tr>`;}).join('')}
             `).join('')}
           </tbody></table>
         </div>
@@ -797,7 +813,7 @@ function editOrtuEntry(siswa,idx){
     <thead><tr style="background:var(--gray-100)"><th style="padding:4px 6px;text-align:left">Aktivitas</th>${HARI_SHORT.map(h=>`<th style="padding:4px 6px;text-align:center;width:52px">${h}</th>`).join('')}</tr></thead><tbody>
     ${BUKU_KAT.map((kat,ki)=>`
       <tr><td colspan="${1+HARI.length}" style="padding:4px 6px;font-weight:700;font-size:10px;color:var(--gray-500);background:var(--gray-100)">${kat.no}. ${kat.label}</td></tr>
-      ${kat.items.map((_,ii)=>`<tr><td style="padding:3px 6px;font-size:11px">${kat.items[ii]}</td>${HARI.map(h=>{const v=(entry.data&&entry.data[ki]&&entry.data[ki][ii]&&entry.data[ki][ii][h])||'—';return`<td style="padding:3px 4px;text-align:center"><select class="day-sel" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="_styleDayGuru(this)">${_bpOptsGuru()}</select></td>`;}).join('')}</tr>`).join('')}
+      ${kat.items.map((item,ii)=>{const lbl=iLbl(item);if(item.weekly){const v=(entry.data&&entry.data[ki]&&entry.data[ki][ii])?entry.data[ki][ii]['Senin']||'—':'—';return`<tr><td style="padding:3px 6px;font-size:11px">${lbl}</td><td colspan="${HARI.length}" style="padding:3px 4px;text-align:center"><select class="day-sel" data-ki="${ki}" data-ii="${ii}" data-h="Senin" style="width:120px" onchange="_styleDayGuru(this)">${iOpts(item)}</select></td></tr>`;}return`<tr><td style="padding:3px 6px;font-size:11px">${lbl}</td>${HARI.map(h=>{return`<td style="padding:3px 4px;text-align:center"><select class="day-sel" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="_styleDayGuru(this)">${iOpts(item)}</select></td>`;}).join('')}</tr>`;}).join('')}
     `).join('')}
   </tbody></table>
   <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
@@ -820,10 +836,10 @@ function saveEditOrtu(siswa,idx){
   const entry=bukuOrtuState[siswa]&&bukuOrtuState[siswa][idx];if(!entry)return;
   const tbl=document.getElementById('oe-edit-tbl-'+idx);
   const newData={};
-  BUKU_KAT.forEach((kat,ki)=>{newData[ki]={};kat.items.forEach((_,ii)=>{newData[ki][ii]={};HARI.forEach(h=>{newData[ki][ii][h]='—';});});});
+  BUKU_KAT.forEach((kat,ki)=>{newData[ki]={};kat.items.forEach((item,ii)=>{newData[ki][ii]={};if(item.weekly){newData[ki][ii]['Senin']='—';}else{HARI.forEach(h=>{newData[ki][ii][h]='—';});}});});
   tbl.querySelectorAll('select[data-ki]').forEach(sel=>{newData[sel.dataset.ki][sel.dataset.ii][sel.dataset.h]=sel.value;});
   toast('💾 Menyimpan...');
-  apiCall('saveBukuOrtu',{siswa,tanggal:entry.tanggal,data:JSON.stringify(newData),taklim:JSON.stringify(entry.taklim||{})})
+  apiCall('saveBukuOrtu',{siswa,tanggal:entry.tanggal,data:JSON.stringify(newData)})
     .then(res=>{
       if(res.ok){
         entry.data=newData;

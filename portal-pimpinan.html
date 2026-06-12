@@ -400,6 +400,7 @@ if (!currentUser || !['pimpinan','admin'].includes(currentUser.role)) window.loc
 const IS_ADMIN = currentUser.role === 'admin';
 const MY_JENJANG = IS_ADMIN ? '' : (currentUser.jenjang || '');
 
+const TODAY_ISO = new Date().toISOString().split('T')[0];
 let allJobData = {}, allKpiData = {}, allUsers = [], allMurid = [], allBukuStatus = {};
 let muridFilterJenjang = '', muridFilterKelas = '', muridFilterSearch = '';
 
@@ -462,8 +463,9 @@ function renderJobTable(){
   }
   allList.forEach(k=>{
     if(fNama&&k.karyawan!==fNama)return;
-    const hasTasks = (k.tasks||[]).length > 0;
-    const submitted = !!k.pagiSubmittedAt;
+    const isToday = k.tanggal === TODAY_ISO;
+    const hasTasks = isToday && (k.tasks||[]).length > 0;
+    const submitted = isToday && !!k.pagiSubmittedAt;
 
     // Guru belum submit sama sekali — tampilkan baris "Belum Submit"
     if(!submitted && !hasTasks){
