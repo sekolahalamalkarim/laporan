@@ -721,18 +721,120 @@ function refreshCatatanOrtu(){
   document.getElementById('catatan-ortu-view').innerHTML='<div style="text-align:center;padding:20px;color:var(--gray-500)">⏳ Memuat laporan orangtua...</div>';
   apiCall('getBukuOrtu',{siswa}).then(res=>{if(res.ok&&res.data){bukuOrtuState[siswa]=res.data;}renderCatatanOrtu(siswa);});
 }
+function _fmtTgl(tgl){
+  if(!tgl)return'—';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(tgl)){const d=new Date(tgl+'T00:00:00');return d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
+  return tgl;
+}
+function _bpOptsGuru(){return['—','✓','✗'].map(o=>`<option value="${o}">${o}</option>`).join('');}
+function _styleDayGuru(sel){sel.className='day-sel '+(sel.value==='✓'?'v-check':sel.value==='✗'?'v-cross':'v-minus');}
+
 function renderCatatanOrtu(siswa){
-  const el=document.getElementById('catatan-ortu-view');const entries=bukuOrtuState[siswa];
+  const el=document.getElementById('catatan-ortu-view');
+  const entries=bukuOrtuState[siswa];
   if(!entries||!entries.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">📭</div><p>Belum ada laporan dari orangtua ${siswa}</p></div>`;return;}
-  const e=entries[0];
-  let html=`<div style="font-size:12px;color:var(--gray-500);margin-bottom:10px">Terakhir dikirim: <strong>${e.tanggal}</strong></div>
-  <div class="table-wrapper"><table class="buku-table"><thead><tr><th style="width:32px">No</th><th>Aktivitas</th>${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}</tr></thead><tbody>`;
-  let rn=1;
-  BUKU_KAT.forEach((kat,ki)=>{
-    html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
-    kat.items.forEach((_,ii)=>{html+=`<tr><td style="text-align:center;color:var(--gray-500);font-size:11px">${rn++}</td><td style="font-size:11px">${kat.items[ii]}</td>`;HARI.forEach(h=>{const val=(e.data&&e.data[ki]&&e.data[ki][ii]&&e.data[ki][ii][h])||'—';const s=val==='✓'?'color:#1B5E20;font-weight:800':val==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-400)';html+=`<td class="hari-td" style="${s}">${val}</td>`;});html+='</tr>';});
+  const list=entries.slice(0,5);
+  let html='';
+  list.forEach((e,idx)=>{
+    let cek=0,tot=0;
+    BUKU_KAT.forEach((kat,ki)=>kat.items.forEach((_,ii)=>HARI.forEach(h=>{tot++;if(e.data&&e.data[ki]&&e.data[ki][ii]&&e.data[ki][ii][h]==='✓')cek++;})));
+    const pct=tot?Math.round(cek/tot*100):0;
+    const pc=pct>=70?'#1B5E20':pct>=40?'#E65100':'#B71C1C';
+    html+=`<div style="border:1px solid var(--gray-200);border-radius:8px;margin-bottom:10px;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--gray-100)">
+        <div onclick="toggleOrtuEntry(${idx})" style="cursor:pointer;flex:1">
+          <span style="font-weight:700;font-size:13px">📅 ${_fmtTgl(e.tanggal)}</span>
+          ${idx===0?'<span style="margin-left:8px;font-size:11px;background:#1B5E20;color:#fff;padding:1px 7px;border-radius:10px">Terbaru</span>':''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;color:${pc};font-weight:700">✓ ${cek}/${tot} (${pct}%)</span>
+          <button onclick="editOrtuEntry('${siswa.replace(/'/g,"\\'")}',${idx})" style="font-size:11px;padding:2px 8px;border:1px solid #1565C0;color:#1565C0;background:#fff;border-radius:5px;cursor:pointer">✏️ Edit</button>
+          <button onclick="hapusOrtuEntry('${siswa.replace(/'/g,"\\'")}','${e.tanggal}')" style="font-size:11px;padding:2px 8px;border:1px solid #C62828;color:#C62828;background:#fff;border-radius:5px;cursor:pointer">🗑️ Hapus</button>
+          <span onclick="toggleOrtuEntry(${idx})" id="oe-arrow-${idx}" style="font-size:12px;color:var(--gray-500);cursor:pointer">▼</span>
+        </div>
+      </div>
+      <div id="oe-detail-${idx}" style="display:none;padding:12px 14px;overflow-x:auto">
+        <div id="oe-view-${idx}">
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            <thead><tr style="background:var(--gray-100)"><th style="padding:4px 6px;text-align:left">Aktivitas</th>${HARI_SHORT.map(h=>`<th style="padding:4px 6px;text-align:center;width:36px">${h}</th>`).join('')}</tr></thead><tbody>
+            ${BUKU_KAT.map((kat,ki)=>`
+              <tr><td colspan="${1+HARI.length}" style="padding:4px 6px;font-weight:700;font-size:10px;color:var(--gray-500);background:var(--gray-100)">${kat.no}. ${kat.label}</td></tr>
+              ${kat.items.map((_,ii)=>`<tr><td style="padding:3px 6px;font-size:11px">${kat.items[ii]}</td>${HARI.map(h=>{const v=(e.data&&e.data[ki]&&e.data[ki][ii]&&e.data[ki][ii][h])||'—';const s=v==='✓'?'color:#1B5E20;font-weight:800':v==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-300)';return`<td style="padding:3px 6px;text-align:center;${s}">${v}</td>`;}).join('')}</tr>`).join('')}
+            `).join('')}
+          </tbody></table>
+        </div>
+        <div id="oe-edit-${idx}" style="display:none"></div>
+      </div>
+    </div>`;
   });
-  html+='</tbody></table></div>';el.innerHTML=html;
+  el.innerHTML=html;
+}
+function toggleOrtuEntry(idx){
+  const det=document.getElementById('oe-detail-'+idx);
+  const arr=document.getElementById('oe-arrow-'+idx);
+  const open=det.style.display==='none';
+  det.style.display=open?'':'none';
+  arr.textContent=open?'▲':'▼';
+}
+function hapusOrtuEntry(siswa,tanggal){
+  if(!confirm('Hapus laporan orangtua '+siswa+' tanggal '+_fmtTgl(tanggal)+'?'))return;
+  apiCall('deleteBukuOrtu',{siswa,tanggal}).then(res=>{
+    if(res.ok){
+      if(bukuOrtuState[siswa])bukuOrtuState[siswa]=bukuOrtuState[siswa].filter(e=>e.tanggal!==tanggal);
+      renderCatatanOrtu(siswa);toast('🗑️ Laporan berhasil dihapus');
+    }else toast('⚠️ '+res.error,true);
+  });
+}
+function editOrtuEntry(siswa,idx){
+  const entry=bukuOrtuState[siswa]&&bukuOrtuState[siswa][idx];if(!entry)return;
+  const viewEl=document.getElementById('oe-view-'+idx);
+  const editEl=document.getElementById('oe-edit-'+idx);
+  // Pastikan detail terbuka
+  document.getElementById('oe-detail-'+idx).style.display='';
+  document.getElementById('oe-arrow-'+idx).textContent='▲';
+  viewEl.style.display='none';
+  let html=`<table style="width:100%;border-collapse:collapse;font-size:11px" id="oe-edit-tbl-${idx}">
+    <thead><tr style="background:var(--gray-100)"><th style="padding:4px 6px;text-align:left">Aktivitas</th>${HARI_SHORT.map(h=>`<th style="padding:4px 6px;text-align:center;width:52px">${h}</th>`).join('')}</tr></thead><tbody>
+    ${BUKU_KAT.map((kat,ki)=>`
+      <tr><td colspan="${1+HARI.length}" style="padding:4px 6px;font-weight:700;font-size:10px;color:var(--gray-500);background:var(--gray-100)">${kat.no}. ${kat.label}</td></tr>
+      ${kat.items.map((_,ii)=>`<tr><td style="padding:3px 6px;font-size:11px">${kat.items[ii]}</td>${HARI.map(h=>{const v=(entry.data&&entry.data[ki]&&entry.data[ki][ii]&&entry.data[ki][ii][h])||'—';return`<td style="padding:3px 4px;text-align:center"><select class="day-sel" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="_styleDayGuru(this)">${_bpOptsGuru()}</select></td>`;}).join('')}</tr>`).join('')}
+    `).join('')}
+  </tbody></table>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
+    <button class="btn btn-outline" style="font-size:12px;padding:4px 12px" onclick="cancelEditOrtu(${idx})">✖ Batal</button>
+    <button class="btn btn-blue" style="font-size:12px;padding:4px 12px" onclick="saveEditOrtu('${siswa.replace(/'/g,"\\'")}',${idx})">💾 Simpan</button>
+  </div>`;
+  editEl.innerHTML=html;editEl.style.display='';
+  // Prefill select values
+  const tbl=document.getElementById('oe-edit-tbl-'+idx);
+  tbl.querySelectorAll('select[data-ki]').forEach(sel=>{
+    const v=(entry.data[sel.dataset.ki]&&entry.data[sel.dataset.ki][sel.dataset.ii])?entry.data[sel.dataset.ki][sel.dataset.ii][sel.dataset.h]||'—':'—';
+    sel.value=v;_styleDayGuru(sel);
+  });
+}
+function cancelEditOrtu(idx){
+  document.getElementById('oe-view-'+idx).style.display='';
+  document.getElementById('oe-edit-'+idx).style.display='none';
+}
+function saveEditOrtu(siswa,idx){
+  const entry=bukuOrtuState[siswa]&&bukuOrtuState[siswa][idx];if(!entry)return;
+  const tbl=document.getElementById('oe-edit-tbl-'+idx);
+  const newData={};
+  BUKU_KAT.forEach((kat,ki)=>{newData[ki]={};kat.items.forEach((_,ii)=>{newData[ki][ii]={};HARI.forEach(h=>{newData[ki][ii][h]='—';});});});
+  tbl.querySelectorAll('select[data-ki]').forEach(sel=>{newData[sel.dataset.ki][sel.dataset.ii][sel.dataset.h]=sel.value;});
+  toast('💾 Menyimpan...');
+  apiCall('saveBukuOrtu',{siswa,tanggal:entry.tanggal,data:JSON.stringify(newData),taklim:JSON.stringify(entry.taklim||{})})
+    .then(res=>{
+      if(res.ok){
+        entry.data=newData;
+        cancelEditOrtu(idx);
+        renderCatatanOrtu(siswa);
+        // Re-expand entry yang baru diedit
+        document.getElementById('oe-detail-'+idx).style.display='';
+        document.getElementById('oe-arrow-'+idx).textContent='▲';
+        toast('✅ Laporan berhasil diperbarui');
+      }else toast('⚠️ '+res.error,true);
+    });
 }
 
 // ══════════════════════════════════════════

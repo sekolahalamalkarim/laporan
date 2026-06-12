@@ -75,6 +75,7 @@ async function apiCall(action, payload = {}) {
       /* BUKU ORTU */
       case 'saveBukuOrtu':       return await _saveBukuOrtu(payload);
       case 'getBukuOrtu':        return await _getBukuOrtu(payload);
+      case 'deleteBukuOrtu':     return await _deleteBukuOrtu(payload);
 
       /* KPI TAHUNAN */
       case 'saveKpi':            return await _saveKpi(payload);
@@ -709,9 +710,23 @@ async function _getBukuOrtu({ siswa }) {
     }
   });
 
-  // Urutkan terbaru dulu
-  const result = Object.values(grouped).sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+  // Normalkan tanggal sebelum sort (handle ISO "2026-06-12" maupun lokal "Jumat, 12 Juni 2026")
+  function _toISO(tgl) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(tgl)) return tgl;
+    const BLN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    const m = tgl.match(/(\d{1,2})\s+(\w+)\s+(\d{4})/);
+    if (m) { const mi = BLN.indexOf(m[2]) + 1; if (mi > 0) return `${m[3]}-${String(mi).padStart(2,'0')}-${m[1].padStart(2,'0')}`; }
+    return tgl;
+  }
+  const result = Object.values(grouped).sort((a, b) => _toISO(b.tanggal).localeCompare(_toISO(a.tanggal)));
   return { ok: true, data: result };
+}
+
+async function _deleteBukuOrtu({ siswa, tanggal }) {
+  if (!siswa || !tanggal) throw new Error('siswa dan tanggal wajib');
+  const { error } = await _sb.from('buku_ortu').delete().eq('siswa', siswa).eq('tanggal', tanggal);
+  if (error) throw error;
+  return { ok: true };
 }
 
 /* ─── KPI TAHUNAN ────────────────────────────────────────────── */
