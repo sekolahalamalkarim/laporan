@@ -331,10 +331,11 @@ if (tipeGuru !== 'mapel') {
     let murid = allMurid;
     const filterParts = [];
 
-    // 1. Filter by jenjang guru (jika jenjang diset)
+    // 1. Filter by jenjang guru (case-insensitive)
     const jenjangGuru = currentUser.jenjang || '';
     if (jenjangGuru) {
-      const byJenjang = allMurid.filter(m => m.jenjang === jenjangGuru);
+      const jL = jenjangGuru.toLowerCase();
+      const byJenjang = allMurid.filter(m => (m.jenjang||'').toLowerCase() === jL);
       if (byJenjang.length > 0) {
         murid = byJenjang;
         filterParts.push('Jenjang: ' + jenjangGuru);

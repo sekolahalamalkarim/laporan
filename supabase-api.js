@@ -674,7 +674,44 @@ async function _getBukuOrtu({ siswa }) {
   const { data, error } = await _sb.from('buku_ortu')
     .select('*').eq('siswa', siswa).order('tanggal', { ascending: false }).order('kat_no').order('no');
   if (error) throw error;
-  return { ok: true, data: data || [] };
+  if (!data || !data.length) return { ok: true, data: [] };
+
+  // Rekonstruksi per tanggal → format {tanggal, data, taklim} (sama dgn format buku guru)
+  const grouped = {};
+  data.forEach(row => {
+    if (!grouped[row.tanggal]) {
+      const dataObj = {};
+      _BUKU_KAT.forEach((kat, ki) => {
+        dataObj[ki] = {};
+        kat.items.forEach((_, ii) => {
+          dataObj[ki][ii] = {};
+          _HARI.forEach(h => { dataObj[ki][ii][h] = '—'; });
+        });
+      });
+      grouped[row.tanggal] = { tanggal: row.tanggal, data: dataObj, taklim: {} };
+    }
+    const entry = grouped[row.tanggal];
+    if (row.kat_no === 4) {
+      // Baris taklim — cari hari yang diisi
+      _HARI.forEach(h => {
+        const v = row[h.toLowerCase()];
+        if (v && v !== '—') {
+          const temaRaw = (row.aktivitas || '').replace('Tema: ', '');
+          entry.taklim[h] = { tema: temaRaw === '—' ? '' : temaRaw, val: v };
+        }
+      });
+    } else {
+      const ki = row.kat_no - 1;
+      const ii = row.no - 1;
+      if (entry.data[ki] && entry.data[ki][ii] !== undefined) {
+        _HARI.forEach(h => { entry.data[ki][ii][h] = row[h.toLowerCase()] || '—'; });
+      }
+    }
+  });
+
+  // Urutkan terbaru dulu
+  const result = Object.values(grouped).sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+  return { ok: true, data: result };
 }
 
 /* ─── KPI TAHUNAN ────────────────────────────────────────────── */

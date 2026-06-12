@@ -250,6 +250,7 @@ const BUKU_KAT = [
   { no:3, label:'Memuliakan Orangtua', items:['Merapikan tempat tidur','Mencuci piring setelah makan','Menyapu / mengepel lantai','Memijat orangtua (minimal 1 pekan sekali)'] },
 ];
 const TODAY = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+const TODAY_ISO = new Date().toISOString().split('T')[0];
 
 let selectedJenjang = '', selectedMurid = null, muridList = [];
 let bukuGuruState = null, bukuOrtuHistory = [];
@@ -362,6 +363,7 @@ function verifyPin() {
 /* ========= PORTAL ========= */
 function enterPortal(murid) {
   selectedMurid = murid;
+  sessionStorage.setItem('ortuPinSession', JSON.stringify({ murid }));
   document.getElementById('pin-screen').style.display = 'none';
   document.getElementById('portal-screen').classList.add('show');
   document.getElementById('user-pill').textContent = '👨‍👩‍👧 Ortu ' + murid.nama;
@@ -376,11 +378,12 @@ function enterPortal(murid) {
   });
   apiCall('getBukuOrtu', { siswa: murid.nama }).then(res => {
     if (res.ok && res.data) bukuOrtuHistory = res.data;
+    renderBukuOrtuForm();
   });
-  renderBukuOrtuForm();
 }
 
 function doLogout() {
+  sessionStorage.removeItem('ortuPinSession');
   document.getElementById('portal-screen').classList.remove('show');
   document.getElementById('pin-screen').style.display = 'flex';
   document.getElementById('portal-screen').style.display = 'none';
@@ -399,7 +402,7 @@ function renderLaporanGuru() {
   const el = document.getElementById('laporan-guru-view');
   const badgeEl = document.getElementById('guru-badge');
   const st = bukuGuruState;
-  if (!st || !st.published) {
+  if (!st || st.status !== 'Published') {
     badgeEl.innerHTML = '<span class="badge badge-pending">⏳ Menunggu Guru</span>';
     el.innerHTML = `<div class="warn-banner">⏳ Laporan dari guru belum tersedia. Guru perlu publish buku penghubung terlebih dahulu.</div>
     <div class="empty-state"><div class="empty-icon">📋</div><p>Laporan akan muncul setelah guru publish</p></div>`;
@@ -453,32 +456,60 @@ function submitBukuOrtu() {
   tbl.querySelectorAll('select.day-sel[data-ki]').forEach(sel => { entryData[sel.dataset.ki][sel.dataset.ii][sel.dataset.h] = sel.value; });
   const taklim = {};
   HARI.forEach(h => { const tema=tbl.querySelector(`[data-taklim-tema="${h}"]`); const val=tbl.querySelector(`[data-taklim-val="${h}"]`); taklim[h]={tema:tema?tema.value:'',val:val?val.value:'—'}; });
-  bukuOrtuHistory.unshift({ siswa:selectedMurid.nama, tanggal:TODAY, data:entryData, taklim });
+  bukuOrtuHistory.unshift({ siswa:selectedMurid.nama, tanggal:TODAY_ISO, data:entryData, taklim });
   renderBukuOrtuForm();
   toast('📤 Mengirim...');
-  apiCall('saveBukuOrtu',{ siswa:selectedMurid.nama, tanggal:TODAY, data:JSON.stringify(entryData), taklim:JSON.stringify(taklim) })
+  apiCall('saveBukuOrtu',{ siswa:selectedMurid.nama, tanggal:TODAY_ISO, data:JSON.stringify(entryData), taklim:JSON.stringify(taklim) })
   .then(res => { res.ok ? toast('📤 Laporan berhasil dikirim ke guru!') : toast('⚠️ '+res.error, true); });
 }
+
+/* ========= RESTORE SESSION ON REFRESH ========= */
+(function restoreSession() {
+  const saved = sessionStorage.getItem('ortuPinSession');
+  if (!saved) return;
+  try {
+    const { murid } = JSON.parse(saved);
+    if (murid && murid.nama) {
+      // Re-enter portal directly without going through PIN again
+      selectedMurid = murid;
+      document.getElementById('pin-screen').style.display = 'none';
+      document.getElementById('portal-screen').style.display = '';
+      document.getElementById('portal-screen').classList.add('show');
+      document.getElementById('user-pill').textContent = '👨‍👩‍👧 Ortu ' + murid.nama;
+      document.getElementById('portal-anak-nama').textContent = murid.nama;
+      document.getElementById('portal-anak-info').textContent = murid.kelas + ' · Jenjang ' + murid.jenjang + '  |  ' + TODAY;
+      document.getElementById('tanggal-badge').textContent = '📅 ' + TODAY;
+      apiCall('getBukuGuru', { siswa: murid.nama }).then(res => {
+        if (res.ok && res.data) bukuGuruState = res.data;
+        renderLaporanGuru();
+      });
+      apiCall('getBukuOrtu', { siswa: murid.nama }).then(res => {
+        if (res.ok && res.data) bukuOrtuHistory = res.data;
+        renderBukuOrtuForm();
+      });
+    }
+  } catch(e) { sessionStorage.removeItem('ortuPinSession'); }
+})();
 
 /* ========= LAPORAN REKAP ========= */
 function renderLaporanRekap() {
   const el = document.getElementById('laporan-rekap');
   const gs = bukuGuruState; const oe = bukuOrtuHistory;
   let gCheck=0,gTotal=0,oCheck=0,oTotal=0;
-  if (gs&&gs.published) { BUKU_KAT.forEach((kat,ki) => kat.items.forEach((_,ii) => HARI.forEach(h => { gTotal++; if(gs.data[ki]&&gs.data[ki][ii]&&gs.data[ki][ii][h]==='✓')gCheck++; }))); }
+  if (gs&&gs.status==='Published') { BUKU_KAT.forEach((kat,ki) => kat.items.forEach((_,ii) => HARI.forEach(h => { gTotal++; if(gs.data[ki]&&gs.data[ki][ii]&&gs.data[ki][ii][h]==='✓')gCheck++; }))); }
   if (oe&&oe[0]) { BUKU_KAT.forEach((kat,ki) => kat.items.forEach((_,ii) => HARI.forEach(h => { oTotal++; if(oe[0].data[ki]&&oe[0].data[ki][ii]&&oe[0].data[ki][ii][h]==='✓')oCheck++; }))); }
   const gPct = gTotal?Math.round(gCheck/gTotal*100):0;
   const oPct = oTotal?Math.round(oCheck/oTotal*100):0;
   el.innerHTML = `
   <div class="stats-grid">
-    <div class="stat-card"><div class="stat-value">${gs&&gs.published?gPct+'%':'—'}</div><div class="stat-label">✅ di Sekolah</div></div>
+    <div class="stat-card"><div class="stat-value">${gs&&gs.status==='Published'?gPct+'%':'—'}</div><div class="stat-label">✅ di Sekolah</div></div>
     <div class="stat-card blue"><div class="stat-value">${oe&&oe.length?oPct+'%':'—'}</div><div class="stat-label">✅ di Rumah</div></div>
     <div class="stat-card orange"><div class="stat-value">${oe?oe.length:0}</div><div class="stat-label">Laporan Dikirim</div></div>
   </div>
   <div class="card">
     <div class="card-title" style="margin-bottom:12px">📈 Ringkasan Minggu Ini — ${selectedMurid?selectedMurid.nama:'—'}</div>
     <div style="font-size:13px;color:var(--gray-700);line-height:2.2">
-      <div>🏫 Laporan sekolah: <strong style="color:${gs&&gs.published?'var(--success)':'var(--warning)'}">${gs&&gs.published?'✅ Sudah diterima dari guru':'⏳ Menunggu guru publish'}</strong></div>
+      <div>🏫 Laporan sekolah: <strong style="color:${gs&&gs.status==='Published'?'var(--success)':'var(--warning)'}">${gs&&gs.status==='Published'?'✅ Sudah diterima dari guru':'⏳ Menunggu guru publish'}</strong></div>
       <div>🏠 Laporan rumah: <strong style="color:${oe&&oe.length?'var(--success)':'var(--warning)'}">${oe&&oe.length?'✅ '+oe.length+' laporan terkirim':'⏳ Belum ada laporan'}</strong></div>
     </div>
   </div>`;
