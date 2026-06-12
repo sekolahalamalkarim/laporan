@@ -262,22 +262,120 @@
 <script>
 const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat'];
 const HARI_SHORT = ['Sen','Sel','Rab','Kam','Jum'];
-const BUKU_KAT = [
+// Indikator buku guru (di sekolah) — per jenjang
+const BUKU_KAT_TK = [
   { no:1, label:'Kedisiplinan', items:[
     { label:'Hadir tepat waktu' },
-    { label:'Membawa perlengkapan pribadi' },
+    { label:'Membawa perlengkapan pribadi (celemek, lap tangan, lap serbaguna, sajadah)' },
   ]},
-  { no:2, label:'Keagamaan', items:[
-    { label:'Sholat Dhuha' },
-    { label:'Sholat Zuhur' },
-    { label:'Hadis/Doa' },
-    { label:'Tahsin', opts:['—','Lancar','Tidak Lancar'] },
-    { label:'Tahfidz', opts:['—','Lancar','Tidak Lancar'] },
+  { no:2, label:'Pencapaian Keagamaan', items:[
+    { label:'Membaca Iqro' },
+    { label:'Hafalan Al-Qur\'an Surah' },
+    { label:'Hafalan Doa' },
+    { label:'Hafalan Hadis' },
+    { label:'Bacaan Wudhu (Niat + doa setelah)' },
+    { label:'Bacaan Sholat (takbiratul ihram s.d. tasyahud akhir)' },
   ]},
-  { no:3, label:'Pengetahuan Umum', items:[
+  { no:3, label:'Pencapaian Membaca', items:[
+    { label:'Pencapaian Membaca' },
+  ]},
+  { no:4, label:'Pencapaian Umum', items:[
     { label:'Pencapaian Umum', opts:['—','A','B','C'], weekly:true },
   ]},
+  { no:5, label:'Pesan Khusus', items:[
+    { label:'Pesan Khusus Fasilitator', type:'text', weekly:true },
+  ]},
 ];
+const BUKU_KAT_SD = [
+  { no:1, label:'Kedisiplinan', items:[
+    { label:'Hadir tepat waktu' },
+    { label:'Mengumpulkan tugas tepat waktu' },
+    { label:'Membawa peralatan pribadi (alat tulis, lap tangan, celemek, sepatu, sandal)' },
+  ]},
+  { no:2, label:'Pencapaian Keagamaan', items:[
+    { label:'Ibadah Harian', opts:['—','A','B','C'], weekly:true },
+    { label:'Tahsin', opts:['—','Lancar','Tidak Lancar'], weekly:true },
+    { label:'Tahfidz', opts:['—','Lancar','Tidak Lancar'], weekly:true },
+    { label:'Hadis/Doa' },
+  ]},
+  { no:3, label:'Pencapaian Umum', items:[
+    { label:'Pencapaian Umum', opts:['—','A','B','C'], weekly:true },
+  ]},
+  { no:4, label:'Pencapaian Akhlak', items:[
+    { label:'Pencapaian Akhlak', opts:['—','A','B','C'], weekly:true },
+  ]},
+  { no:5, label:'Pesan Khusus', items:[
+    { label:'Pesan Khusus Fasilitator', type:'text', weekly:true },
+  ]},
+];
+const BUKU_KAT_SMP = [
+  { no:1, label:'Kedisiplinan', items:[
+    { label:'Hadir di sekolah tepat waktu' },
+    { label:'Mengumpulkan tugas tepat waktu' },
+    { label:'Membawa perlengkapan pribadi (Laptop, Alquran, Al-ma\'tsurat, dll.)' },
+    { label:'Menggunakan seragam sesuai jadwal' },
+  ]},
+  { no:2, label:'Pencapaian Ibadah Harian', items:[
+    { label:'Pencapaian Ibadah Harian', opts:['—','A','B','C'], weekly:true },
+    { label:'Tahsin', opts:['—','Lancar','Tidak Lancar'], weekly:true },
+    { label:'Tahfidz', opts:['—','Lancar','Tidak Lancar'], weekly:true },
+    { label:'Pencapaian Umum', opts:['—','A','B','C'], weekly:true },
+    { label:'Pencapaian Akhlak', opts:['—','A','B','C'], weekly:true },
+  ]},
+  { no:3, label:'Pesan Khusus', items:[
+    { label:'Pesan Khusus Fasilitator', type:'text', weekly:true },
+  ]},
+];
+const BUKU_KAT_SMA = [
+  { no:1, label:'Kedisiplinan', items:[
+    { label:'Hadir di sekolah tepat waktu' },
+    { label:'Mengumpulkan tugas/menyelesaikan project tepat waktu' },
+    { label:'Membawa perlengkapan pribadi (Laptop, Alquran, Al-ma\'tsurat, dll.)' },
+    { label:'Menggunakan seragam sesuai jadwal (termasuk sepatu & sandal)' },
+  ]},
+  { no:2, label:'Pencapaian Keagamaan', items:[
+    { label:'Pencapaian Ibadah Harian', opts:['—','A','B','C'], weekly:true },
+    { label:'Perkembangan capaian Tahsin', opts:['—','Lancar','Tidak Lancar'], weekly:true },
+    { label:'Perkembangan capaian Tahfiz', opts:['—','Lancar','Tidak Lancar'], weekly:true },
+  ]},
+  { no:3, label:'Pencapaian Akhlak', items:[
+    { label:'Progres pembiasaan Akhlak dan Adab', opts:['—','A','B','C'], weekly:true },
+  ]},
+  { no:4, label:'Pencapaian Umum', items:[
+    { label:'Progres perkembangan ilmu pengetahuan', opts:['—','A','B','C'], weekly:true },
+  ]},
+  { no:5, label:'Pesan Khusus', items:[
+    { label:'Pesan Khusus Fasilitator', type:'text', weekly:true },
+  ]},
+];
+const BUKU_KAT_BY_JENJANG = {
+  'TK':  BUKU_KAT_TK,
+  'SD':  BUKU_KAT_SD,
+  'SMP': BUKU_KAT_SMP,
+  'SMA': BUKU_KAT_SMA,
+};
+
+// Indikator buku ortu (di rumah) — struktur lama, tidak berubah
+const BUKU_KAT_ORTU = [
+  { no:1, label:'Pembiasaan Ibadah Harian', items:[
+    { label:'Shalat Subuh' },{ label:'Shalat Dzuhur' },{ label:'Shalat Ashar' },
+    { label:'Shalat Maghrib' },{ label:'Shalat Isya' },{ label:'Shalat Dhuha' },
+    { label:'Shalat Tahajud' },{ label:'Membaca Dzikir Pagi dan Petang' },
+    { label:'Murajaah Hafalan Alquran' },{ label:'Membaca Alquran ½ juz per hari' },
+  ]},
+  { no:2, label:'Kedisiplinan', items:[
+    { label:'Tidur maksimal pukul 21.00 WIB' },
+    { label:'Bangun tidur sebelum adzan subuh / maks. 05.30 WIB' },
+    { label:'Membawa bekal makanan sehat dan bergizi seimbang' },
+    { label:'Penggunaan HP/TV maksimal 30 menit' },
+    { label:'Belajar minimal 15–30 menit selama di rumah' },
+  ]},
+  { no:3, label:'Memuliakan Orangtua', items:[
+    { label:'Merapikan tempat tidur' },{ label:'Mencuci piring setelah makan' },
+    { label:'Menyapu / mengepel lantai' },{ label:'Memijat orangtua (minimal 1 pekan sekali)' },
+  ]},
+];
+
 const KPI_HARIAN_ITEMS = [
   'Mengisi absensi hadir tepat waktu',
   'Berpakaian rapi, sopan, dan sesuai ketentuan sekolah',
@@ -301,7 +399,7 @@ let jadwal = { jamBuka:'05:00', jamTutup:'08:00', jamBukaSore:'15:00', jamTutupS
 let pagiRows = [];
 let soreRows = [];
 let kpiHarianRows = KPI_HARIAN_ITEMS.map(lbl => ({ label: lbl, nilai: null }));
-let bukuGuruState = {}, bukuOrtuState = {};
+let bukuGuruState = {}, bukuOrtuState = {}, siswaJenjangMap = {};
 
 const TODAY_ISO = new Date().toISOString().split('T')[0];
 const TODAY_LABEL = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -380,8 +478,9 @@ if (tipeGuru !== 'mapel') {
       filterParts.length = 0; // reset badge filter
     }
 
-    // Isi dropdown
+    // Isi dropdown + bangun peta jenjang
     murid.forEach(m => {
+      siswaJenjangMap[m.nama] = (m.jenjang || '').toUpperCase();
       const opt = document.createElement('option');
       opt.value = m.nama;
       opt.textContent = m.nama + (m.kelas ? ' (' + m.kelas + ')' : '');
@@ -417,7 +516,7 @@ function iLbl(item){return typeof item==='string'?item:item.label;}
 function iOpts(item){const opts=(typeof item==='object'&&item.opts)?item.opts:['—','✓','✗'];return opts.map(o=>`<option value="${o}">${o}</option>`).join('');}
 function valCls(v){if(v==='✓'||v==='Lancar'||v==='A')return'v-check';if(v==='✗'||v==='Tidak Lancar'||v==='C')return'v-cross';if(v==='B')return'v-warn';return'v-minus';}
 function styleDay(sel){sel.className='day-sel '+valCls(sel.value);}
-function emptyBukuData(){const data={};BUKU_KAT.forEach((kat,ki)=>{data[ki]={};kat.items.forEach((item,ii)=>{data[ki][ii]={};if(item.weekly){data[ki][ii]['Senin']='—';}else{HARI.forEach(h=>{data[ki][ii][h]='—';});}});});return{data};}
+function emptyBukuData(jenjang){const kat=BUKU_KAT_BY_JENJANG[(jenjang||'').toUpperCase()]||BUKU_KAT_SD;const data={};kat.forEach((k,ki)=>{data[ki]={};k.items.forEach((item,ii)=>{data[ki][ii]={};if(item.weekly){data[ki][ii]['Senin']=item.type==='text'?'':'—';}else{HARI.forEach(h=>{data[ki][ii][h]='—';});}});});return{data};}
 function timeToMin(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
 function isWindowOpen(buka,tutup){const now=new Date();const hhmm=now.getHours()*60+now.getMinutes();const b=timeToMin(buka),c=timeToMin(tutup);if(b>c)return hhmm>=b||hhmm<c;return hhmm>=b&&hhmm<c;}
 function lsKey(prefix){return prefix+'_'+currentUser.nama+'_'+TODAY_ISO;}
@@ -689,14 +788,17 @@ function showKpiRekap(totalSkor) {
 // ══════════════════════════════════════════
 function loadBukuGuru(){
   const siswa=document.getElementById('siswa-select').value;if(!siswa)return;
+  const jenjang=siswaJenjangMap[siswa]||'';
   if(!bukuGuruState[siswa]){
-    const d=emptyBukuData();d.status='Draft';bukuGuruState[siswa]=d;
-    apiCall('getBukuGuru',{siswa}).then(res=>{if(res.ok&&res.data){bukuGuruState[siswa]={...res.data};}renderBukuGuruForm(siswa);});
+    const d=emptyBukuData(jenjang);d.status='Draft';d.jenjang=jenjang;bukuGuruState[siswa]=d;
+    apiCall('getBukuGuru',{siswa,jenjang}).then(res=>{if(res.ok&&res.data){bukuGuruState[siswa]={...res.data,jenjang};}renderBukuGuruForm(siswa);});
   }else{renderBukuGuruForm(siswa);}
   apiCall('getBukuOrtu',{siswa}).then(res=>{if(res.ok&&res.data){bukuOrtuState[siswa]=res.data;}renderCatatanOrtu(siswa);});
 }
 function renderBukuGuruForm(siswa){
   const el=document.getElementById('buku-guru-content');const st=bukuGuruState[siswa];
+  const jenjang=(st.jenjang||'').toUpperCase();
+  const kat=BUKU_KAT_BY_JENJANG[jenjang]||BUKU_KAT_SD;
   let html=`<div class="approval-bar">
     <div><div style="font-size:14px;font-weight:800">📚 ${siswa}</div>
     <div style="margin-top:4px">${st.status==='Published'?'<span class="badge badge-approved">✅ Sudah Dipublish</span>':'<span class="badge badge-draft">⏳ Draft</span>'}</div></div>
@@ -709,11 +811,15 @@ function renderBukuGuruForm(siswa){
     <thead><tr><th style="width:32px">No</th><th>Aktivitas</th>
     ${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}</tr></thead><tbody>`;
   let rn=1;
-  BUKU_KAT.forEach((kat,ki)=>{
-    html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
-    kat.items.forEach((item,ii)=>{
+  kat.forEach((k,ki)=>{
+    html+=`<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${k.no}. ${k.label}</td></tr>`;
+    k.items.forEach((item,ii)=>{
       const lbl=iLbl(item);
-      if(item.weekly){
+      if(item.type==='text'&&item.weekly){
+        const val=st.data[ki]&&st.data[ki][ii]?st.data[ki][ii]['Senin']||'':'';
+        html+=`<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${lbl}</td>
+          <td class="hari-td" colspan="${HARI.length}" style="padding:4px 6px"><textarea style="width:100%;font-size:11px;padding:4px 6px;border:1px solid var(--gray-300);border-radius:4px;resize:vertical;min-height:56px;box-sizing:border-box" data-ki="${ki}" data-ii="${ii}" data-h="Senin" oninput="setBukuGuru('${siswa}',${ki},${ii},'Senin',this.value)">${val}</textarea></td></tr>`;
+      } else if(item.weekly){
         const val=st.data[ki]&&st.data[ki][ii]?st.data[ki][ii]['Senin']||'—':'—';
         const cls=valCls(val);
         html+=`<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${lbl}</td>
@@ -730,8 +836,8 @@ function renderBukuGuruForm(siswa){
   el.querySelectorAll('select.day-sel[data-ki]').forEach(sel=>{const ki=sel.dataset.ki,ii=sel.dataset.ii,h=sel.dataset.h;sel.value=st.data[ki]&&st.data[ki][ii]?st.data[ki][ii][h]||'—':'—';styleDay(sel);});
 }
 function setBukuGuru(siswa,ki,ii,h,val){if(bukuGuruState[siswa]){bukuGuruState[siswa].data[ki][ii][h]=val;bukuGuruState[siswa].status='Draft';}}
-function saveBukuDraft(siswa){const st=bukuGuruState[siswa];apiCall('saveBukuGuru',{siswa,minggu:'Minggu Ini',data:JSON.stringify(st.data)}).then(res=>{res.ok?toast('✅ Draft tersimpan!'):toast('⚠️ '+res.error,true);});}
-function publishBuku(siswa){const st=bukuGuruState[siswa];toast('📤 Menyimpan...');apiCall('saveBukuGuru',{siswa,minggu:'Minggu Ini',data:JSON.stringify(st.data)}).then(()=>apiCall('publishBukuGuru',{siswa})).then(res=>{if(res.ok){st.status='Published';renderBukuGuruForm(siswa);toast('📤 Buku '+siswa+' dipublish ke orangtua!');}else toast('⚠️ '+res.error,true);});}
+function saveBukuDraft(siswa){const st=bukuGuruState[siswa];apiCall('saveBukuGuru',{siswa,jenjang:st.jenjang||'',minggu:'Minggu Ini',data:JSON.stringify(st.data)}).then(res=>{res.ok?toast('✅ Draft tersimpan!'):toast('⚠️ '+res.error,true);});}
+function publishBuku(siswa){const st=bukuGuruState[siswa];toast('📤 Menyimpan...');apiCall('saveBukuGuru',{siswa,jenjang:st.jenjang||'',minggu:'Minggu Ini',data:JSON.stringify(st.data)}).then(()=>apiCall('publishBukuGuru',{siswa})).then(res=>{if(res.ok){st.status='Published';renderBukuGuruForm(siswa);toast('📤 Buku '+siswa+' dipublish ke orangtua!');}else toast('⚠️ '+res.error,true);});}
 function refreshCatatanOrtu(){
   const siswa=document.getElementById('siswa-select').value;
   if(!siswa){toast('⚠️ Pilih siswa terlebih dahulu',true);return;}
@@ -753,7 +859,7 @@ function renderCatatanOrtu(siswa){
   let html='';
   list.forEach((e,idx)=>{
     let cek=0,tot=0;
-    BUKU_KAT.forEach((kat,ki)=>kat.items.forEach((item,ii)=>{if(item.weekly){tot++;const v=e.data&&e.data[ki]&&e.data[ki][ii]?e.data[ki][ii]['Senin']||'—':'—';if(v==='A'||v==='Lancar'||v==='✓')cek++;}else{HARI.forEach(h=>{tot++;const v=e.data&&e.data[ki]&&e.data[ki][ii]?e.data[ki][ii][h]||'—':'—';if(v==='✓'||v==='Lancar'||v==='A')cek++;});}}));
+    BUKU_KAT_ORTU.forEach((kat,ki)=>kat.items.forEach((_,ii)=>HARI.forEach(h=>{tot++;const v=e.data&&e.data[ki]&&e.data[ki][ii]?e.data[ki][ii][h]||'—':'—';if(v==='✓')cek++;})));
     const pct=tot?Math.round(cek/tot*100):0;
     const pc=pct>=70?'#1B5E20':pct>=40?'#E65100':'#B71C1C';
     html+=`<div style="border:1px solid var(--gray-200);border-radius:8px;margin-bottom:10px;overflow:hidden">
@@ -773,10 +879,12 @@ function renderCatatanOrtu(siswa){
         <div id="oe-view-${idx}">
           <table style="width:100%;border-collapse:collapse;font-size:11px">
             <thead><tr style="background:var(--gray-100)"><th style="padding:4px 6px;text-align:left">Aktivitas</th>${HARI_SHORT.map(h=>`<th style="padding:4px 6px;text-align:center;width:36px">${h}</th>`).join('')}</tr></thead><tbody>
-            ${BUKU_KAT.map((kat,ki)=>`
+            ${BUKU_KAT_ORTU.map((kat,ki)=>`
               <tr><td colspan="${1+HARI.length}" style="padding:4px 6px;font-weight:700;font-size:10px;color:var(--gray-500);background:var(--gray-100)">${kat.no}. ${kat.label}</td></tr>
-              ${kat.items.map((item,ii)=>{const lbl=iLbl(item);if(item.weekly){const v=(e.data&&e.data[ki]&&e.data[ki][ii])?e.data[ki][ii]['Senin']||'—':'—';const s=v==='A'?'color:#1B5E20;font-weight:800':v==='C'?'color:#C62828;font-weight:800':v==='B'?'color:#E65100;font-weight:800':'color:var(--gray-300)';return`<tr><td style="padding:3px 6px;font-size:11px">${lbl}</td><td colspan="${HARI.length}" style="padding:3px 6px;text-align:center;${s}">${v}</td></tr>`;}return`<tr><td style="padding:3px 6px;font-size:11px">${lbl}</td>${HARI.map(h=>{const v=(e.data&&e.data[ki]&&e.data[ki][ii])?e.data[ki][ii][h]||'—':'—';const s=v==='✓'||v==='Lancar'||v==='A'?'color:#1B5E20;font-weight:800':v==='✗'||v==='Tidak Lancar'||v==='C'?'color:#C62828;font-weight:800':v==='B'?'color:#E65100;font-weight:800':'color:var(--gray-300)';return`<td style="padding:3px 6px;text-align:center;${s}">${v}</td>`;}).join('')}</tr>`;}).join('')}
+              ${kat.items.map((item,ii)=>`<tr><td style="padding:3px 6px;font-size:11px">${iLbl(item)}</td>${HARI.map(h=>{const v=(e.data&&e.data[ki]&&e.data[ki][ii])?e.data[ki][ii][h]||'—':'—';const s=v==='✓'?'color:#1B5E20;font-weight:800':v==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-300)';return`<td style="padding:3px 6px;text-align:center;${s}">${v}</td>`;}).join('')}</tr>`).join('')}
             `).join('')}
+            <tr><td colspan="${1+HARI.length}" style="padding:4px 6px;font-weight:700;font-size:10px;color:var(--gray-500);background:var(--gray-100)">4. Taklim</td></tr>
+            <tr><td style="padding:3px 6px;font-size:11px">Tema Taklim</td>${HARI.map(h=>{const t=e.taklim&&e.taklim[h]?e.taklim[h]:{tema:'—',val:'—'};const s=t.val==='✓'?'color:#1B5E20;font-weight:800':t.val==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-300)';return`<td style="padding:3px 6px;text-align:center"><div style="font-size:10px;color:var(--gray-500)">${t.tema||'—'}</div><div style="${s}">${t.val}</div></td>`;}).join('')}</tr>
           </tbody></table>
         </div>
         <div id="oe-edit-${idx}" style="display:none"></div>
@@ -811,10 +919,12 @@ function editOrtuEntry(siswa,idx){
   viewEl.style.display='none';
   let html=`<table style="width:100%;border-collapse:collapse;font-size:11px" id="oe-edit-tbl-${idx}">
     <thead><tr style="background:var(--gray-100)"><th style="padding:4px 6px;text-align:left">Aktivitas</th>${HARI_SHORT.map(h=>`<th style="padding:4px 6px;text-align:center;width:52px">${h}</th>`).join('')}</tr></thead><tbody>
-    ${BUKU_KAT.map((kat,ki)=>`
+    ${BUKU_KAT_ORTU.map((kat,ki)=>`
       <tr><td colspan="${1+HARI.length}" style="padding:4px 6px;font-weight:700;font-size:10px;color:var(--gray-500);background:var(--gray-100)">${kat.no}. ${kat.label}</td></tr>
-      ${kat.items.map((item,ii)=>{const lbl=iLbl(item);if(item.weekly){const v=(entry.data&&entry.data[ki]&&entry.data[ki][ii])?entry.data[ki][ii]['Senin']||'—':'—';return`<tr><td style="padding:3px 6px;font-size:11px">${lbl}</td><td colspan="${HARI.length}" style="padding:3px 4px;text-align:center"><select class="day-sel" data-ki="${ki}" data-ii="${ii}" data-h="Senin" style="width:120px" onchange="_styleDayGuru(this)">${iOpts(item)}</select></td></tr>`;}return`<tr><td style="padding:3px 6px;font-size:11px">${lbl}</td>${HARI.map(h=>{return`<td style="padding:3px 4px;text-align:center"><select class="day-sel" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="_styleDayGuru(this)">${iOpts(item)}</select></td>`;}).join('')}</tr>`;}).join('')}
+      ${kat.items.map((item,ii)=>`<tr><td style="padding:3px 6px;font-size:11px">${iLbl(item)}</td>${HARI.map(h=>`<td style="padding:3px 4px;text-align:center"><select class="day-sel" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="_styleDayGuru(this)"><option>—</option><option>✓</option><option>✗</option></select></td>`).join('')}</tr>`).join('')}
     `).join('')}
+    <tr><td colspan="${1+HARI.length}" style="padding:4px 6px;font-weight:700;font-size:10px;color:var(--gray-500);background:var(--gray-100)">4. Taklim</td></tr>
+    <tr><td style="padding:3px 6px;font-size:11px">Tema Taklim</td>${HARI.map(h=>`<td style="padding:3px 4px;min-width:72px"><input type="text" style="width:100%;font-size:10px;border:1px solid #ddd;border-radius:4px;padding:2px 4px" placeholder="Tema" data-taklim-tema="${h}"/><select class="day-sel v-minus" data-taklim-val="${h}" onchange="_styleDayGuru(this)"><option>—</option><option>✓</option><option>✗</option></select></td>`).join('')}</tr>
   </tbody></table>
   <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
     <button class="btn btn-outline" style="font-size:12px;padding:4px 12px" onclick="cancelEditOrtu(${idx})">✖ Batal</button>
@@ -827,6 +937,11 @@ function editOrtuEntry(siswa,idx){
     const v=(entry.data[sel.dataset.ki]&&entry.data[sel.dataset.ki][sel.dataset.ii])?entry.data[sel.dataset.ki][sel.dataset.ii][sel.dataset.h]||'—':'—';
     sel.value=v;_styleDayGuru(sel);
   });
+  // Prefill taklim fields
+  if(entry.taklim){
+    tbl.querySelectorAll('[data-taklim-tema]').forEach(inp=>{const t=entry.taklim[inp.dataset.taklimTema];inp.value=t?t.tema||'':'';});
+    tbl.querySelectorAll('[data-taklim-val]').forEach(sel=>{const t=entry.taklim[sel.dataset.taklimVal];sel.value=t?t.val||'—':'—';_styleDayGuru(sel);});
+  }
 }
 function cancelEditOrtu(idx){
   document.getElementById('oe-view-'+idx).style.display='';
@@ -836,13 +951,20 @@ function saveEditOrtu(siswa,idx){
   const entry=bukuOrtuState[siswa]&&bukuOrtuState[siswa][idx];if(!entry)return;
   const tbl=document.getElementById('oe-edit-tbl-'+idx);
   const newData={};
-  BUKU_KAT.forEach((kat,ki)=>{newData[ki]={};kat.items.forEach((item,ii)=>{newData[ki][ii]={};if(item.weekly){newData[ki][ii]['Senin']='—';}else{HARI.forEach(h=>{newData[ki][ii][h]='—';});}});});
+  BUKU_KAT_ORTU.forEach((kat,ki)=>{newData[ki]={};kat.items.forEach((_,ii)=>{newData[ki][ii]={};HARI.forEach(h=>{newData[ki][ii][h]='—';});});});
   tbl.querySelectorAll('select[data-ki]').forEach(sel=>{newData[sel.dataset.ki][sel.dataset.ii][sel.dataset.h]=sel.value;});
+  // Collect taklim
+  const newTaklim={};
+  tbl.querySelectorAll('[data-taklim-tema]').forEach(inp=>{const h=inp.dataset.taklimTema;if(!newTaklim[h])newTaklim[h]={};newTaklim[h].tema=inp.value||'—';});
+  tbl.querySelectorAll('[data-taklim-val]').forEach(sel=>{const h=sel.dataset.taklimVal;if(!newTaklim[h])newTaklim[h]={};newTaklim[h].val=sel.value||'—';});
+  // Store _tema from Senin for compatibility
+  if(newTaklim['Senin'])newTaklim['_tema']=newTaklim['Senin'].tema;
   toast('💾 Menyimpan...');
-  apiCall('saveBukuOrtu',{siswa,tanggal:entry.tanggal,data:JSON.stringify(newData)})
+  apiCall('saveBukuOrtu',{siswa,tanggal:entry.tanggal,data:JSON.stringify(newData),taklim:JSON.stringify(newTaklim)})
     .then(res=>{
       if(res.ok){
         entry.data=newData;
+        entry.taklim=newTaklim;
         cancelEditOrtu(idx);
         renderCatatanOrtu(siswa);
         // Re-expand entry yang baru diedit

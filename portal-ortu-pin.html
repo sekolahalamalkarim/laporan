@@ -251,20 +251,114 @@
 <script>
 const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat'];
 const HARI_SHORT = ['Sen','Sel','Rab','Kam','Jum'];
-const BUKU_KAT = [
+const BUKU_KAT_TK = [
   { no:1, label:'Kedisiplinan', items:[
     { label:'Hadir tepat waktu' },
-    { label:'Membawa perlengkapan pribadi' },
+    { label:'Membawa perlengkapan pribadi (celemek, lap tangan, lap serbaguna, sajadah)' },
   ]},
-  { no:2, label:'Keagamaan', items:[
-    { label:'Sholat Dhuha' },
-    { label:'Sholat Zuhur' },
-    { label:'Hadis/Doa' },
-    { label:'Tahsin', opts:['—','Lancar','Tidak Lancar'] },
-    { label:'Tahfidz', opts:['—','Lancar','Tidak Lancar'] },
+  { no:2, label:'Pencapaian Keagamaan', items:[
+    { label:'Membaca Iqro' },
+    { label:'Hafalan Al-Qur\'an Surah' },
+    { label:'Hafalan Doa' },
+    { label:'Hafalan Hadis' },
+    { label:'Bacaan Wudhu (Niat + doa setelah)' },
+    { label:'Bacaan Sholat (takbiratul ihram s.d. tasyahud akhir)' },
   ]},
-  { no:3, label:'Pengetahuan Umum', items:[
+  { no:3, label:'Pencapaian Membaca', items:[
+    { label:'Pencapaian Membaca' },
+  ]},
+  { no:4, label:'Pencapaian Umum', items:[
     { label:'Pencapaian Umum', opts:['—','A','B','C'], weekly:true },
+  ]},
+  { no:5, label:'Pesan Khusus', items:[
+    { label:'Pesan Khusus Fasilitator', type:'text', weekly:true },
+  ]},
+];
+const BUKU_KAT_SD = [
+  { no:1, label:'Kedisiplinan', items:[
+    { label:'Hadir tepat waktu' },
+    { label:'Mengumpulkan tugas tepat waktu' },
+    { label:'Membawa peralatan pribadi (alat tulis, lap tangan, celemek, sepatu, sandal)' },
+  ]},
+  { no:2, label:'Pencapaian Keagamaan', items:[
+    { label:'Ibadah Harian', opts:['—','A','B','C'], weekly:true },
+    { label:'Tahsin', opts:['—','Lancar','Tidak Lancar'], weekly:true },
+    { label:'Tahfidz', opts:['—','Lancar','Tidak Lancar'], weekly:true },
+    { label:'Hadis/Doa' },
+  ]},
+  { no:3, label:'Pencapaian Umum', items:[
+    { label:'Pencapaian Umum', opts:['—','A','B','C'], weekly:true },
+  ]},
+  { no:4, label:'Pencapaian Akhlak', items:[
+    { label:'Pencapaian Akhlak', opts:['—','A','B','C'], weekly:true },
+  ]},
+  { no:5, label:'Pesan Khusus', items:[
+    { label:'Pesan Khusus Fasilitator', type:'text', weekly:true },
+  ]},
+];
+const BUKU_KAT_SMP = [
+  { no:1, label:'Kedisiplinan', items:[
+    { label:'Hadir di sekolah tepat waktu' },
+    { label:'Mengumpulkan tugas tepat waktu' },
+    { label:'Membawa perlengkapan pribadi (Laptop, Alquran, Al-ma\'tsurat, dll.)' },
+    { label:'Menggunakan seragam sesuai jadwal' },
+  ]},
+  { no:2, label:'Pencapaian Ibadah Harian', items:[
+    { label:'Pencapaian Ibadah Harian', opts:['—','A','B','C'], weekly:true },
+    { label:'Tahsin', opts:['—','Lancar','Tidak Lancar'], weekly:true },
+    { label:'Tahfidz', opts:['—','Lancar','Tidak Lancar'], weekly:true },
+    { label:'Pencapaian Umum', opts:['—','A','B','C'], weekly:true },
+    { label:'Pencapaian Akhlak', opts:['—','A','B','C'], weekly:true },
+  ]},
+  { no:3, label:'Pesan Khusus', items:[
+    { label:'Pesan Khusus Fasilitator', type:'text', weekly:true },
+  ]},
+];
+const BUKU_KAT_SMA = [
+  { no:1, label:'Kedisiplinan', items:[
+    { label:'Hadir di sekolah tepat waktu' },
+    { label:'Mengumpulkan tugas/menyelesaikan project tepat waktu' },
+    { label:'Membawa perlengkapan pribadi (Laptop, Alquran, Al-ma\'tsurat, dll.)' },
+    { label:'Menggunakan seragam sesuai jadwal (termasuk sepatu & sandal)' },
+  ]},
+  { no:2, label:'Pencapaian Keagamaan', items:[
+    { label:'Pencapaian Ibadah Harian', opts:['—','A','B','C'], weekly:true },
+    { label:'Perkembangan capaian Tahsin', opts:['—','Lancar','Tidak Lancar'], weekly:true },
+    { label:'Perkembangan capaian Tahfiz', opts:['—','Lancar','Tidak Lancar'], weekly:true },
+  ]},
+  { no:3, label:'Pencapaian Akhlak', items:[
+    { label:'Progres pembiasaan Akhlak dan Adab', opts:['—','A','B','C'], weekly:true },
+  ]},
+  { no:4, label:'Pencapaian Umum', items:[
+    { label:'Progres perkembangan ilmu pengetahuan', opts:['—','A','B','C'], weekly:true },
+  ]},
+  { no:5, label:'Pesan Khusus', items:[
+    { label:'Pesan Khusus Fasilitator', type:'text', weekly:true },
+  ]},
+];
+const BUKU_KAT_BY_JENJANG = {
+  'TK':  BUKU_KAT_TK,
+  'SD':  BUKU_KAT_SD,
+  'SMP': BUKU_KAT_SMP,
+  'SMA': BUKU_KAT_SMA,
+};
+const BUKU_KAT_ORTU = [
+  { no:1, label:'Pembiasaan Ibadah Harian', items:[
+    { label:'Shalat Subuh' },{ label:'Shalat Dzuhur' },{ label:'Shalat Ashar' },
+    { label:'Shalat Maghrib' },{ label:'Shalat Isya' },{ label:'Shalat Dhuha' },
+    { label:'Shalat Tahajud' },{ label:'Membaca Dzikir Pagi dan Petang' },
+    { label:'Murajaah Hafalan Alquran' },{ label:'Membaca Alquran ½ juz per hari' },
+  ]},
+  { no:2, label:'Kedisiplinan', items:[
+    { label:'Tidur maksimal pukul 21.00 WIB' },
+    { label:'Bangun tidur sebelum adzan subuh / maks. 05.30 WIB' },
+    { label:'Membawa bekal makanan sehat dan bergizi seimbang' },
+    { label:'Penggunaan HP/TV maksimal 30 menit' },
+    { label:'Belajar minimal 15–30 menit selama di rumah' },
+  ]},
+  { no:3, label:'Memuliakan Orangtua', items:[
+    { label:'Merapikan tempat tidur' },{ label:'Mencuci piring setelah makan' },
+    { label:'Menyapu / mengepel lantai' },{ label:'Memijat orangtua (minimal 1 pekan sekali)' },
   ]},
 ];
 const TODAY = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -400,7 +494,7 @@ function enterPortal(murid) {
   document.getElementById('tanggal-badge').textContent = '📅 ' + TODAY;
 
   // Load data
-  apiCall('getBukuGuru', { siswa: murid.nama }).then(res => {
+  apiCall('getBukuGuru', { siswa: murid.nama, jenjang: murid.jenjang }).then(res => {
     if (res.ok && res.data) bukuGuruState = res.data;
     renderLaporanGuru();
   });
@@ -441,12 +535,16 @@ function renderLaporanGuru() {
   let html = `<div class="success-banner">✅ Laporan aktivitas <strong>${selectedMurid.nama}</strong> di sekolah sudah tersedia.</div>
   <div class="table-wrapper"><table class="buku-table">
     <thead><tr><th style="width:32px">No</th><th>Aktivitas</th>${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}</tr></thead><tbody>`;
+  const kat = BUKU_KAT_BY_JENJANG[(selectedMurid.jenjang||'').toUpperCase()] || BUKU_KAT_SD;
   let rn = 1;
-  BUKU_KAT.forEach((kat,ki) => {
-    html += `<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
-    kat.items.forEach((item,ii) => {
+  kat.forEach((k,ki) => {
+    html += `<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${k.no}. ${k.label}</td></tr>`;
+    k.items.forEach((item,ii) => {
       const lbl = iLbl(item);
-      if (item.weekly) {
+      if (item.type==='text' && item.weekly) {
+        const val = st.data[ki]&&st.data[ki][ii]?st.data[ki][ii]['Senin']||'':'';
+        html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${lbl}</td><td class="hari-td" colspan="${HARI.length}" style="font-size:11px;color:var(--gray-700);font-style:italic;padding:6px 8px">${val||'—'}</td></tr>`;
+      } else if (item.weekly) {
         const val = st.data[ki]&&st.data[ki][ii]?st.data[ki][ii]['Senin']||'—':'—';
         const s = val==='A'?'color:#1B5E20;font-weight:800':val==='C'?'color:#C62828;font-weight:800':val==='B'?'color:#E65100;font-weight:800':'color:var(--gray-400)';
         html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${lbl}</td><td class="hari-td" colspan="${HARI.length}" style="text-align:center;${s}">${val}</td></tr>`;
@@ -467,20 +565,20 @@ function renderBukuOrtuForm(prefill) {
   let html = `<div class="table-wrapper"><table class="buku-table" id="ortu-buku-table">
     <thead><tr><th style="width:32px">No</th><th>Aktivitas</th>${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}</tr></thead><tbody>`;
   let rn = 1;
-  BUKU_KAT.forEach((kat,ki) => {
+  BUKU_KAT_ORTU.forEach((kat,ki) => {
     html += `<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
     kat.items.forEach((item,ii) => {
       const lbl = iLbl(item);
-      if (item.weekly) {
-        html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${lbl}</td>
-          <td class="hari-td" colspan="${HARI.length}" style="text-align:center"><select class="day-sel v-minus" style="width:120px" data-ki="${ki}" data-ii="${ii}" data-h="Senin" onchange="styleDay(this)">${iOpts(item)}</select></td></tr>`;
-      } else {
-        html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${lbl}</td>`;
-        HARI.forEach(h => { html += `<td class="hari-td"><select class="day-sel v-minus" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="styleDay(this)">${iOpts(item)}</select></td>`; });
-        html += '</tr>';
-      }
+      html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${lbl}</td>`;
+      HARI.forEach(h => { html += `<td class="hari-td"><select class="day-sel v-minus" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="styleDay(this)"><option>—</option><option>✓</option><option>✗</option></select></td>`; });
+      html += '</tr>';
     });
   });
+  // Taklim section
+  html += `<tr><td class="buku-kat-header" colspan="${2+HARI.length}">4. Taklim</td></tr>
+    <tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">Tema Taklim</td>
+    ${HARI.map(h=>`<td class="hari-td" style="min-width:72px"><input type="text" style="width:100%;font-size:10px;border:1px solid #ddd;border-radius:4px;padding:2px 4px;margin-bottom:2px" placeholder="Tema" data-taklim-tema="${h}"/><select class="day-sel v-minus" data-taklim-val="${h}" onchange="styleDay(this)"><option>—</option><option>✓</option><option>✗</option></select></td>`).join('')}
+    </tr>`;
   html += '</tbody></table></div>';
   el.innerHTML = html;
   // Prefill jika ada data (mode edit)
@@ -489,19 +587,28 @@ function renderBukuOrtuForm(prefill) {
       const v = (prefill.data[sel.dataset.ki]&&prefill.data[sel.dataset.ki][sel.dataset.ii]) ? prefill.data[sel.dataset.ki][sel.dataset.ii][sel.dataset.h]||'—' : '—';
       sel.value = v; styleDay(sel);
     });
+    if (prefill.taklim) {
+      el.querySelectorAll('[data-taklim-tema]').forEach(inp => { const t=prefill.taklim[inp.dataset.taklimTema]; inp.value=t?t.tema||'':''; });
+      el.querySelectorAll('[data-taklim-val]').forEach(sel => { const t=prefill.taklim[sel.dataset.taklimVal]; sel.value=t?t.val||'—':'—'; styleDay(sel); });
+    }
   }
 }
 
 function submitBukuOrtu() {
   const tbl = document.getElementById('ortu-buku-table'); if (!tbl) return;
   const entryData = {};
-  BUKU_KAT.forEach((kat,ki) => { entryData[ki]={}; kat.items.forEach((item,ii) => { entryData[ki][ii]={}; if(item.weekly){entryData[ki][ii]['Senin']='—';}else{HARI.forEach(h=>{entryData[ki][ii][h]='—';});} }); });
+  BUKU_KAT_ORTU.forEach((kat,ki) => { entryData[ki]={}; kat.items.forEach((_,ii) => { entryData[ki][ii]={}; HARI.forEach(h=>{entryData[ki][ii][h]='—';}); }); });
   tbl.querySelectorAll('select.day-sel[data-ki]').forEach(sel => { entryData[sel.dataset.ki][sel.dataset.ii][sel.dataset.h] = sel.value; });
-  bukuOrtuHistory.unshift({ siswa:selectedMurid.nama, tanggal:TODAY_ISO, data:entryData });
+  // Collect taklim
+  const taklim = {};
+  tbl.querySelectorAll('[data-taklim-tema]').forEach(inp => { const h=inp.dataset.taklimTema; if(!taklim[h])taklim[h]={}; taklim[h].tema=inp.value||'—'; });
+  tbl.querySelectorAll('[data-taklim-val]').forEach(sel => { const h=sel.dataset.taklimVal; if(!taklim[h])taklim[h]={}; taklim[h].val=sel.value||'—'; });
+  if(taklim['Senin']) taklim['_tema']=taklim['Senin'].tema;
+  bukuOrtuHistory.unshift({ siswa:selectedMurid.nama, tanggal:TODAY_ISO, data:entryData, taklim });
   // Jangan reset form — ceklis tetap tampil setelah kirim
   const btn = document.querySelector('button[onclick="submitBukuOrtu()"]');
   if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Mengirim...'; }
-  apiCall('saveBukuOrtu',{ siswa:selectedMurid.nama, tanggal:TODAY_ISO, data:JSON.stringify(entryData) })
+  apiCall('saveBukuOrtu',{ siswa:selectedMurid.nama, tanggal:TODAY_ISO, data:JSON.stringify(entryData), taklim:JSON.stringify(taklim) })
   .then(res => {
     if (res.ok) {
       toast('📤 Laporan berhasil dikirim ke guru!');
@@ -524,9 +631,8 @@ function renderRiwayatOrtu() {
   let html = '';
   list.forEach((e, idx) => {
     let ceklis = 0, total = 0;
-    BUKU_KAT.forEach((kat, ki) => kat.items.forEach((item, ii) => {
-      if (item.weekly) { total++; const v=e.data&&e.data[ki]&&e.data[ki][ii]?e.data[ki][ii]['Senin']||'—':'—'; if(v==='A'||v==='Lancar'||v==='✓')ceklis++; }
-      else { HARI.forEach(h => { total++; const v=e.data&&e.data[ki]&&e.data[ki][ii]?e.data[ki][ii][h]||'—':'—'; if(v==='✓'||v==='Lancar'||v==='A')ceklis++; }); }
+    BUKU_KAT_ORTU.forEach((kat, ki) => kat.items.forEach((_, ii) => {
+      HARI.forEach(h => { total++; const v=e.data&&e.data[ki]&&e.data[ki][ii]?e.data[ki][ii][h]||'—':'—'; if(v==='✓')ceklis++; });
     }));
     const pct = total ? Math.round(ceklis / total * 100) : 0;
     const barColor = pct >= 70 ? '#1B5E20' : pct >= 40 ? '#E65100' : '#B71C1C';
@@ -550,10 +656,12 @@ function renderRiwayatOrtu() {
             <th style="padding:4px 6px;text-align:left;font-weight:600">Aktivitas</th>
             ${HARI_SHORT.map(h=>`<th style="padding:4px 6px;text-align:center;width:36px">${h}</th>`).join('')}
           </tr></thead><tbody>
-          ${BUKU_KAT.map((kat,ki)=>`
+          ${BUKU_KAT_ORTU.map((kat,ki)=>`
             <tr><td colspan="${1+HARI.length}" style="padding:4px 6px;font-weight:700;font-size:10px;color:var(--gray-500);background:var(--gray-100)">${kat.no}. ${kat.label}</td></tr>
-            ${kat.items.map((item,ii)=>{const lbl=iLbl(item);if(item.weekly){const v=(e.data&&e.data[ki]&&e.data[ki][ii])?e.data[ki][ii]['Senin']||'—':'—';const s=v==='A'?'color:#1B5E20;font-weight:800':v==='C'?'color:#C62828;font-weight:800':v==='B'?'color:#E65100;font-weight:800':'color:var(--gray-300)';return`<tr><td style="padding:3px 6px;font-size:11px">${lbl}</td><td colspan="${HARI.length}" style="padding:3px 6px;text-align:center;${s}">${v}</td></tr>`;}return`<tr><td style="padding:3px 6px;font-size:11px">${lbl}</td>${HARI.map(h=>{const v=(e.data&&e.data[ki]&&e.data[ki][ii])?e.data[ki][ii][h]||'—':'—';const s=v==='✓'||v==='Lancar'||v==='A'?'color:#1B5E20;font-weight:800':v==='✗'||v==='Tidak Lancar'||v==='C'?'color:#C62828;font-weight:800':v==='B'?'color:#E65100;font-weight:800':'color:var(--gray-300)';return`<td style="padding:3px 6px;text-align:center;${s}">${v}</td>`;}).join('')}</tr>`;}).join('')}
+            ${kat.items.map((item,ii)=>`<tr><td style="padding:3px 6px;font-size:11px">${iLbl(item)}</td>${HARI.map(h=>{const v=(e.data&&e.data[ki]&&e.data[ki][ii])?e.data[ki][ii][h]||'—':'—';const s=v==='✓'?'color:#1B5E20;font-weight:800':v==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-300)';return`<td style="padding:3px 6px;text-align:center;${s}">${v}</td>`;}).join('')}</tr>`).join('')}
           `).join('')}
+          <tr><td colspan="${1+HARI.length}" style="padding:4px 6px;font-weight:700;font-size:10px;color:var(--gray-500);background:var(--gray-100)">4. Taklim</td></tr>
+          <tr><td style="padding:3px 6px;font-size:11px">Tema Taklim</td>${HARI.map(h=>{const t=e.taklim&&e.taklim[h]?e.taklim[h]:{tema:'—',val:'—'};const s=t.val==='✓'?'color:#1B5E20;font-weight:800':t.val==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-300)';return`<td style="padding:3px 6px;text-align:center;font-size:10px"><div style="color:var(--gray-700)">${t.tema||'—'}</div><div style="${s}">${t.val||'—'}</div></td>`;}).join('')}</tr>
         </tbody></table>
       </div>
     </div>`;
@@ -606,7 +714,7 @@ function hapusLaporan(idx) {
       document.getElementById('portal-anak-nama').textContent = murid.nama;
       document.getElementById('portal-anak-info').textContent = murid.kelas + ' · Jenjang ' + murid.jenjang + '  |  ' + TODAY;
       document.getElementById('tanggal-badge').textContent = '📅 ' + TODAY;
-      apiCall('getBukuGuru', { siswa: murid.nama }).then(res => {
+      apiCall('getBukuGuru', { siswa: murid.nama, jenjang: murid.jenjang }).then(res => {
         if (res.ok && res.data) bukuGuruState = res.data;
         renderLaporanGuru();
       });
@@ -624,9 +732,10 @@ function renderLaporanRekap() {
   const el = document.getElementById('laporan-rekap');
   const gs = bukuGuruState; const oe = bukuOrtuHistory;
   let gCheck=0,gTotal=0,oCheck=0,oTotal=0;
-  function _cntBuku(dataObj){let chk=0,tot=0;BUKU_KAT.forEach((kat,ki)=>kat.items.forEach((item,ii)=>{if(item.weekly){tot++;const v=dataObj&&dataObj[ki]&&dataObj[ki][ii]?dataObj[ki][ii]['Senin']||'—':'—';if(v==='A'||v==='Lancar'||v==='✓')chk++;}else{HARI.forEach(h=>{tot++;const v=dataObj&&dataObj[ki]&&dataObj[ki][ii]?dataObj[ki][ii][h]||'—':'—';if(v==='✓'||v==='Lancar'||v==='A')chk++;});}}));return{chk,tot};}
-  if (gs&&gs.status==='Published') { const r=_cntBuku(gs.data);gCheck=r.chk;gTotal=r.tot; }
-  if (oe&&oe[0]) { const r=_cntBuku(oe[0].data);oCheck=r.chk;oTotal=r.tot; }
+  function _cntGuru(dataObj){let chk=0,tot=0;const kat=BUKU_KAT_BY_JENJANG[(selectedMurid.jenjang||'').toUpperCase()]||BUKU_KAT_SD;kat.forEach((k,ki)=>k.items.forEach((item,ii)=>{if(item.type==='text')return;if(item.weekly){tot++;const v=dataObj&&dataObj[ki]&&dataObj[ki][ii]?dataObj[ki][ii]['Senin']||'—':'—';if(v==='A'||v==='Lancar'||v==='✓')chk++;}else{HARI.forEach(h=>{tot++;const v=dataObj&&dataObj[ki]&&dataObj[ki][ii]?dataObj[ki][ii][h]||'—':'—';if(v==='✓'||v==='Lancar'||v==='A')chk++;});}}));return{chk,tot};}
+  function _cntOrtu(dataObj){let chk=0,tot=0;BUKU_KAT_ORTU.forEach((kat,ki)=>kat.items.forEach((_,ii)=>{HARI.forEach(h=>{tot++;const v=dataObj&&dataObj[ki]&&dataObj[ki][ii]?dataObj[ki][ii][h]||'—':'—';if(v==='✓')chk++;});}));return{chk,tot};}
+  if (gs&&gs.status==='Published') { const r=_cntGuru(gs.data);gCheck=r.chk;gTotal=r.tot; }
+  if (oe&&oe[0]) { const r=_cntOrtu(oe[0].data);oCheck=r.chk;oTotal=r.tot; }
   const gPct = gTotal?Math.round(gCheck/gTotal*100):0;
   const oPct = oTotal?Math.round(oCheck/oTotal*100):0;
   el.innerHTML = `

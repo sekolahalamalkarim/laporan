@@ -509,48 +509,129 @@ async function _getTugasPimpinan({ karyawan }) {
   return { ok: true, data: data || [] };
 }
 
-/* ─── BUKU GURU ──────────────────────────────────────────────── */
+/* ─── BUKU GURU PER JENJANG ──────────────────────────────────── */
 
-const _BUKU_KAT = [
+const _BUKU_KAT_TK = [
   { no: 1, label: 'Kedisiplinan', items: [
     { label: 'Hadir tepat waktu' },
-    { label: 'Membawa perlengkapan pribadi' },
+    { label: 'Membawa perlengkapan pribadi (celemek, lap tangan, lap serbaguna, sajadah)' },
   ]},
-  { no: 2, label: 'Keagamaan', items: [
-    { label: 'Sholat Dhuha' },
-    { label: 'Sholat Zuhur' },
-    { label: 'Hadis/Doa' },
-    { label: 'Tahsin', opts: ['—','Lancar','Tidak Lancar'] },
-    { label: 'Tahfidz', opts: ['—','Lancar','Tidak Lancar'] },
+  { no: 2, label: 'Pencapaian Keagamaan', items: [
+    { label: 'Membaca Iqro' },
+    { label: 'Hafalan Al-Qur\'an Surah' },
+    { label: 'Hafalan Doa' },
+    { label: 'Hafalan Hadis' },
+    { label: 'Bacaan Wudhu (Niat + doa setelah)' },
+    { label: 'Bacaan Sholat (takbiratul ihram s.d. tasyahud akhir)' },
   ]},
-  { no: 3, label: 'Pengetahuan Umum', items: [
+  { no: 3, label: 'Pencapaian Membaca', items: [
+    { label: 'Pencapaian Membaca' },
+  ]},
+  { no: 4, label: 'Pencapaian Umum', items: [
     { label: 'Pencapaian Umum', opts: ['—','A','B','C'], weekly: true },
   ]},
+  { no: 5, label: 'Pesan Khusus', items: [
+    { label: 'Pesan Khusus Fasilitator', type: 'text', weekly: true },
+  ]},
 ];
+
+const _BUKU_KAT_SD = [
+  { no: 1, label: 'Kedisiplinan', items: [
+    { label: 'Hadir tepat waktu' },
+    { label: 'Mengumpulkan tugas tepat waktu' },
+    { label: 'Membawa peralatan pribadi (alat tulis, lap tangan, celemek, sepatu, sandal)' },
+  ]},
+  { no: 2, label: 'Pencapaian Keagamaan', items: [
+    { label: 'Ibadah Harian', opts: ['—','A','B','C'], weekly: true },
+    { label: 'Tahsin', opts: ['—','Lancar','Tidak Lancar'], weekly: true },
+    { label: 'Tahfidz', opts: ['—','Lancar','Tidak Lancar'], weekly: true },
+    { label: 'Hadis/Doa' },
+  ]},
+  { no: 3, label: 'Pencapaian Umum', items: [
+    { label: 'Pencapaian Umum', opts: ['—','A','B','C'], weekly: true },
+  ]},
+  { no: 4, label: 'Pencapaian Akhlak', items: [
+    { label: 'Pencapaian Akhlak', opts: ['—','A','B','C'], weekly: true },
+  ]},
+  { no: 5, label: 'Pesan Khusus', items: [
+    { label: 'Pesan Khusus Fasilitator', type: 'text', weekly: true },
+  ]},
+];
+
+const _BUKU_KAT_SMP = [
+  { no: 1, label: 'Kedisiplinan', items: [
+    { label: 'Hadir di sekolah tepat waktu' },
+    { label: 'Mengumpulkan tugas tepat waktu' },
+    { label: 'Membawa perlengkapan pribadi (Laptop, Alquran, Al-ma\'tsurat, dll.)' },
+    { label: 'Menggunakan seragam sesuai jadwal' },
+  ]},
+  { no: 2, label: 'Pencapaian Ibadah Harian', items: [
+    { label: 'Pencapaian Ibadah Harian', opts: ['—','A','B','C'], weekly: true },
+    { label: 'Tahsin', opts: ['—','Lancar','Tidak Lancar'], weekly: true },
+    { label: 'Tahfidz', opts: ['—','Lancar','Tidak Lancar'], weekly: true },
+    { label: 'Pencapaian Umum', opts: ['—','A','B','C'], weekly: true },
+    { label: 'Pencapaian Akhlak', opts: ['—','A','B','C'], weekly: true },
+  ]},
+  { no: 3, label: 'Pesan Khusus', items: [
+    { label: 'Pesan Khusus Fasilitator', type: 'text', weekly: true },
+  ]},
+];
+
+const _BUKU_KAT_SMA = [
+  { no: 1, label: 'Kedisiplinan', items: [
+    { label: 'Hadir di sekolah tepat waktu' },
+    { label: 'Mengumpulkan tugas/menyelesaikan project tepat waktu' },
+    { label: 'Membawa perlengkapan pribadi (Laptop, Alquran, Al-ma\'tsurat, dll.)' },
+    { label: 'Menggunakan seragam sesuai jadwal (termasuk sepatu & sandal)' },
+  ]},
+  { no: 2, label: 'Pencapaian Keagamaan', items: [
+    { label: 'Pencapaian Ibadah Harian', opts: ['—','A','B','C'], weekly: true },
+    { label: 'Perkembangan capaian Tahsin', opts: ['—','Lancar','Tidak Lancar'], weekly: true },
+    { label: 'Perkembangan capaian Tahfiz', opts: ['—','Lancar','Tidak Lancar'], weekly: true },
+  ]},
+  { no: 3, label: 'Pencapaian Akhlak', items: [
+    { label: 'Progres pembiasaan Akhlak dan Adab', opts: ['—','A','B','C'], weekly: true },
+  ]},
+  { no: 4, label: 'Pencapaian Umum', items: [
+    { label: 'Progres perkembangan ilmu pengetahuan', opts: ['—','A','B','C'], weekly: true },
+  ]},
+  { no: 5, label: 'Pesan Khusus', items: [
+    { label: 'Pesan Khusus Fasilitator', type: 'text', weekly: true },
+  ]},
+];
+
+const _BUKU_KAT_BY_JENJANG = {
+  'TK':  _BUKU_KAT_TK,
+  'SD':  _BUKU_KAT_SD,
+  'SMP': _BUKU_KAT_SMP,
+  'SMA': _BUKU_KAT_SMA,
+};
+
 const _HARI = ['Senin','Selasa','Rabu','Kamis','Jumat'];
 
-async function _saveBukuGuru({ siswa, minggu, data: dataRaw }) {
+async function _saveBukuGuru({ siswa, jenjang, minggu, data: dataRaw }) {
   if (!siswa) throw new Error('Nama siswa wajib');
   const mingguVal = minggu || 'Minggu Ini';
   const dataObj   = typeof dataRaw === 'string' ? JSON.parse(dataRaw) : (dataRaw || {});
+  const kat = _BUKU_KAT_BY_JENJANG[(jenjang || '').toUpperCase()] || _BUKU_KAT_SD;
 
   await _sb.from('buku_guru').delete().eq('siswa', siswa).eq('minggu', mingguVal);
 
   const rows = [];
-  _BUKU_KAT.forEach((kat, ki) => {
-    kat.items.forEach((item, ii) => {
+  kat.forEach((kategori, ki) => {
+    kategori.items.forEach((item, ii) => {
       const h = (dataObj[ki] && dataObj[ki][ii]) ? dataObj[ki][ii] : {};
       if (item.weekly) {
-        const wv = h['Senin'] || '—';
+        const wv = item.type === 'text' ? (h['Senin'] || '') : (h['Senin'] || '—');
         rows.push({
           siswa, minggu: mingguVal, status: 'Draft',
-          kat_no: kat.no, kategori: kat.label, no: ii + 1, aktivitas: item.label,
+          kat_no: kategori.no, kategori: kategori.label, no: ii + 1, aktivitas: item.label,
           senin: wv, selasa: '—', rabu: '—', kamis: '—', jumat: '—',
         });
       } else {
         rows.push({
           siswa, minggu: mingguVal, status: 'Draft',
-          kat_no: kat.no, kategori: kat.label, no: ii + 1, aktivitas: item.label,
+          kat_no: kategori.no, kategori: kategori.label, no: ii + 1, aktivitas: item.label,
           senin:  h['Senin']  || '—', selasa: h['Selasa'] || '—',
           rabu:   h['Rabu']   || '—', kamis:  h['Kamis']  || '—', jumat: h['Jumat'] || '—',
         });
@@ -565,20 +646,22 @@ async function _saveBukuGuru({ siswa, minggu, data: dataRaw }) {
   return { ok: true, message: `Buku penghubung ${siswa} berhasil disimpan` };
 }
 
-async function _getBukuGuru({ siswa }) {
+async function _getBukuGuru({ siswa, jenjang }) {
   const { data, error } = await _sb.from('buku_guru')
     .select('*').eq('siswa', siswa).order('kat_no').order('no');
   if (error) throw error;
   if (!data || !data.length) return { ok: true, data: null };
 
-  // Rekonstruksi objek data seperti yang diharapkan portal-guru.html
+  const kat = _BUKU_KAT_BY_JENJANG[(jenjang || '').toUpperCase()] || _BUKU_KAT_SD;
+
+  // Rekonstruksi objek data
   const dataObj = {};
-  _BUKU_KAT.forEach((kat, ki) => {
+  kat.forEach((kategori, ki) => {
     dataObj[ki] = {};
-    kat.items.forEach((item, ii) => {
+    kategori.items.forEach((item, ii) => {
       dataObj[ki][ii] = {};
       if (item.weekly) {
-        dataObj[ki][ii]['Senin'] = '—';
+        dataObj[ki][ii]['Senin'] = item.type === 'text' ? '' : '—';
       } else {
         _HARI.forEach(h => { dataObj[ki][ii][h] = '—'; });
       }
@@ -591,10 +674,10 @@ async function _getBukuGuru({ siswa }) {
     const ki = row.kat_no - 1;
     const ii = row.no - 1;
     if (ki < 0 || !dataObj[ki] || dataObj[ki][ii] === undefined) return;
-    const item = _BUKU_KAT[ki] && _BUKU_KAT[ki].items[ii];
+    const item = kat[ki] && kat[ki].items[ii];
     if (!item) return;
     if (item.weekly) {
-      dataObj[ki][ii]['Senin'] = row.senin || '—';
+      dataObj[ki][ii]['Senin'] = item.type === 'text' ? (row.senin || '') : (row.senin || '—');
     } else {
       _HARI.forEach(h => { dataObj[ki][ii][h] = row[h.toLowerCase()] || '—'; });
     }
@@ -625,32 +708,58 @@ async function _getAllBukuStatus() {
 
 /* ─── BUKU ORTU ──────────────────────────────────────────────── */
 
-async function _saveBukuOrtu({ siswa, tanggal, data: dataRaw }) {
+// Indikator buku ortu (di rumah) — berbeda dari guru, tidak berubah
+const _BUKU_KAT_ORTU = [
+  { no: 1, label: 'Pembiasaan Ibadah Harian', items: [
+    { label: 'Shalat Subuh' }, { label: 'Shalat Dzuhur' }, { label: 'Shalat Ashar' },
+    { label: 'Shalat Maghrib' }, { label: 'Shalat Isya' }, { label: 'Shalat Dhuha' },
+    { label: 'Shalat Tahajud' }, { label: 'Membaca Dzikir Pagi dan Petang' },
+    { label: 'Murajaah Hafalan Alquran' }, { label: 'Membaca Alquran ½ juz per hari' },
+  ]},
+  { no: 2, label: 'Kedisiplinan', items: [
+    { label: 'Tidur maksimal pukul 21.00 WIB' },
+    { label: 'Bangun tidur sebelum adzan subuh / maks. 05.30 WIB' },
+    { label: 'Membawa bekal makanan sehat dan bergizi seimbang' },
+    { label: 'Penggunaan HP/TV maksimal 30 menit' },
+    { label: 'Belajar minimal 15–30 menit selama di rumah' },
+  ]},
+  { no: 3, label: 'Memuliakan Orangtua', items: [
+    { label: 'Merapikan tempat tidur' }, { label: 'Mencuci piring setelah makan' },
+    { label: 'Menyapu / mengepel lantai' }, { label: 'Memijat orangtua (minimal 1 pekan sekali)' },
+  ]},
+];
+
+async function _saveBukuOrtu({ siswa, tanggal, data: dataRaw, taklim: taklimRaw }) {
   if (!siswa) throw new Error('Nama siswa wajib');
   const tgl     = tanggal || _isoToday();
-  const dataObj = typeof dataRaw === 'string' ? JSON.parse(dataRaw) : (dataRaw || {});
+  const dataObj = typeof dataRaw   === 'string' ? JSON.parse(dataRaw)   : (dataRaw   || {});
+  const taklim  = typeof taklimRaw === 'string' ? JSON.parse(taklimRaw) : (taklimRaw || {});
 
   await _sb.from('buku_ortu').delete().eq('siswa', siswa).eq('tanggal', tgl);
 
   const rows = [];
-  _BUKU_KAT.forEach((kat, ki) => {
+  _BUKU_KAT_ORTU.forEach((kat, ki) => {
     kat.items.forEach((item, ii) => {
       const h = (dataObj[ki] && dataObj[ki][ii]) ? dataObj[ki][ii] : {};
-      if (item.weekly) {
-        const wv = h['Senin'] || '—';
-        rows.push({
-          siswa, tanggal: tgl,
-          kat_no: kat.no, kategori: kat.label, no: ii + 1, aktivitas: item.label,
-          senin: wv, selasa: '—', rabu: '—', kamis: '—', jumat: '—',
-        });
-      } else {
-        rows.push({
-          siswa, tanggal: tgl,
-          kat_no: kat.no, kategori: kat.label, no: ii + 1, aktivitas: item.label,
-          senin:  h['Senin']  || '—', selasa: h['Selasa'] || '—',
-          rabu:   h['Rabu']   || '—', kamis:  h['Kamis']  || '—', jumat: h['Jumat'] || '—',
-        });
-      }
+      rows.push({
+        siswa, tanggal: tgl,
+        kat_no: kat.no, kategori: kat.label, no: ii + 1, aktivitas: item.label,
+        senin:  h['Senin']  || '—', selasa: h['Selasa'] || '—',
+        rabu:   h['Rabu']   || '—', kamis:  h['Kamis']  || '—', jumat: h['Jumat'] || '—',
+      });
+    });
+  });
+  _HARI.forEach(h => {
+    const t = taklim[h] || { val: '—' };
+    rows.push({
+      siswa, tanggal: tgl,
+      kat_no: 4, kategori: 'Taklim', no: 1,
+      aktivitas: 'Tema: ' + (taklim['_tema'] || '—'),
+      senin:  h === 'Senin'  ? (t.val || '—') : '—',
+      selasa: h === 'Selasa' ? (t.val || '—') : '—',
+      rabu:   h === 'Rabu'   ? (t.val || '—') : '—',
+      kamis:  h === 'Kamis'  ? (t.val || '—') : '—',
+      jumat:  h === 'Jumat'  ? (t.val || '—') : '—',
     });
   });
 
@@ -667,34 +776,36 @@ async function _getBukuOrtu({ siswa }) {
   if (error) throw error;
   if (!data || !data.length) return { ok: true, data: [] };
 
-  // Rekonstruksi per tanggal → format {tanggal, data}
+  // Rekonstruksi per tanggal → format {tanggal, data, taklim}
   const grouped = {};
   data.forEach(row => {
     if (!grouped[row.tanggal]) {
       const dataObj = {};
-      _BUKU_KAT.forEach((kat, ki) => {
+      _BUKU_KAT_ORTU.forEach((kat, ki) => {
         dataObj[ki] = {};
-        kat.items.forEach((item, ii) => {
+        kat.items.forEach((_, ii) => {
           dataObj[ki][ii] = {};
-          if (item.weekly) {
-            dataObj[ki][ii]['Senin'] = '—';
-          } else {
-            _HARI.forEach(h => { dataObj[ki][ii][h] = '—'; });
-          }
+          _HARI.forEach(h => { dataObj[ki][ii][h] = '—'; });
         });
       });
-      grouped[row.tanggal] = { tanggal: row.tanggal, data: dataObj };
+      grouped[row.tanggal] = { tanggal: row.tanggal, data: dataObj, taklim: {} };
     }
     const entry = grouped[row.tanggal];
-    const ki = row.kat_no - 1;
-    const ii = row.no - 1;
-    if (ki < 0 || !entry.data[ki] || entry.data[ki][ii] === undefined) return;
-    const item = _BUKU_KAT[ki] && _BUKU_KAT[ki].items[ii];
-    if (!item) return;
-    if (item.weekly) {
-      entry.data[ki][ii]['Senin'] = row.senin || '—';
+    if (row.kat_no === 4) {
+      // Baris taklim
+      _HARI.forEach(h => {
+        const v = row[h.toLowerCase()];
+        if (v && v !== '—') {
+          const temaRaw = (row.aktivitas || '').replace('Tema: ', '');
+          entry.taklim[h] = { tema: temaRaw === '—' ? '' : temaRaw, val: v };
+        }
+      });
     } else {
-      _HARI.forEach(h => { entry.data[ki][ii][h] = row[h.toLowerCase()] || '—'; });
+      const ki = row.kat_no - 1;
+      const ii = row.no - 1;
+      if (ki >= 0 && entry.data[ki] && entry.data[ki][ii] !== undefined) {
+        _HARI.forEach(h => { entry.data[ki][ii][h] = row[h.toLowerCase()] || '—'; });
+      }
     }
   });
 
