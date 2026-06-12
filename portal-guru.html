@@ -209,7 +209,10 @@
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><div class="card-title">📩 Laporan dari Orangtua (di Rumah)</div></div>
+        <div class="card-header">
+          <div class="card-title">📩 Laporan dari Orangtua (di Rumah)</div>
+          <button class="btn btn-outline" style="font-size:12px;padding:4px 12px" onclick="refreshCatatanOrtu()">🔄 Muat Ulang</button>
+        </div>
         <div id="catatan-ortu-view">
           <div class="empty-state"><div class="empty-icon">📬</div><p>Pilih siswa untuk melihat laporan orangtua</p></div>
         </div>
@@ -712,6 +715,12 @@ function setBukuGuru(siswa,ki,ii,h,val){if(bukuGuruState[siswa]){bukuGuruState[s
 function setTaklimGuru(siswa,h,field,val){if(!bukuGuruState[siswa])return;if(!bukuGuruState[siswa].taklim[h])bukuGuruState[siswa].taklim[h]={tema:'',val:'—'};bukuGuruState[siswa].taklim[h][field]=val;}
 function saveBukuDraft(siswa){const st=bukuGuruState[siswa];apiCall('saveBukuGuru',{siswa,minggu:'Minggu Ini',data:JSON.stringify(st.data),taklim:JSON.stringify(st.taklim)}).then(res=>{res.ok?toast('✅ Draft tersimpan!'):toast('⚠️ '+res.error,true);});}
 function publishBuku(siswa){const st=bukuGuruState[siswa];toast('📤 Menyimpan...');apiCall('saveBukuGuru',{siswa,minggu:'Minggu Ini',data:JSON.stringify(st.data),taklim:JSON.stringify(st.taklim)}).then(()=>apiCall('publishBukuGuru',{siswa})).then(res=>{if(res.ok){st.published=true;renderBukuGuruForm(siswa);toast('📤 Buku '+siswa+' dipublish ke orangtua!');}else toast('⚠️ '+res.error,true);});}
+function refreshCatatanOrtu(){
+  const siswa=document.getElementById('siswa-select').value;
+  if(!siswa){toast('⚠️ Pilih siswa terlebih dahulu',true);return;}
+  document.getElementById('catatan-ortu-view').innerHTML='<div style="text-align:center;padding:20px;color:var(--gray-500)">⏳ Memuat laporan orangtua...</div>';
+  apiCall('getBukuOrtu',{siswa}).then(res=>{if(res.ok&&res.data){bukuOrtuState[siswa]=res.data;}renderCatatanOrtu(siswa);});
+}
 function renderCatatanOrtu(siswa){
   const el=document.getElementById('catatan-ortu-view');const entries=bukuOrtuState[siswa];
   if(!entries||!entries.length){el.innerHTML=`<div class="empty-state"><div class="empty-icon">📭</div><p>Belum ada laporan dari orangtua ${siswa}</p></div>`;return;}

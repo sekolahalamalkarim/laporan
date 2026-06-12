@@ -457,10 +457,19 @@ function submitBukuOrtu() {
   const taklim = {};
   HARI.forEach(h => { const tema=tbl.querySelector(`[data-taklim-tema="${h}"]`); const val=tbl.querySelector(`[data-taklim-val="${h}"]`); taklim[h]={tema:tema?tema.value:'',val:val?val.value:'—'}; });
   bukuOrtuHistory.unshift({ siswa:selectedMurid.nama, tanggal:TODAY_ISO, data:entryData, taklim });
-  renderBukuOrtuForm();
-  toast('📤 Mengirim...');
+  // Jangan reset form — ceklis tetap tampil setelah kirim
+  const btn = document.querySelector('button[onclick="submitBukuOrtu()"]');
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Mengirim...'; }
   apiCall('saveBukuOrtu',{ siswa:selectedMurid.nama, tanggal:TODAY_ISO, data:JSON.stringify(entryData), taklim:JSON.stringify(taklim) })
-  .then(res => { res.ok ? toast('📤 Laporan berhasil dikirim ke guru!') : toast('⚠️ '+res.error, true); });
+  .then(res => {
+    if (res.ok) {
+      toast('📤 Laporan berhasil dikirim ke guru!');
+      if (btn) { btn.innerHTML = '✅ Terkirim'; }
+    } else {
+      toast('⚠️ '+res.error, true);
+      if (btn) { btn.disabled = false; btn.innerHTML = '📤 Kirim ke Guru'; }
+    }
+  });
 }
 
 /* ========= RESTORE SESSION ON REFRESH ========= */
