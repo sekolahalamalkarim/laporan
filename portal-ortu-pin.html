@@ -231,6 +231,12 @@
           <button class="btn-sm-green" onclick="submitBukuOrtu()">📤 Kirim ke Guru</button>
         </div>
       </div>
+      <div class="card" id="card-riwayat" style="display:none">
+        <div class="card-header">
+          <div class="card-title">📜 Riwayat Laporan (5 Terakhir)</div>
+        </div>
+        <div id="riwayat-ortu-view"></div>
+      </div>
     </div>
 
     <div id="tab-laporan" class="tab-content">
@@ -379,6 +385,7 @@ function enterPortal(murid) {
   apiCall('getBukuOrtu', { siswa: murid.nama }).then(res => {
     if (res.ok && res.data) bukuOrtuHistory = res.data;
     renderBukuOrtuForm();
+    renderRiwayatOrtu();
   });
 }
 
@@ -465,11 +472,65 @@ function submitBukuOrtu() {
     if (res.ok) {
       toast('📤 Laporan berhasil dikirim ke guru!');
       if (btn) { btn.innerHTML = '✅ Terkirim'; }
+      renderRiwayatOrtu();
     } else {
       toast('⚠️ '+res.error, true);
       if (btn) { btn.disabled = false; btn.innerHTML = '📤 Kirim ke Guru'; }
     }
   });
+}
+
+/* ========= RIWAYAT LAPORAN ========= */
+function renderRiwayatOrtu() {
+  const card = document.getElementById('card-riwayat');
+  const el = document.getElementById('riwayat-ortu-view');
+  if (!bukuOrtuHistory || !bukuOrtuHistory.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const list = bukuOrtuHistory.slice(0, 5);
+  let html = '';
+  list.forEach((e, idx) => {
+    let ceklis = 0, total = 0;
+    BUKU_KAT.forEach((kat, ki) => kat.items.forEach((_, ii) => HARI.forEach(h => {
+      total++;
+      if (e.data && e.data[ki] && e.data[ki][ii] && e.data[ki][ii][h] === '✓') ceklis++;
+    })));
+    const pct = total ? Math.round(ceklis / total * 100) : 0;
+    const barColor = pct >= 70 ? '#1B5E20' : pct >= 40 ? '#E65100' : '#B71C1C';
+    html += `<div style="border:1px solid var(--gray-200);border-radius:8px;margin-bottom:10px;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;background:var(--gray-100)"
+           onclick="toggleRiwayat(${idx})">
+        <div>
+          <span style="font-weight:700;font-size:13px">📅 ${e.tanggal}</span>
+          ${idx===0?'<span style="margin-left:8px;font-size:11px;background:#1B5E20;color:#fff;padding:1px 7px;border-radius:10px">Terbaru</span>':''}
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:12px;color:${barColor};font-weight:700">✓ ${ceklis}/${total} (${pct}%)</span>
+          <span id="rw-arrow-${idx}" style="font-size:12px;color:var(--gray-500)">▼</span>
+        </div>
+      </div>
+      <div id="rw-detail-${idx}" style="display:none;padding:10px 14px;overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead><tr style="background:var(--gray-100)">
+            <th style="padding:4px 6px;text-align:left;font-weight:600">Aktivitas</th>
+            ${HARI_SHORT.map(h=>`<th style="padding:4px 6px;text-align:center;width:36px">${h}</th>`).join('')}
+          </tr></thead><tbody>
+          ${BUKU_KAT.map((kat,ki)=>`
+            <tr><td colspan="${1+HARI.length}" style="padding:4px 6px;font-weight:700;font-size:10px;color:var(--gray-500);background:var(--gray-100)">${kat.no}. ${kat.label}</td></tr>
+            ${kat.items.map((_,ii)=>`<tr>${['<td style="padding:3px 6px;font-size:11px">'+(kat.items[ii])+'</td>',
+              ...HARI.map(h=>{const v=(e.data&&e.data[ki]&&e.data[ki][ii]&&e.data[ki][ii][h])||'—';const s=v==='✓'?'color:#1B5E20;font-weight:800':v==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-300)';return`<td style="padding:3px 6px;text-align:center;${s}">${v}</td>`;})].join('')}</tr>`).join('')}
+          `).join('')}
+        </tbody></table>
+      </div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+function toggleRiwayat(idx) {
+  const det = document.getElementById('rw-detail-'+idx);
+  const arr = document.getElementById('rw-arrow-'+idx);
+  const open = det.style.display === 'none';
+  det.style.display = open ? '' : 'none';
+  arr.textContent = open ? '▲' : '▼';
 }
 
 /* ========= RESTORE SESSION ON REFRESH ========= */
@@ -495,6 +556,7 @@ function submitBukuOrtu() {
       apiCall('getBukuOrtu', { siswa: murid.nama }).then(res => {
         if (res.ok && res.data) bukuOrtuHistory = res.data;
         renderBukuOrtuForm();
+        renderRiwayatOrtu();
       });
     }
   } catch(e) { sessionStorage.removeItem('ortuPinSession'); }
