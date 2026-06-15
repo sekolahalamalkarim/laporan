@@ -225,7 +225,7 @@
           <div class="card-title">🏠 Laporan Aktivitas di Rumah</div>
           <span class="date-badge" id="tanggal-badge">📅 Hari ini</span>
         </div>
-        <div class="info-banner">✏️ Isi aktivitas anak di rumah minggu ini, lalu kirim ke guru.</div>
+        <div class="info-banner">✏️ Isi aktivitas anak di rumah (Senin–Minggu) lalu kirim ke guru. Data minggu ini otomatis tersimpan dan bisa diperbarui kapan saja.</div>
         <div id="buku-ortu-form"></div>
         <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px">
           <button class="btn-sm-outline" onclick="renderBukuOrtuForm()">↺ Reset</button>
@@ -249,8 +249,8 @@
 <div id="toast"></div>
 
 <script>
-const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat'];
-const HARI_SHORT = ['Sen','Sel','Rab','Kam','Jum'];
+const HARI = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
+const HARI_SHORT = ['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
 const BUKU_KAT_TK = [
   { no:1, label:'Kedisiplinan', items:[
     { label:'Hadir tepat waktu' },
@@ -368,6 +368,14 @@ let selectedJenjang = '', selectedMurid = null, muridList = [];
 let bukuGuruState = null, bukuOrtuHistory = [];
 
 /* ========= HELPERS ========= */
+// Mengembalikan tanggal Senin pada minggu berjalan (YYYY-MM-DD)
+function getWeekMonday() {
+  const d = new Date();
+  const day = d.getDay(); // 0=Minggu, 1=Senin, ..., 6=Sabtu
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().split('T')[0];
+}
 function toast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.style.background=err?'#C62828':'#1B5E20';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 function showError(msg){const el=document.getElementById('error-msg');el.textContent='⚠️ '+msg;el.classList.add('show');}
 function hideError(){document.getElementById('error-msg').classList.remove('show');}
@@ -500,7 +508,10 @@ function enterPortal(murid) {
   });
   apiCall('getBukuOrtu', { siswa: murid.nama }).then(res => {
     if (res.ok && res.data) bukuOrtuHistory = res.data;
-    renderBukuOrtuForm();
+    // Otomatis isi form dengan data minggu ini jika sudah pernah diisi
+    const weekMon = getWeekMonday();
+    const thisWeek = bukuOrtuHistory.find(e => e.tanggal === weekMon);
+    renderBukuOrtuForm(thisWeek || undefined);
     renderRiwayatOrtu();
   });
 }
@@ -604,15 +615,21 @@ function submitBukuOrtu() {
   tbl.querySelectorAll('[data-taklim-tema]').forEach(inp => { const h=inp.dataset.taklimTema; if(!taklim[h])taklim[h]={}; taklim[h].tema=inp.value||'—'; });
   tbl.querySelectorAll('[data-taklim-val]').forEach(sel => { const h=sel.dataset.taklimVal; if(!taklim[h])taklim[h]={}; taklim[h].val=sel.value||'—'; });
   if(taklim['Senin']) taklim['_tema']=taklim['Senin'].tema;
-  bukuOrtuHistory.unshift({ siswa:selectedMurid.nama, tanggal:TODAY_ISO, data:entryData, taklim });
+  // Simpan dengan tanggal Senin minggu ini agar data mingguan terakumulasi dalam satu record
+  const WEEK_MON = getWeekMonday();
+  const newEntry = { siswa:selectedMurid.nama, tanggal:WEEK_MON, data:entryData, taklim };
+  const existIdx = bukuOrtuHistory.findIndex(e => e.tanggal === WEEK_MON);
+  if (existIdx >= 0) bukuOrtuHistory[existIdx] = newEntry;
+  else bukuOrtuHistory.unshift(newEntry);
   // Jangan reset form — ceklis tetap tampil setelah kirim
   const btn = document.querySelector('button[onclick="submitBukuOrtu()"]');
   if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Mengirim...'; }
-  apiCall('saveBukuOrtu',{ siswa:selectedMurid.nama, tanggal:TODAY_ISO, data:JSON.stringify(entryData), taklim:JSON.stringify(taklim) })
+  apiCall('saveBukuOrtu',{ siswa:selectedMurid.nama, tanggal:WEEK_MON, data:JSON.stringify(entryData), taklim:JSON.stringify(taklim) })
   .then(res => {
     if (res.ok) {
-      toast('📤 Laporan berhasil dikirim ke guru!');
-      if (btn) { btn.innerHTML = '✅ Terkirim'; }
+      toast('📤 Laporan berhasil dikirim/diperbarui!');
+      // Re-enable button agar ortu bisa update lagi di hari yang berbeda pada minggu yang sama
+      if (btn) { btn.disabled = false; btn.innerHTML = '📤 Kirim ke Guru'; }
       renderRiwayatOrtu();
     } else {
       toast('⚠️ '+res.error, true);
@@ -720,7 +737,9 @@ function hapusLaporan(idx) {
       });
       apiCall('getBukuOrtu', { siswa: murid.nama }).then(res => {
         if (res.ok && res.data) bukuOrtuHistory = res.data;
-        renderBukuOrtuForm();
+        const weekMon = getWeekMonday();
+        const thisWeek = bukuOrtuHistory.find(e => e.tanggal === weekMon);
+        renderBukuOrtuForm(thisWeek || undefined);
         renderRiwayatOrtu();
       });
     }

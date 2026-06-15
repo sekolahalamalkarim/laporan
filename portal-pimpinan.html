@@ -160,14 +160,18 @@
         </div>
         <div id="rekap-container"></div>
         <div style="margin-top:14px;display:flex;justify-content:flex-end">
-          <button class="btn btn-outline" onclick="toast('📥 Export...')">⬇️ Export Excel</button>
+          <button class="btn btn-outline" onclick="exportJobRekap()">⬇️ Export Excel</button>
         </div>
       </div>
       <!-- KPI Harian -->
       <div class="card" style="margin-top:0">
         <div class="card-header">
           <div class="card-title">⭐ Rekap KPI Harian Guru</div>
-          <button class="btn btn-outline btn-sm" onclick="apiCall('getAllKpiHarian',{jenjang:MY_JENJANG||null}).then(r=>{if(r.ok){allKpiData=r.data;renderKpiRekap();toast('✅ KPI diperbarui');}})">🔄 Refresh</button>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" onclick="apiCall('getAllKpiHarian',{jenjang:MY_JENJANG||null}).then(r=>{if(r.ok){allKpiData=r.data;renderKpiRekap();toast('✅ KPI diperbarui');}})">🔄 Refresh Hari Ini</button>
+            <button class="btn btn-outline btn-sm" onclick="exportKpiRekap()">⬇️ Export KPI Bulanan</button>
+            <input type="month" id="kpi-month-picker" style="padding:4px 8px;border:1px solid var(--gray-300);border-radius:8px;font-size:12px;color:var(--gray-700)" title="Pilih bulan untuk export KPI">
+          </div>
         </div>
         <div id="kpi-rekap-container"><div class="empty-state"><div class="empty-icon">⭐</div><p>Memuat data KPI...</p></div></div>
       </div>
@@ -617,6 +621,79 @@ function renderRekap(mode='harian'){
   });
   html+='</tbody></table></div>';
   document.getElementById('rekap-container').innerHTML=html;
+}
+
+/* ── EXPORT REKAP AGENDA KERJA (CSV/Excel) ── */
+function exportJobRekap(){
+  const rows=Object.values(allJobData);
+  if(!rows.length){toast('⚠️ Tidak ada data untuk diekspor',true);return;}
+  const activeMode=document.querySelector('.rekap-pill.active')?.textContent||'Harian';
+  const header=[['No','Nama Karyawan','Jabatan','Jenjang','Total Tugas','Selesai','On Progres','Tidak Selesai','Nilai Rekap','Pagi Submit','Sore Submit','Predikat']];
+  const dataRows=rows.map((k,i)=>{
+    const tasks=k.tasks||[];
+    const selesai=tasks.filter(t=>t.status==='Selesai').length;
+    const onProg=tasks.filter(t=>t.status==='On Progres').length;
+    const tidak=tasks.filter(t=>t.status==='Tidak Selesai').length;
+    const total=selesai+tidak;
+    const nr=k.nilaiRekap!==null&&k.nilaiRekap!==undefined?k.nilaiRekap:(total>0?Math.round(selesai/total*100):null);
+    const pred=nr===null?'—':nr>=90?'Sangat Baik':nr>=80?'Baik':nr>=70?'Cukup':'Perlu Perhatian';
+    return[i+1,k.karyawan,k.jabatan||'',k.jenjang||'',tasks.length,selesai,onProg,tidak,nr!==null?nr:'—',k.pagiSubmittedAt?'Ya':'—',k.soreSubmittedAt?'Ya':'—',pred];
+  });
+  const allRows=[...header,...dataRows];
+  const csv='﻿'+allRows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='Rekap_Agenda_Kerja_'+TODAY_ISO+'.csv';
+  a.click();
+  toast('✅ Export berhasil — buka file .csv di Excel');
+}
+
+/* ── EXPORT KPI BULANAN ── */
+function exportKpiRekap(){
+  const picker=document.getElementById('kpi-month-picker');
+  const bulan=picker?.value||TODAY_ISO.substring(0,7);
+  toast('📥 Memuat data KPI bulan '+bulan+'...');
+  apiCall('getKpiHarianBulan',{bulan,jenjang:MY_JENJANG||null}).then(res=>{
+    if(!res.ok){toast('⚠️ Gagal memuat: '+(res.error||''),true);return;}
+    const data=res.data||{};
+    const guruList=Object.values(data);
+    if(!guruList.length){toast('⚠️ Tidak ada data KPI untuk bulan ini',true);return;}
+
+    // Kumpulkan semua tanggal unik
+    const allDates=[...new Set(guruList.flatMap(g=>Object.keys(g.dates||{})))].sort();
+
+    const KPI_LABELS=['Hadir tepat waktu','Berpakaian rapi','Kelas inspirasi pagi','ID Card/atribut','Absen mengajar','Sikap & adab'];
+
+    // Sheet 1: Ringkasan rata-rata per guru per bulan
+    const summaryRows=[['No','Nama Guru','Jabatan','Jenjang','Hari Isi','Rata-rata KPI','Predikat']];
+    guruList.forEach((g,i)=>{
+      const dates=Object.values(g.dates||{});
+      const filled=dates.filter(d=>d.totalSkor>0);
+      const avg=filled.length?Math.round(filled.reduce((s,d)=>s+d.totalSkor,0)/filled.length):0;
+      const pred=filled.length===0?'Belum Isi':avg>=90?'Sangat Baik':avg>=80?'Baik':avg>=60?'Cukup':'Perlu Perhatian';
+      summaryRows.push([i+1,g.guru,g.jabatan,g.jenjang,filled.length+'/'+allDates.length,avg>0?avg:'—',pred]);
+    });
+
+    // Sheet 2 (flat): Per guru per tanggal
+    const detailHeader=['Nama Guru','Jabatan','Tanggal','Total KPI',...KPI_LABELS.map((_,i)=>'Item '+(i+1))];
+    const detailRows=[detailHeader];
+    guruList.forEach(g=>{
+      allDates.forEach(tgl=>{
+        const d=g.dates[tgl];
+        const items=d?d.items||[]:[];
+        detailRows.push([g.guru,g.jabatan,tgl,d?d.totalSkor:'—',...KPI_LABELS.map((_,i)=>items[i]?items[i].nilai===100?'Ya':'Tidak':'—')]);
+      });
+    });
+
+    // Gabung: ringkasan, baris kosong, detail
+    const allData=[...summaryRows,[],...detailRows];
+    const csv='﻿'+allData.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+    const a=document.createElement('a');
+    a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+    a.download='KPI_Harian_'+bulan+'.csv';
+    a.click();
+    toast('✅ Export KPI bulan '+bulan+' berhasil!');
+  });
 }
 
 /* KPI HARIAN REKAP */
@@ -1107,6 +1184,8 @@ function generatePinMurid(id, nama) {
     if (sub)   sub.textContent = 'Monitoring kinerja karyawan & siswa jenjang ' + MY_JENJANG;
   }
 })();
+// Set default month picker ke bulan ini
+(function(){ const mp=document.getElementById('kpi-month-picker'); if(mp) mp.value=TODAY_ISO.substring(0,7); })();
 loadAllJob();
 renderRekap('harian');
 

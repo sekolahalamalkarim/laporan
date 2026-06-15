@@ -57,6 +57,7 @@ async function apiCall(action, payload = {}) {
       case 'saveKpiHarian':      return await _saveKpiHarian(payload);
       case 'getKpiHarian':       return await _getKpiHarian(payload);
       case 'getAllKpiHarian':    return await _getAllKpiHarian(payload);
+      case 'getKpiHarianBulan': return await _getKpiHarianBulan(payload);
 
       /* JADWAL */
       case 'getJadwalAgenda':    return await _getJadwalAgenda();
@@ -351,12 +352,11 @@ async function _getAllJobTracker({ jenjang } = {}) {
   if (e1) throw e1;
   if (e2) throw e2;
 
-  // Filter jenjang client-side: hanya terapkan jika ada guru dengan jenjang tsb
+  // Filter jenjang secara ketat (case-insensitive) — tidak ada fallback "tampilkan semua"
   let guruList = rawGuru || [];
   if (jenjang) {
-    const matched = guruList.filter(g => g.jenjang === jenjang);
-    if (matched.length > 0) guruList = matched; // ada yang cocok → filter
-    // jika tidak ada yang cocok → tampilkan semua (data jenjang belum diisi)
+    const jL = jenjang.toLowerCase();
+    guruList = guruList.filter(g => (g.jenjang || '').toLowerCase() === jL);
   }
 
   const kvMap = {};
@@ -431,9 +431,8 @@ async function _getAllKpiHarian({ tanggal, jenjang } = {}) {
 
   let guruList = rawGuru2 || [];
   if (jenjang) {
-    const matched = guruList.filter(g => g.jenjang === jenjang);
-    if (matched.length > 0) guruList = matched;
-    // jika tidak ada yang cocok → tampilkan semua (data jenjang belum diisi)
+    const jL = jenjang.toLowerCase();
+    guruList = guruList.filter(g => (g.jenjang || '').toLowerCase() === jL);
   }
 
   const kvMap = {};
@@ -452,6 +451,46 @@ async function _getAllKpiHarian({ tanggal, jenjang } = {}) {
     };
   });
   return { ok: true, data: result, tanggal: today };
+}
+
+async function _getKpiHarianBulan({ bulan, jenjang } = {}) {
+  // bulan = 'YYYY-MM'; default = bulan ini
+  const bln = bulan || _isoToday().substring(0, 7);
+  const startDate = bln + '-01';
+  const endDate   = bln + '-31'; // tanggal 31+ tidak ada → Supabase lte aman
+
+  const [{ data: rawGuru, error: e1 }, { data: kpiRows, error: e2 }] = await Promise.all([
+    _sb.from('users').select('nama, jabatan, jenjang').eq('role', 'guru').eq('active', 'Y'),
+    _sb.from('kpi_harian').select('*')
+       .gte('tanggal', startDate).lte('tanggal', endDate)
+       .order('tanggal').order('guru'),
+  ]);
+  if (e1) throw e1;
+  if (e2) throw e2;
+
+  let guruList = rawGuru || [];
+  if (jenjang) {
+    const jL = jenjang.toLowerCase();
+    guruList = guruList.filter(g => (g.jenjang || '').toLowerCase() === jL);
+  }
+  const guruNames = new Set(guruList.map(g => g.nama));
+
+  // Struktur: grouped[guruNama] = { guru, jabatan, jenjang, dates: { 'YYYY-MM-DD': { totalSkor, items } } }
+  const grouped = {};
+  guruList.forEach(g => {
+    grouped[g.nama] = { guru: g.nama, jabatan: g.jabatan || '', jenjang: g.jenjang || '', dates: {} };
+  });
+
+  (kpiRows || []).forEach(r => {
+    if (guruNames.size && !guruNames.has(r.guru)) return;
+    if (!grouped[r.guru]) grouped[r.guru] = { guru: r.guru, jabatan: r.jabatan || '', jenjang: '', dates: {} };
+    const gd = grouped[r.guru].dates;
+    if (!gd[r.tanggal]) gd[r.tanggal] = { totalSkor: 0, items: [] };
+    if (r.no === 1 && r.total_skor) gd[r.tanggal].totalSkor = r.total_skor;
+    gd[r.tanggal].items.push({ label: r.item_kpi, nilai: r.nilai });
+  });
+
+  return { ok: true, data: grouped, bulan: bln };
 }
 
 /* ─── JADWAL AGENDA ──────────────────────────────────────────── */
@@ -608,6 +647,7 @@ const _BUKU_KAT_BY_JENJANG = {
 };
 
 const _HARI = ['Senin','Selasa','Rabu','Kamis','Jumat'];
+const _HARI_ORTU = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
 
 async function _saveBukuGuru({ siswa, jenjang, minggu, data: dataRaw }) {
   if (!siswa) throw new Error('Nama siswa wajib');
@@ -745,11 +785,12 @@ async function _saveBukuOrtu({ siswa, tanggal, data: dataRaw, taklim: taklimRaw 
         siswa, tanggal: tgl,
         kat_no: kat.no, kategori: kat.label, no: ii + 1, aktivitas: item.label,
         senin:  h['Senin']  || '—', selasa: h['Selasa'] || '—',
-        rabu:   h['Rabu']   || '—', kamis:  h['Kamis']  || '—', jumat: h['Jumat'] || '—',
+        rabu:   h['Rabu']   || '—', kamis:  h['Kamis']  || '—', jumat:  h['Jumat']  || '—',
+        sabtu:  h['Sabtu']  || '—', minggu: h['Minggu'] || '—',
       });
     });
   });
-  _HARI.forEach(h => {
+  _HARI_ORTU.forEach(h => {
     const t = taklim[h] || { val: '—' };
     rows.push({
       siswa, tanggal: tgl,
@@ -760,6 +801,8 @@ async function _saveBukuOrtu({ siswa, tanggal, data: dataRaw, taklim: taklimRaw 
       rabu:   h === 'Rabu'   ? (t.val || '—') : '—',
       kamis:  h === 'Kamis'  ? (t.val || '—') : '—',
       jumat:  h === 'Jumat'  ? (t.val || '—') : '—',
+      sabtu:  h === 'Sabtu'  ? (t.val || '—') : '—',
+      minggu: h === 'Minggu' ? (t.val || '—') : '—',
     });
   });
 
@@ -785,7 +828,7 @@ async function _getBukuOrtu({ siswa }) {
         dataObj[ki] = {};
         kat.items.forEach((_, ii) => {
           dataObj[ki][ii] = {};
-          _HARI.forEach(h => { dataObj[ki][ii][h] = '—'; });
+          _HARI_ORTU.forEach(h => { dataObj[ki][ii][h] = '—'; });
         });
       });
       grouped[row.tanggal] = { tanggal: row.tanggal, data: dataObj, taklim: {} };
@@ -793,7 +836,7 @@ async function _getBukuOrtu({ siswa }) {
     const entry = grouped[row.tanggal];
     if (row.kat_no === 4) {
       // Baris taklim
-      _HARI.forEach(h => {
+      _HARI_ORTU.forEach(h => {
         const v = row[h.toLowerCase()];
         if (v && v !== '—') {
           const temaRaw = (row.aktivitas || '').replace('Tema: ', '');
@@ -804,7 +847,7 @@ async function _getBukuOrtu({ siswa }) {
       const ki = row.kat_no - 1;
       const ii = row.no - 1;
       if (ki >= 0 && entry.data[ki] && entry.data[ki][ii] !== undefined) {
-        _HARI.forEach(h => { entry.data[ki][ii][h] = row[h.toLowerCase()] || '—'; });
+        _HARI_ORTU.forEach(h => { entry.data[ki][ii][h] = row[h.toLowerCase()] || '—'; });
       }
     }
   });
