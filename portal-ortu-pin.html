@@ -390,7 +390,7 @@ const BUKU_SEKOLAH_DEF = {
   TK: [
     { kat:'A', label:'Kedisiplinan', items:[
       {key:'hadir',        label:'Hadir tepat waktu',        type:'ceklis'},
-      {key:'perlengkapan', label:'Membawa perlengkapan pribadi', type:'ceklis'},
+      {key:'perlengkapan', label:'Membawa perlengkapan pribadi (celemek, lap tangan, lap serbaguna, sajadah)', type:'ceklis'},
     ]},
     { kat:'B', label:'Pencapaian Keagamaan', items:[
       {key:'sholat_duha',   label:'Sholat Duha',              type:'ceklis'},
@@ -406,8 +406,8 @@ const BUKU_SEKOLAH_DEF = {
   ],
   SD: [
     { kat:'A', label:'Kedisiplinan', items:[
-      {key:'hadir',        label:'Hadir tepat waktu',                                         type:'ceklis'},
-      {key:'perlengkapan', label:'Membawa perlengkapan pribadi (celemek, lap, sajadah, dll)', type:'ceklis'},
+      {key:'hadir',        label:'Hadir tepat waktu',                                                               type:'ceklis'},
+      {key:'perlengkapan', label:'Membawa perlengkapan pribadi (celemek, lap tangan, lap serbaguna, sajadah, alat sholat dll)', type:'ceklis'},
     ]},
     { kat:'B', label:'Pencapaian Keagamaan', items:[
       {key:'sholat_duha',       label:'Sholat Duha',                          type:'ceklis'},
@@ -846,8 +846,8 @@ function _loadNilaiKeaktifan(murid) {
       const badge = document.getElementById('bp-keaktifan-badge');
       const bln = now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
       const jml = res.jumlahHari;
-      const color = jml >= 20 ? 'var(--success)' : jml >= 10 ? 'var(--warning)' : '#C62828';
-      const label = jml >= 20 ? '⭐ Sangat Aktif' : jml >= 10 ? '✅ Aktif' : '⚠️ Perlu Ditingkatkan';
+      const color = jml >= 24 ? 'var(--success)' : jml >= 14 ? 'var(--warning)' : '#C62828';
+      const label = jml >= 24 ? '⭐ Sangat Aktif' : jml >= 14 ? '✅ Aktif' : '⚠️ Kurang Aktif';
       if (badge) badge.innerHTML = `<span style="font-size:12px;font-weight:800;color:${color}">${label}</span>`;
       if (el) el.innerHTML = `
         <div style="display:flex;align-items:center;gap:16px;padding:12px 14px;background:var(--gray-100);border-radius:10px">
@@ -941,8 +941,8 @@ function renderLaporanRekap() {
     const rumahDays   = rekap.ok ? (rekap.rumah||[]).length : 0;
     const jmlKeaktifan = keaktifan.ok ? keaktifan.jumlahHari : 0;
     const bln = now.toLocaleDateString('id-ID',{month:'long',year:'numeric'});
-    const kColor = jmlKeaktifan>=20?'var(--success)':jmlKeaktifan>=10?'var(--warning)':'#C62828';
-    const kLabel = jmlKeaktifan>=20?'⭐ Sangat Aktif':jmlKeaktifan>=10?'✅ Aktif':'⚠️ Perlu Ditingkatkan';
+    const kColor = jmlKeaktifan>=24?'var(--success)':jmlKeaktifan>=14?'var(--warning)':'#C62828';
+    const kLabel = jmlKeaktifan>=24?'⭐ Sangat Aktif':jmlKeaktifan>=14?'✅ Aktif':'⚠️ Kurang Aktif';
     el.innerHTML = `
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-value">${sekolahDays}</div><div class="stat-label">📋 Laporan Sekolah (7 hari)</div></div>
