@@ -153,6 +153,9 @@
     <div id="section-anak" style="display:none">
       <div class="form-group">
         <label>Nama Anak</label>
+        <input type="text" id="anak-search" placeholder="🔍 Ketik nama anak..." oninput="filterAnakList(this.value)"
+          style="width:100%;padding:10px 14px;border:1.5px solid var(--gray-300);border-radius:10px;font-size:14px;font-family:inherit;outline:none;margin-bottom:8px;box-sizing:border-box"
+          autocomplete="off">
         <select id="anak-select" onchange="onAnakChange()">
           <option value="">-- Pilih nama anak --</option>
         </select>
@@ -211,32 +214,53 @@
     </div>
 
     <div id="tab-buku" class="tab-content active">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">📋 Laporan dari Guru (Aktivitas di Sekolah)</div>
-          <div id="guru-badge"></div>
-        </div>
-        <div id="laporan-guru-view">
-          <div class="empty-state"><div class="empty-icon">⏳</div><p>Memuat laporan dari guru...</p></div>
+      <!-- Sub-tab navigation -->
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="tab-btn active" id="btab-sekolah-btn" onclick="switchBukuTab('sekolah',this)" style="flex:1">🏫 Dari Sekolah</button>
+        <button class="tab-btn" id="btab-rumah-btn" onclick="switchBukuTab('rumah',this)" style="flex:1">🏠 Aktivitas Rumah</button>
+      </div>
+      <!-- Sub-tab: Laporan dari Sekolah (read-only) -->
+      <div id="btab-sekolah">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📋 Laporan dari Guru — Aktivitas di Sekolah</div>
+              <div style="font-size:12px;color:var(--gray-500);margin-top:2px" id="bp-sekolah-date-label">📅 Hari ini</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="date" id="bp-sekolah-date" style="padding:6px 9px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:12px;font-family:inherit;outline:none">
+              <button class="btn-sm-outline" onclick="loadBpSekolahOrtu()">🔍 Lihat</button>
+            </div>
+          </div>
+          <div id="bp-sekolah-view">
+            <div class="empty-state"><div class="empty-icon">⏳</div><p>Memuat laporan dari guru...</p></div>
+          </div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">🏠 Laporan Aktivitas di Rumah</div>
-          <span class="date-badge" id="tanggal-badge">📅 Hari ini</span>
+      <!-- Sub-tab: Aktivitas di Rumah (editable) -->
+      <div id="btab-rumah" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🏠 Laporan Aktivitas di Rumah</div>
+              <span class="date-badge" id="tanggal-badge">📅 Hari ini</span>
+            </div>
+            <div id="bp-keaktifan-badge"></div>
+          </div>
+          <div class="info-banner">✏️ Isi aktivitas anak di rumah hari ini lalu kirim ke guru. Laporan hari ini bisa diperbarui kapan saja.</div>
+          <div id="bp-rumah-form">
+            <div class="empty-state"><div class="empty-icon">⏳</div><p>Memuat form...</p></div>
+          </div>
         </div>
-        <div class="info-banner">✏️ Isi aktivitas anak di rumah (Senin–Minggu) lalu kirim ke guru. Data minggu ini otomatis tersimpan dan bisa diperbarui kapan saja.</div>
-        <div id="buku-ortu-form"></div>
-        <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:10px">
-          <button class="btn-sm-outline" onclick="renderBukuOrtuForm()">↺ Reset</button>
-          <button class="btn-sm-green" onclick="submitBukuOrtu()">📤 Kirim ke Guru</button>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📊 Nilai Keaktifan Bulan Ini</div>
+            <button class="btn-sm-outline" onclick="downloadRekapOrtuCSV()">⬇️ Download Rekap</button>
+          </div>
+          <div id="bp-keaktifan-view">
+            <div class="empty-state"><div class="empty-icon">📊</div><p>Data keaktifan akan muncul di sini</p></div>
+          </div>
         </div>
-      </div>
-      <div class="card" id="card-riwayat" style="display:none">
-        <div class="card-header">
-          <div class="card-title">📜 Riwayat Laporan (5 Terakhir)</div>
-        </div>
-        <div id="riwayat-ortu-view"></div>
       </div>
     </div>
 
@@ -361,6 +385,167 @@ const BUKU_KAT_ORTU = [
     { label:'Menyapu / mengepel lantai' },{ label:'Memijat orangtua (minimal 1 pekan sekali)' },
   ]},
 ];
+// ── Schema: aktivitas SEKOLAH (guru isi, read-only untuk ortu) ──
+const BUKU_SEKOLAH_DEF = {
+  TK: [
+    { kat:'A', label:'Kedisiplinan', items:[
+      {key:'hadir',        label:'Hadir tepat waktu',        type:'ceklis'},
+      {key:'perlengkapan', label:'Membawa perlengkapan pribadi', type:'ceklis'},
+    ]},
+    { kat:'B', label:'Pencapaian Keagamaan', items:[
+      {key:'sholat_duha',   label:'Sholat Duha',              type:'ceklis'},
+      {key:'baca_iqro',     label:'Membaca Iqro',             type:'tulis'},
+      {key:'hafalan_quran', label:"Hafalan Al-Qur'an Surah",  type:'tulis'},
+      {key:'hafalan_doa',   label:'Hafalan Doa',              type:'tulis'},
+      {key:'hafalan_hadis', label:'Hafalan Hadis',            type:'tulis'},
+      {key:'berinfaq',      label:'Berinfaq',                 type:'tulis'},
+    ]},
+    { kat:'C', label:'Pesan Khusus', items:[
+      {key:'pesan_khusus', label:'Pesan Khusus Fasilitator', type:'pesan'},
+    ]},
+  ],
+  SD: [
+    { kat:'A', label:'Kedisiplinan', items:[
+      {key:'hadir',        label:'Hadir tepat waktu',                                         type:'ceklis'},
+      {key:'perlengkapan', label:'Membawa perlengkapan pribadi (celemek, lap, sajadah, dll)', type:'ceklis'},
+    ]},
+    { kat:'B', label:'Pencapaian Keagamaan', items:[
+      {key:'sholat_duha',       label:'Sholat Duha',                          type:'ceklis'},
+      {key:'sholat_dzuhur',     label:'Sholat Duhur',                         type:'ceklis'},
+      {key:'sholat_asar',       label:'Sholat Asar',                          type:'ceklis'},
+      {key:'tahsin',            label:'Tahsin',                               type:'tulis'},
+      {key:'tahfidz',           label:'Tahfidz',                              type:'tulis'},
+      {key:'hafalan_doa_hadis', label:'Hafalan Doa/Hadis',                    type:'tulis'},
+      {key:'berinfaq',          label:'Berinfaq',                             type:'tulis'},
+      {key:'akhlak',            label:'Menerapkan akhlak dan adab yang baik', type:'ceklis'},
+    ]},
+    { kat:'C', label:'Pesan Khusus', items:[
+      {key:'pesan_khusus', label:'Pesan Khusus Fasilitator', type:'pesan'},
+    ]},
+  ],
+  SMP: [
+    { kat:'A', label:'Kedisiplinan', items:[
+      {key:'hadir',   label:'Hadir tepat waktu',                type:'ceklis'},
+      {key:'seragam', label:'Menggunakan seragam sesuai jadwal', type:'ceklis'},
+    ]},
+    { kat:'B', label:'Pencapaian Keagamaan', items:[
+      {key:'sholat_duha',   label:'Sholat Duha',   type:'ceklis'},
+      {key:'sholat_dzuhur', label:'Sholat Duhur',  type:'ceklis'},
+      {key:'sholat_asar',   label:'Sholat Asar',   type:'ceklis'},
+      {key:'tahsin',        label:'Tahsin',        type:'tulis'},
+      {key:'tahfidz',       label:'Tahfidz',       type:'tulis'},
+      {key:'berinfaq',      label:'Berinfaq',      type:'ceklis'},
+    ]},
+    { kat:'C', label:'Pesan Khusus', items:[
+      {key:'pesan_khusus', label:'Pesan Khusus Fasilitator', type:'pesan'},
+    ]},
+  ],
+  SMA: [
+    { kat:'A', label:'Kedisiplinan', items:[
+      {key:'hadir',   label:'Hadir tepat waktu',                type:'ceklis'},
+      {key:'seragam', label:'Menggunakan seragam sesuai jadwal', type:'ceklis'},
+    ]},
+    { kat:'B', label:'Pencapaian Keagamaan', items:[
+      {key:'sholat_duha',   label:'Sholat Duha',   type:'ceklis'},
+      {key:'sholat_dzuhur', label:'Sholat Duhur',  type:'ceklis'},
+      {key:'sholat_asar',   label:'Sholat Asar',   type:'ceklis'},
+      {key:'tahsin',        label:'Tahsin',        type:'tulis'},
+      {key:'tahfidz',       label:'Tahfidz',       type:'tulis'},
+      {key:'berinfaq',      label:'Berinfaq',      type:'ceklis'},
+    ]},
+    { kat:'C', label:'Pesan Khusus', items:[
+      {key:'pesan_khusus', label:'Pesan Khusus Fasilitator', type:'pesan'},
+    ]},
+  ],
+};
+
+// ── Schema: aktivitas RUMAH (ortu isi) ──
+const BUKU_RUMAH_DEF = {
+  TK: [
+    { kat:'A', label:'Pembiasaan Ibadah', items:[
+      {key:'sholat_dzuhur',  label:'Sholat Dzuhur',  type:'ceklis'},
+      {key:'sholat_ashar',   label:'Sholat Ashar',   type:'ceklis'},
+      {key:'sholat_maghrib', label:'Sholat Maghrib', type:'ceklis'},
+      {key:'sholat_isya',    label:'Sholat Isya',    type:'ceklis'},
+      {key:'sholat_subuh',   label:'Sholat Subuh',   type:'ceklis'},
+    ]},
+    { kat:'B', label:'Membaca', items:[
+      {key:'baca_iqro', label:'Membaca Iqro/Murojaah Hafalan', type:'tulis'},
+    ]},
+    { kat:'C', label:'Kedisiplinan', items:[
+      {key:'jam_tidur', label:'Jam tidur maks pukul 21.00 WIB',   type:'ceklis'},
+      {key:'hp_tv',     label:'Penggunaan HP/TV maks 30 menit',    type:'ceklis'},
+    ]},
+    { kat:'D', label:'Kesopanan', items:[
+      {key:'beres_mainan',  label:'Membereskan mainan',                   type:'ceklis'},
+      {key:'baju_sendiri',  label:'Mengenakan baju sendiri',              type:'ceklis'},
+      {key:'sepatu_sendiri',label:'Memakai sepatu dan kaus kaki sendiri', type:'ceklis'},
+    ]},
+  ],
+  SD: [
+    { kat:'A', label:'Pembiasaan Ibadah', items:[
+      {key:'sholat_dzuhur',  label:'Sholat Dzuhur',              type:'ceklis'},
+      {key:'sholat_ashar',   label:'Sholat Ashar',               type:'ceklis'},
+      {key:'sholat_maghrib', label:'Sholat Maghrib',             type:'ceklis'},
+      {key:'sholat_isya',    label:'Sholat Isya',                type:'ceklis'},
+      {key:'sholat_subuh',   label:'Sholat Subuh',               type:'ceklis'},
+      {key:'murojaah',       label:"Murojaah Hafalan Al-Qur'an", type:'ceklis'},
+      {key:'baca_quran',     label:"Membaca Al-Qur'an/Iqro",     type:'ceklis'},
+    ]},
+    { kat:'B', label:'Kedisiplinan', items:[
+      {key:'hp_tv', label:'Penggunaan HP/TV maks 30 menit', type:'ceklis'},
+    ]},
+    { kat:'C', label:'Memuliakan Orangtua', items:[
+      {key:'rapikan_barang', label:'Merapikan barang pribadi',        type:'ceklis'},
+      {key:'pijat_ortu',     label:'Memijit atau membantu orangtua',  type:'ceklis'},
+    ]},
+    { kat:'D', label:'Taklim Keluarga', items:[
+      {key:'taklim', label:'Taklim Keluarga (min 1 minggu sekali)', type:'ceklis'},
+    ]},
+  ],
+  SMP: [
+    { kat:'A', label:'Pembiasaan Ibadah', items:[
+      {key:'sholat_dzuhur',  label:'Sholat Dzuhur',               type:'ceklis'},
+      {key:'sholat_ashar',   label:'Sholat Ashar',                type:'ceklis'},
+      {key:'sholat_maghrib', label:'Sholat Maghrib',              type:'ceklis'},
+      {key:'sholat_isya',    label:'Sholat Isya',                 type:'ceklis'},
+      {key:'sholat_subuh',   label:'Sholat Subuh',                type:'ceklis'},
+      {key:'sholat_tahajud', label:'Sholat Tahajud',              type:'ceklis'},
+      {key:'murojaah',       label:"Murojaah Hafalan Al-Qur'an",  type:'tulis'},
+      {key:'baca_quran',     label:"Membaca Al-Qur'an min ½ Juz", type:'tulis'},
+    ]},
+    { kat:'B', label:'Kedisiplinan', items:[
+      {key:'hp_tv', label:'Penggunaan HP/TV maks 30 menit', type:'ceklis'},
+    ]},
+    { kat:'C', label:'Memuliakan Orangtua', items:[
+      {key:'rapikan_barang', label:'Merapikan barang pribadi',             type:'ceklis'},
+      {key:'pijat_ortu',     label:'Memijat orangtua min 1 pekan sekali', type:'ceklis'},
+    ]},
+    { kat:'D', label:'Taklim', items:[
+      {key:'taklim', label:'Taklim (min 1 minggu sekali)', type:'ceklis'},
+    ]},
+  ],
+  SMA: [
+    { kat:'A', label:'Pembiasaan Ibadah', items:[
+      {key:'sholat_dzuhur',  label:'Sholat Dzuhur',               type:'ceklis'},
+      {key:'sholat_ashar',   label:'Sholat Ashar',                type:'ceklis'},
+      {key:'sholat_maghrib', label:'Sholat Maghrib',              type:'ceklis'},
+      {key:'sholat_isya',    label:'Sholat Isya',                 type:'ceklis'},
+      {key:'sholat_subuh',   label:'Sholat Subuh',                type:'ceklis'},
+      {key:'sholat_tahajud', label:'Sholat Tahajud',              type:'ceklis'},
+      {key:'murojaah',       label:"Murojaah Hafalan Al-Qur'an",  type:'tulis'},
+      {key:'baca_quran',     label:"Membaca Al-Qur'an min ½ Juz", type:'tulis'},
+    ]},
+    { kat:'B', label:'Kedisiplinan', items:[
+      {key:'baca_buku',     label:'Membaca 1 buku/pekan',             type:'ceklis'},
+      {key:'rapikan_kamar', label:'Membereskan kamar/barang pribadi', type:'ceklis'},
+    ]},
+    { kat:'C', label:'E-Muda', items:[
+      {key:'emuda', label:'E-Muda berdakwah dalam keluarga/lingkungan masyarakat (min 2 pekan sekali)', type:'ceklis'},
+    ]},
+  ],
+};
+
 const TODAY = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 const TODAY_ISO = new Date().toISOString().split('T')[0];
 
@@ -427,6 +612,23 @@ function onAnakChange() {
   hideError();
 }
 
+function filterAnakList(q) {
+  const sel = document.getElementById('anak-select');
+  const query = (q || '').toLowerCase().trim();
+  const filtered = query
+    ? muridList.filter(m => m.nama.toLowerCase().includes(query))
+    : muridList;
+  sel.innerHTML = '<option value="">-- Pilih nama anak --</option>';
+  filtered.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.id; opt.textContent = m.nama + ' (' + m.kelas + ')';
+    sel.appendChild(opt);
+  });
+  // Auto-select jika hanya 1 hasil
+  if (filtered.length === 1) { sel.value = filtered[0].id; }
+  onAnakChange();
+}
+
 function goToPin() {
   const id = document.getElementById('anak-select').value;
   selectedMurid = muridList.find(m => String(m.id) === String(id));
@@ -448,6 +650,7 @@ function backToJenjang() {
   document.getElementById('step2').classList.remove('active');
   document.getElementById('step1').classList.add('active');
   document.getElementById('anak-select').value = '';
+  document.getElementById('anak-search').value = '';
   hideError();
 }
 
@@ -501,19 +704,22 @@ function enterPortal(murid) {
   document.getElementById('portal-anak-info').textContent = murid.kelas + ' · Jenjang ' + murid.jenjang + '  |  ' + TODAY;
   document.getElementById('tanggal-badge').textContent = '📅 ' + TODAY;
 
-  // Load data
-  apiCall('getBukuGuru', { siswa: murid.nama, jenjang: murid.jenjang }).then(res => {
-    if (res.ok && res.data) bukuGuruState = res.data;
-    renderLaporanGuru();
+  // Load data buku penghubung
+  const bp_dp = document.getElementById('bp-sekolah-date');
+  if (bp_dp) { bp_dp.value = TODAY_ISO; bp_dp.max = TODAY_ISO; }
+  document.getElementById('bp-sekolah-date-label').textContent = '📅 ' + TODAY;
+  const siswaId = murid.nama;
+  const jenjang = (murid.jenjang || 'SD').toUpperCase();
+  // Load today's school report (read-only)
+  apiCall('getBukuSekolah', { siswaId, tanggal: TODAY_ISO }).then(res => {
+    _renderBpSekolahOrtu((res.ok && res.data) ? res.data.aktivitas : null, jenjang);
   });
-  apiCall('getBukuOrtu', { siswa: murid.nama }).then(res => {
-    if (res.ok && res.data) bukuOrtuHistory = res.data;
-    // Otomatis isi form dengan data minggu ini jika sudah pernah diisi
-    const weekMon = getWeekMonday();
-    const thisWeek = bukuOrtuHistory.find(e => e.tanggal === weekMon);
-    renderBukuOrtuForm(thisWeek || undefined);
-    renderRiwayatOrtu();
+  // Load today's home report (editable)
+  apiCall('getBukuRumah', { siswaId, tanggal: TODAY_ISO }).then(res => {
+    _renderBpRumahForm(murid, (res.ok && res.data) ? res.data.aktivitas : null);
   });
+  // Load nilai keaktifan
+  _loadNilaiKeaktifan(murid);
 }
 
 function doLogout() {
@@ -531,38 +737,47 @@ function doLogout() {
   bukuGuruState = null; bukuOrtuHistory = [];
 }
 
-/* ========= LAPORAN GURU ========= */
-function renderLaporanGuru() {
-  const el = document.getElementById('laporan-guru-view');
-  const badgeEl = document.getElementById('guru-badge');
-  const st = bukuGuruState;
-  if (!st || st.status !== 'Published') {
-    badgeEl.innerHTML = '<span class="badge badge-pending">⏳ Menunggu Guru</span>';
-    el.innerHTML = `<div class="warn-banner">⏳ Laporan dari guru belum tersedia. Guru perlu publish buku penghubung terlebih dahulu.</div>
-    <div class="empty-state"><div class="empty-icon">📋</div><p>Laporan akan muncul setelah guru publish</p></div>`;
+/* ========= BUKU PENGHUBUNG DIGITAL — ORTU ========= */
+
+function switchBukuTab(tab, btn) {
+  document.getElementById('btab-sekolah').style.display = tab === 'sekolah' ? '' : 'none';
+  document.getElementById('btab-rumah').style.display   = tab === 'rumah'   ? '' : 'none';
+  document.querySelectorAll('#tab-buku .tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+// ─── Sekolah: read-only view ───
+function loadBpSekolahOrtu() {
+  const murid = selectedMurid; if (!murid) return;
+  const tgl = document.getElementById('bp-sekolah-date').value || TODAY_ISO;
+  const jenjang = (murid.jenjang || 'SD').toUpperCase();
+  const el = document.getElementById('bp-sekolah-view');
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--gray-500)">⏳ Memuat...</div>';
+  apiCall('getBukuSekolah', { siswaId: murid.nama, tanggal: tgl }).then(res => {
+    _renderBpSekolahOrtu((res.ok && res.data) ? res.data.aktivitas : null, jenjang);
+  });
+}
+
+function _renderBpSekolahOrtu(data, jenjang) {
+  const el = document.getElementById('bp-sekolah-view');
+  if (!data) {
+    el.innerHTML = '<div class="warn-banner">⏳ Laporan dari guru belum tersedia untuk tanggal ini.</div><div class="empty-state"><div class="empty-icon">📋</div><p>Laporan akan muncul setelah guru mengisi buku penghubung</p></div>';
     return;
   }
-  badgeEl.innerHTML = '<span class="badge badge-approved">✅ Sudah Dipublish</span>';
-  let html = `<div class="success-banner">✅ Laporan aktivitas <strong>${selectedMurid.nama}</strong> di sekolah sudah tersedia.</div>
-  <div class="table-wrapper"><table class="buku-table">
-    <thead><tr><th style="width:32px">No</th><th>Aktivitas</th>${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}</tr></thead><tbody>`;
-  const kat = BUKU_KAT_BY_JENJANG[(selectedMurid.jenjang||'').toUpperCase()] || BUKU_KAT_SD;
-  let rn = 1;
-  kat.forEach((k,ki) => {
-    html += `<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${k.no}. ${k.label}</td></tr>`;
-    k.items.forEach((item,ii) => {
-      const lbl = iLbl(item);
-      if (item.type==='text' && item.weekly) {
-        const val = st.data[ki]&&st.data[ki][ii]?st.data[ki][ii]['Senin']||'':'';
-        html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${lbl}</td><td class="hari-td" colspan="${HARI.length}" style="font-size:11px;color:var(--gray-700);font-style:italic;padding:6px 8px">${val||'—'}</td></tr>`;
-      } else if (item.weekly) {
-        const val = st.data[ki]&&st.data[ki][ii]?st.data[ki][ii]['Senin']||'—':'—';
-        const s = val==='A'?'color:#1B5E20;font-weight:800':val==='C'?'color:#C62828;font-weight:800':val==='B'?'color:#E65100;font-weight:800':'color:var(--gray-400)';
-        html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${lbl}</td><td class="hari-td" colspan="${HARI.length}" style="text-align:center;${s}">${val}</td></tr>`;
+  const schema = BUKU_SEKOLAH_DEF[jenjang] || BUKU_SEKOLAH_DEF['SD'];
+  let html = '<div class="success-banner">✅ Laporan dari guru sudah tersedia.</div>';
+  html += '<div class="table-wrapper"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th style="padding:5px 8px">Aktivitas</th><th style="width:90px;text-align:center;padding:5px 8px">Hasil</th></tr></thead><tbody>';
+  schema.forEach(kat => {
+    html += `<tr><td colspan="2" style="padding:5px 10px;font-weight:800;font-size:11px;color:var(--primary-dark);background:var(--secondary)">${kat.kat}. ${kat.label}</td></tr>`;
+    kat.items.forEach(item => {
+      const val = data[item.key];
+      if (item.type === 'pesan') {
+        html += `<tr><td style="padding:5px 10px;font-size:12px;font-weight:600" colspan="2">${item.label}<br><span style="font-size:11px;font-weight:400;color:var(--gray-700)">${val||'—'}</span></td></tr>`;
+      } else if (item.type === 'ceklis') {
+        const ok = val === true || val === 'true';
+        html += `<tr><td style="padding:5px 10px;font-size:12px">${item.label}</td><td style="text-align:center;font-weight:800;font-size:14px;color:${ok?'var(--success)':'var(--gray-300)'}">${ok?'✓':'—'}</td></tr>`;
       } else {
-        html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${lbl}</td>`;
-        HARI.forEach(h => { const val=st.data[ki]&&st.data[ki][ii]?st.data[ki][ii][h]||'—':'—'; const s=val==='✓'||val==='Lancar'||val==='A'?'color:#1B5E20;font-weight:800':val==='✗'||val==='Tidak Lancar'||val==='C'?'color:#C62828;font-weight:800':val==='B'?'color:#E65100;font-weight:800':'color:var(--gray-400)'; html+=`<td class="hari-td" style="${s}">${val}</td>`; });
-        html += '</tr>';
+        html += `<tr><td style="padding:5px 10px;font-size:12px">${item.label}</td><td style="padding:5px 10px;color:var(--gray-700);font-size:11px">${val||'—'}</td></tr>`;
       }
     });
   });
@@ -570,150 +785,111 @@ function renderLaporanGuru() {
   el.innerHTML = html;
 }
 
-/* ========= BUKU ORTU ========= */
-function renderBukuOrtuForm(prefill) {
-  const el = document.getElementById('buku-ortu-form');
-  let html = `<div class="table-wrapper"><table class="buku-table" id="ortu-buku-table">
-    <thead><tr><th style="width:32px">No</th><th>Aktivitas</th>${HARI_SHORT.map(h=>`<th class="hari-th">${h}</th>`).join('')}</tr></thead><tbody>`;
+// ─── Rumah: editable form ───
+function _renderBpRumahForm(murid, prefill) {
+  const el = document.getElementById('bp-rumah-form');
+  const jenjang = (murid.jenjang || 'SD').toUpperCase();
+  const schema = BUKU_RUMAH_DEF[jenjang] || BUKU_RUMAH_DEF['SD'];
+  const data = prefill || {};
+  let html = '<div class="table-wrapper"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th style="width:28px;text-align:center;padding:5px 4px">No</th><th style="padding:5px 8px">Aktivitas</th><th style="width:100px;text-align:center;padding:5px 4px">Isian</th></tr></thead><tbody>';
   let rn = 1;
-  BUKU_KAT_ORTU.forEach((kat,ki) => {
-    html += `<tr><td class="buku-kat-header" colspan="${2+HARI.length}">${kat.no}. ${kat.label}</td></tr>`;
-    kat.items.forEach((item,ii) => {
-      const lbl = iLbl(item);
-      html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">${lbl}</td>`;
-      HARI.forEach(h => { html += `<td class="hari-td"><select class="day-sel v-minus" data-ki="${ki}" data-ii="${ii}" data-h="${h}" onchange="styleDay(this)"><option>—</option><option>✓</option><option>✗</option></select></td>`; });
-      html += '</tr>';
+  schema.forEach(kat => {
+    html += `<tr><td colspan="3" style="padding:7px 10px;font-weight:800;font-size:12px;color:var(--primary-dark);background:var(--secondary);border-bottom:1px solid var(--accent)">${kat.kat}. ${kat.label}</td></tr>`;
+    kat.items.forEach(item => {
+      const val = data[item.key];
+      if (item.type === 'ceklis') {
+        const chk = val === true || val === 'true';
+        html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:11px;padding:4px">${rn++}</td><td style="font-size:12px;padding:7px 10px">${item.label}</td><td style="text-align:center"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" data-key="${item.key}" ${chk?'checked':''} style="width:17px;height:17px;cursor:pointer"><span style="font-size:12px;color:var(--gray-500)">Ya</span></label></td></tr>`;
+      } else {
+        html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:11px;padding:4px">${rn++}</td><td style="font-size:12px;padding:7px 10px">${item.label}</td><td style="padding:4px 6px"><input type="text" data-key="${item.key}" value="${(val||'').toString().replace(/"/g,'&quot;')}" style="width:100%;padding:6px 9px;border:1.5px solid var(--gray-300);border-radius:7px;font-size:12px;font-family:inherit;box-sizing:border-box"></td></tr>`;
+      }
     });
   });
-  // Taklim section
-  html += `<tr><td class="buku-kat-header" colspan="${2+HARI.length}">4. Taklim</td></tr>
-    <tr><td style="text-align:center;color:var(--gray-500);font-size:12px">${rn++}</td><td style="font-size:12px">Tema Taklim</td>
-    ${HARI.map(h=>`<td class="hari-td" style="min-width:72px"><input type="text" style="width:100%;font-size:10px;border:1px solid #ddd;border-radius:4px;padding:2px 4px;margin-bottom:2px" placeholder="Tema" data-taklim-tema="${h}"/><select class="day-sel v-minus" data-taklim-val="${h}" onchange="styleDay(this)"><option>—</option><option>✓</option><option>✗</option></select></td>`).join('')}
-    </tr>`;
   html += '</tbody></table></div>';
+  html += `<div style="margin-top:16px;display:flex;justify-content:flex-end;gap:10px">
+    <button class="btn-sm-outline" onclick="_renderBpRumahForm(selectedMurid,null)">↺ Reset</button>
+    <button class="btn-sm-green" onclick="_saveBpRumah()">📤 Kirim ke Guru</button>
+  </div>`;
   el.innerHTML = html;
-  // Prefill jika ada data (mode edit)
-  if (prefill && prefill.data) {
-    el.querySelectorAll('select.day-sel[data-ki]').forEach(sel => {
-      const v = (prefill.data[sel.dataset.ki]&&prefill.data[sel.dataset.ki][sel.dataset.ii]) ? prefill.data[sel.dataset.ki][sel.dataset.ii][sel.dataset.h]||'—' : '—';
-      sel.value = v; styleDay(sel);
-    });
-    if (prefill.taklim) {
-      el.querySelectorAll('[data-taklim-tema]').forEach(inp => { const t=prefill.taklim[inp.dataset.taklimTema]; inp.value=t?t.tema||'':''; });
-      el.querySelectorAll('[data-taklim-val]').forEach(sel => { const t=prefill.taklim[sel.dataset.taklimVal]; sel.value=t?t.val||'—':'—'; styleDay(sel); });
-    }
-  }
 }
 
-function submitBukuOrtu() {
-  const tbl = document.getElementById('ortu-buku-table'); if (!tbl) return;
-  const entryData = {};
-  BUKU_KAT_ORTU.forEach((kat,ki) => { entryData[ki]={}; kat.items.forEach((_,ii) => { entryData[ki][ii]={}; HARI.forEach(h=>{entryData[ki][ii][h]='—';}); }); });
-  tbl.querySelectorAll('select.day-sel[data-ki]').forEach(sel => { entryData[sel.dataset.ki][sel.dataset.ii][sel.dataset.h] = sel.value; });
-  // Collect taklim
-  const taklim = {};
-  tbl.querySelectorAll('[data-taklim-tema]').forEach(inp => { const h=inp.dataset.taklimTema; if(!taklim[h])taklim[h]={}; taklim[h].tema=inp.value||'—'; });
-  tbl.querySelectorAll('[data-taklim-val]').forEach(sel => { const h=sel.dataset.taklimVal; if(!taklim[h])taklim[h]={}; taklim[h].val=sel.value||'—'; });
-  if(taklim['Senin']) taklim['_tema']=taklim['Senin'].tema;
-  // Simpan dengan tanggal Senin minggu ini agar data mingguan terakumulasi dalam satu record
-  const WEEK_MON = getWeekMonday();
-  const newEntry = { siswa:selectedMurid.nama, tanggal:WEEK_MON, data:entryData, taklim };
-  const existIdx = bukuOrtuHistory.findIndex(e => e.tanggal === WEEK_MON);
-  if (existIdx >= 0) bukuOrtuHistory[existIdx] = newEntry;
-  else bukuOrtuHistory.unshift(newEntry);
-  // Jangan reset form — ceklis tetap tampil setelah kirim
-  const btn = document.querySelector('button[onclick="submitBukuOrtu()"]');
+function _saveBpRumah() {
+  const murid = selectedMurid; if (!murid) return;
+  const el = document.getElementById('bp-rumah-form');
+  const aktivitas = {};
+  el.querySelectorAll('input[type=checkbox][data-key]').forEach(cb => { aktivitas[cb.dataset.key] = cb.checked; });
+  el.querySelectorAll('input[type=text][data-key]').forEach(inp => { aktivitas[inp.dataset.key] = inp.value.trim(); });
+  const btn = el.querySelector('button.btn-sm-green');
   if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Mengirim...'; }
-  apiCall('saveBukuOrtu',{ siswa:selectedMurid.nama, tanggal:WEEK_MON, data:JSON.stringify(entryData), taklim:JSON.stringify(taklim) })
-  .then(res => {
+  apiCall('saveBukuRumah', {
+    siswaId: murid.nama, jenjang: (murid.jenjang || 'SD').toUpperCase(),
+    tanggal: TODAY_ISO, aktivitas: JSON.stringify(aktivitas),
+  }).then(res => {
     if (res.ok) {
       toast('📤 Laporan berhasil dikirim/diperbarui!');
-      // Re-enable button agar ortu bisa update lagi di hari yang berbeda pada minggu yang sama
       if (btn) { btn.disabled = false; btn.innerHTML = '📤 Kirim ke Guru'; }
-      renderRiwayatOrtu();
+      _loadNilaiKeaktifan(murid);
     } else {
-      toast('⚠️ '+res.error, true);
+      toast('⚠️ ' + res.error, true);
       if (btn) { btn.disabled = false; btn.innerHTML = '📤 Kirim ke Guru'; }
     }
   });
 }
 
-/* ========= RIWAYAT LAPORAN ========= */
-function renderRiwayatOrtu() {
-  const card = document.getElementById('card-riwayat');
-  const el = document.getElementById('riwayat-ortu-view');
-  if (!bukuOrtuHistory || !bukuOrtuHistory.length) { card.style.display = 'none'; return; }
-  card.style.display = '';
-  const list = bukuOrtuHistory.slice(0, 5);
-  let html = '';
-  list.forEach((e, idx) => {
-    let ceklis = 0, total = 0;
-    BUKU_KAT_ORTU.forEach((kat, ki) => kat.items.forEach((_, ii) => {
-      HARI.forEach(h => { total++; const v=e.data&&e.data[ki]&&e.data[ki][ii]?e.data[ki][ii][h]||'—':'—'; if(v==='✓')ceklis++; });
-    }));
-    const pct = total ? Math.round(ceklis / total * 100) : 0;
-    const barColor = pct >= 70 ? '#1B5E20' : pct >= 40 ? '#E65100' : '#B71C1C';
-    const tglLabel = formatTgl(e.tanggal);
-    html += `<div style="border:1px solid var(--gray-200);border-radius:8px;margin-bottom:10px;overflow:hidden">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--gray-100)">
-        <div onclick="toggleRiwayat(${idx})" style="cursor:pointer;flex:1">
-          <span style="font-weight:700;font-size:13px">📅 ${tglLabel}</span>
-          ${idx===0?'<span style="margin-left:8px;font-size:11px;background:#1B5E20;color:#fff;padding:1px 7px;border-radius:10px">Terbaru</span>':''}
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:12px;color:${barColor};font-weight:700">✓ ${ceklis}/${total} (${pct}%)</span>
-          <button onclick="editLaporan(${idx})" style="font-size:11px;padding:2px 8px;border:1px solid #1565C0;color:#1565C0;background:#fff;border-radius:5px;cursor:pointer">✏️ Edit</button>
-          <button onclick="hapusLaporan(${idx})" style="font-size:11px;padding:2px 8px;border:1px solid #C62828;color:#C62828;background:#fff;border-radius:5px;cursor:pointer">🗑️ Hapus</button>
-          <span id="rw-arrow-${idx}" onclick="toggleRiwayat(${idx})" style="font-size:12px;color:var(--gray-500);cursor:pointer">▼</span>
-        </div>
-      </div>
-      <div id="rw-detail-${idx}" style="display:none;padding:10px 14px;overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-size:11px">
-          <thead><tr style="background:var(--gray-100)">
-            <th style="padding:4px 6px;text-align:left;font-weight:600">Aktivitas</th>
-            ${HARI_SHORT.map(h=>`<th style="padding:4px 6px;text-align:center;width:36px">${h}</th>`).join('')}
-          </tr></thead><tbody>
-          ${BUKU_KAT_ORTU.map((kat,ki)=>`
-            <tr><td colspan="${1+HARI.length}" style="padding:4px 6px;font-weight:700;font-size:10px;color:var(--gray-500);background:var(--gray-100)">${kat.no}. ${kat.label}</td></tr>
-            ${kat.items.map((item,ii)=>`<tr><td style="padding:3px 6px;font-size:11px">${iLbl(item)}</td>${HARI.map(h=>{const v=(e.data&&e.data[ki]&&e.data[ki][ii])?e.data[ki][ii][h]||'—':'—';const s=v==='✓'?'color:#1B5E20;font-weight:800':v==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-300)';return`<td style="padding:3px 6px;text-align:center;${s}">${v}</td>`;}).join('')}</tr>`).join('')}
-          `).join('')}
-          <tr><td colspan="${1+HARI.length}" style="padding:4px 6px;font-weight:700;font-size:10px;color:var(--gray-500);background:var(--gray-100)">4. Taklim</td></tr>
-          <tr><td style="padding:3px 6px;font-size:11px">Tema Taklim</td>${HARI.map(h=>{const t=e.taklim&&e.taklim[h]?e.taklim[h]:{tema:'—',val:'—'};const s=t.val==='✓'?'color:#1B5E20;font-weight:800':t.val==='✗'?'color:#C62828;font-weight:800':'color:var(--gray-300)';return`<td style="padding:3px 6px;text-align:center;font-size:10px"><div style="color:var(--gray-700)">${t.tema||'—'}</div><div style="${s}">${t.val||'—'}</div></td>`;}).join('')}</tr>
-        </tbody></table>
-      </div>
-    </div>`;
-  });
-  el.innerHTML = html;
-}
-function toggleRiwayat(idx) {
-  const det = document.getElementById('rw-detail-'+idx);
-  const arr = document.getElementById('rw-arrow-'+idx);
-  const open = det.style.display === 'none';
-  det.style.display = open ? '' : 'none';
-  arr.textContent = open ? '▲' : '▼';
-}
-function editLaporan(idx) {
-  const entry = bukuOrtuHistory[idx];
-  if (!entry) return;
-  renderBukuOrtuForm(entry);
-  const btn = document.querySelector('button[onclick="submitBukuOrtu()"]');
-  if (btn) { btn.disabled = false; btn.innerHTML = '📤 Kirim ke Guru'; }
-  document.getElementById('buku-ortu-form').scrollIntoView({ behavior: 'smooth' });
-  toast('✏️ Form diisi dengan laporan ' + formatTgl(entry.tanggal));
-}
-function hapusLaporan(idx) {
-  const entry = bukuOrtuHistory[idx];
-  if (!entry) return;
-  if (!confirm('Hapus laporan tanggal ' + formatTgl(entry.tanggal) + '?')) return;
-  apiCall('deleteBukuOrtu', { siswa: selectedMurid.nama, tanggal: entry.tanggal })
+// ─── Nilai Keaktifan ───
+function _loadNilaiKeaktifan(murid) {
+  const now = new Date();
+  apiCall('getNilaiKeaktifan', { siswaId: murid.nama, bulan: now.getMonth() + 1, tahun: now.getFullYear() })
     .then(res => {
-      if (res.ok) {
-        bukuOrtuHistory.splice(idx, 1);
-        renderRiwayatOrtu();
-        toast('🗑️ Laporan berhasil dihapus');
-      } else { toast('⚠️ ' + res.error, true); }
+      if (!res.ok) return;
+      const el = document.getElementById('bp-keaktifan-view');
+      const badge = document.getElementById('bp-keaktifan-badge');
+      const bln = now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+      const jml = res.jumlahHari;
+      const color = jml >= 20 ? 'var(--success)' : jml >= 10 ? 'var(--warning)' : '#C62828';
+      const label = jml >= 20 ? '⭐ Sangat Aktif' : jml >= 10 ? '✅ Aktif' : '⚠️ Perlu Ditingkatkan';
+      if (badge) badge.innerHTML = `<span style="font-size:12px;font-weight:800;color:${color}">${label}</span>`;
+      if (el) el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:16px;padding:12px 14px;background:var(--gray-100);border-radius:10px">
+          <div style="font-size:32px;font-weight:900;color:${color}">${jml}</div>
+          <div>
+            <div style="font-weight:800;font-size:14px;color:var(--gray-700)">Hari laporan terkirim</div>
+            <div style="font-size:12px;color:var(--gray-500)">${bln} · ${label}</div>
+          </div>
+        </div>`;
     });
 }
+
+// ─── Download Rekap CSV ───
+function downloadRekapOrtuCSV() {
+  const murid = selectedMurid; if (!murid) { toast('⚠️ Data belum dimuat', true); return; }
+  const end = TODAY_ISO;
+  const s = new Date(end); s.setDate(s.getDate() - 29);
+  const startDate = s.toISOString().split('T')[0];
+  toast('📥 Memuat rekap 30 hari...');
+  apiCall('getRekapBuku', { siswaId: murid.nama, startDate, endDate: end }).then(res => {
+    if (!res.ok) { toast('⚠️ Gagal memuat data', true); return; }
+    const jenjang = (murid.jenjang || 'SD').toUpperCase();
+    const sSchema = BUKU_SEKOLAH_DEF[jenjang] || BUKU_SEKOLAH_DEF['SD'];
+    const rSchema = BUKU_RUMAH_DEF[jenjang] || BUKU_RUMAH_DEF['SD'];
+    const sKeys = sSchema.flatMap(k => k.items);
+    const rKeys = rSchema.flatMap(k => k.items);
+    const sMap = {}; (res.sekolah||[]).forEach(r => sMap[r.tanggal] = r.aktivitas||{});
+    const rMap = {}; (res.rumah||[]).forEach(r => rMap[r.tanggal] = r.aktivitas||{});
+    const header = ['Tanggal', ...sKeys.map(i=>'[Sekolah] '+i.label), ...rKeys.map(i=>'[Rumah] '+i.label)];
+    const dates = []; const cur = new Date(startDate); const last = new Date(end);
+    while (cur <= last) { dates.push(cur.toISOString().split('T')[0]); cur.setDate(cur.getDate()+1); }
+    const _v = v => v===true?'Ya':v===false?'Tidak':(v||'—');
+    const rows = dates.map(tgl => [tgl, ...sKeys.map(i=>_v((sMap[tgl]||{})[i.key])), ...rKeys.map(i=>_v((rMap[tgl]||{})[i.key]))]);
+    const csv = '﻿' + [header,...rows].map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+    a.download = 'BukuPenghubung_'+murid.nama.replace(/\s+/g,'_')+'_'+TODAY_ISO+'.csv';
+    a.click(); toast('✅ Rekap berhasil diunduh!');
+  });
+}
+
+
 
 /* ========= RESTORE SESSION ON REFRESH ========= */
 (function restoreSession() {
@@ -731,17 +907,18 @@ function hapusLaporan(idx) {
       document.getElementById('portal-anak-nama').textContent = murid.nama;
       document.getElementById('portal-anak-info').textContent = murid.kelas + ' · Jenjang ' + murid.jenjang + '  |  ' + TODAY;
       document.getElementById('tanggal-badge').textContent = '📅 ' + TODAY;
-      apiCall('getBukuGuru', { siswa: murid.nama, jenjang: murid.jenjang }).then(res => {
-        if (res.ok && res.data) bukuGuruState = res.data;
-        renderLaporanGuru();
+      const bp_dp2 = document.getElementById('bp-sekolah-date');
+      if (bp_dp2) { bp_dp2.value = TODAY_ISO; bp_dp2.max = TODAY_ISO; }
+      document.getElementById('bp-sekolah-date-label').textContent = '📅 ' + TODAY;
+      const siswaId2 = murid.nama;
+      const jenjang2 = (murid.jenjang || 'SD').toUpperCase();
+      apiCall('getBukuSekolah', { siswaId: siswaId2, tanggal: TODAY_ISO }).then(res => {
+        _renderBpSekolahOrtu((res.ok && res.data) ? res.data.aktivitas : null, jenjang2);
       });
-      apiCall('getBukuOrtu', { siswa: murid.nama }).then(res => {
-        if (res.ok && res.data) bukuOrtuHistory = res.data;
-        const weekMon = getWeekMonday();
-        const thisWeek = bukuOrtuHistory.find(e => e.tanggal === weekMon);
-        renderBukuOrtuForm(thisWeek || undefined);
-        renderRiwayatOrtu();
+      apiCall('getBukuRumah', { siswaId: siswaId2, tanggal: TODAY_ISO }).then(res => {
+        _renderBpRumahForm(murid, (res.ok && res.data) ? res.data.aktivitas : null);
       });
+      _loadNilaiKeaktifan(murid);
     }
   } catch(e) { sessionStorage.removeItem('ortuPinSession'); }
 })();
@@ -749,27 +926,45 @@ function hapusLaporan(idx) {
 /* ========= LAPORAN REKAP ========= */
 function renderLaporanRekap() {
   const el = document.getElementById('laporan-rekap');
-  const gs = bukuGuruState; const oe = bukuOrtuHistory;
-  let gCheck=0,gTotal=0,oCheck=0,oTotal=0;
-  function _cntGuru(dataObj){let chk=0,tot=0;const kat=BUKU_KAT_BY_JENJANG[(selectedMurid.jenjang||'').toUpperCase()]||BUKU_KAT_SD;kat.forEach((k,ki)=>k.items.forEach((item,ii)=>{if(item.type==='text')return;if(item.weekly){tot++;const v=dataObj&&dataObj[ki]&&dataObj[ki][ii]?dataObj[ki][ii]['Senin']||'—':'—';if(v==='A'||v==='Lancar'||v==='✓')chk++;}else{HARI.forEach(h=>{tot++;const v=dataObj&&dataObj[ki]&&dataObj[ki][ii]?dataObj[ki][ii][h]||'—':'—';if(v==='✓'||v==='Lancar'||v==='A')chk++;});}}));return{chk,tot};}
-  function _cntOrtu(dataObj){let chk=0,tot=0;BUKU_KAT_ORTU.forEach((kat,ki)=>kat.items.forEach((_,ii)=>{HARI.forEach(h=>{tot++;const v=dataObj&&dataObj[ki]&&dataObj[ki][ii]?dataObj[ki][ii][h]||'—':'—';if(v==='✓')chk++;});}));return{chk,tot};}
-  if (gs&&gs.status==='Published') { const r=_cntGuru(gs.data);gCheck=r.chk;gTotal=r.tot; }
-  if (oe&&oe[0]) { const r=_cntOrtu(oe[0].data);oCheck=r.chk;oTotal=r.tot; }
-  const gPct = gTotal?Math.round(gCheck/gTotal*100):0;
-  const oPct = oTotal?Math.round(oCheck/oTotal*100):0;
-  el.innerHTML = `
-  <div class="stats-grid">
-    <div class="stat-card"><div class="stat-value">${gs&&gs.status==='Published'?gPct+'%':'—'}</div><div class="stat-label">✅ di Sekolah</div></div>
-    <div class="stat-card blue"><div class="stat-value">${oe&&oe.length?oPct+'%':'—'}</div><div class="stat-label">✅ di Rumah</div></div>
-    <div class="stat-card orange"><div class="stat-value">${oe?oe.length:0}</div><div class="stat-label">Laporan Dikirim</div></div>
-  </div>
-  <div class="card">
-    <div class="card-title" style="margin-bottom:12px">📈 Ringkasan Minggu Ini — ${selectedMurid?selectedMurid.nama:'—'}</div>
-    <div style="font-size:13px;color:var(--gray-700);line-height:2.2">
-      <div>🏫 Laporan sekolah: <strong style="color:${gs&&gs.status==='Published'?'var(--success)':'var(--warning)'}">${gs&&gs.status==='Published'?'✅ Sudah diterima dari guru':'⏳ Menunggu guru publish'}</strong></div>
-      <div>🏠 Laporan rumah: <strong style="color:${oe&&oe.length?'var(--success)':'var(--warning)'}">${oe&&oe.length?'✅ '+oe.length+' laporan terkirim':'⏳ Belum ada laporan'}</strong></div>
+  if (!selectedMurid) { el.innerHTML = ''; return; }
+  const murid = selectedMurid;
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--gray-500)">⏳ Memuat rekap...</div>';
+  const end = TODAY_ISO;
+  const s7 = new Date(end); s7.setDate(s7.getDate() - 6);
+  const startDate = s7.toISOString().split('T')[0];
+  const now = new Date();
+  Promise.all([
+    apiCall('getRekapBuku', { siswaId: murid.nama, startDate, endDate: end }),
+    apiCall('getNilaiKeaktifan', { siswaId: murid.nama, bulan: now.getMonth()+1, tahun: now.getFullYear() }),
+  ]).then(([rekap, keaktifan]) => {
+    const sekolahDays = rekap.ok ? (rekap.sekolah||[]).length : 0;
+    const rumahDays   = rekap.ok ? (rekap.rumah||[]).length : 0;
+    const jmlKeaktifan = keaktifan.ok ? keaktifan.jumlahHari : 0;
+    const bln = now.toLocaleDateString('id-ID',{month:'long',year:'numeric'});
+    const kColor = jmlKeaktifan>=20?'var(--success)':jmlKeaktifan>=10?'var(--warning)':'#C62828';
+    const kLabel = jmlKeaktifan>=20?'⭐ Sangat Aktif':jmlKeaktifan>=10?'✅ Aktif':'⚠️ Perlu Ditingkatkan';
+    el.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-value">${sekolahDays}</div><div class="stat-label">📋 Laporan Sekolah (7 hari)</div></div>
+      <div class="stat-card blue"><div class="stat-value">${rumahDays}</div><div class="stat-label">🏠 Laporan Rumah (7 hari)</div></div>
+      <div class="stat-card orange"><div class="stat-value">${jmlKeaktifan}</div><div class="stat-label">📅 Hari Aktif (${bln})</div></div>
     </div>
-  </div>`;
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">📈 Ringkasan 7 Hari Terakhir — ${murid.nama}</div>
+      <div style="font-size:13px;color:var(--gray-700);line-height:2.4">
+        <div>🏫 Laporan sekolah: <strong style="color:${sekolahDays>0?'var(--success)':'var(--warning)'}">${sekolahDays>0?'✅ '+sekolahDays+' hari terisi':'⏳ Belum ada laporan guru'}</strong></div>
+        <div>🏠 Laporan rumah: <strong style="color:${rumahDays>0?'var(--success)':'var(--warning)'}">${rumahDays>0?'✅ '+rumahDays+' hari terkirim':'⏳ Belum ada laporan'}</strong></div>
+        <div>📊 Nilai keaktifan: <strong style="color:${kColor}">${kLabel} (${jmlKeaktifan} hari di ${bln})</strong></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">⬇️ Download Rekap Lengkap</div>
+        <button class="btn-sm-outline" onclick="downloadRekapOrtuCSV()">Download CSV (30 hari)</button>
+      </div>
+      <div style="font-size:12px;color:var(--gray-500);padding:4px 0">File CSV berisi kolom aktivitas sekolah dan rumah setiap hari selama 30 hari terakhir.</div>
+    </div>`;
+  });
 }
 </script>
 </body>

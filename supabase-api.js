@@ -78,6 +78,14 @@ async function apiCall(action, payload = {}) {
       case 'getBukuOrtu':        return await _getBukuOrtu(payload);
       case 'deleteBukuOrtu':     return await _deleteBukuOrtu(payload);
 
+      /* BUKU PENGHUBUNG DIGITAL */
+      case 'getBukuSekolah':     return await _getBukuSekolah(payload);
+      case 'saveBukuSekolah':    return await _saveBukuSekolah(payload);
+      case 'getBukuRumah':       return await _getBukuRumah(payload);
+      case 'saveBukuRumah':      return await _saveBukuRumah(payload);
+      case 'getRekapBuku':       return await _getRekapBuku(payload);
+      case 'getNilaiKeaktifan':  return await _getNilaiKeaktifan(payload);
+
       /* KPI TAHUNAN */
       case 'saveKpi':            return await _saveKpi(payload);
       case 'getKpi':             return await _getKpi(payload);
@@ -1016,6 +1024,66 @@ async function _batchImportUsers({ rows }) {
     message: `Import selesai: ${newRows.length} akun ditambahkan, ${skipped} dilewati`,
     added: newRows.length, skipped,
   };
+}
+
+/* ─── BUKU PENGHUBUNG DIGITAL ────────────────────────────────── */
+
+async function _getBukuSekolah({ siswaId, tanggal } = {}) {
+  const tgl = tanggal || _isoToday();
+  const { data, error } = await _sb.from('buku_sekolah')
+    .select('*').eq('siswa_id', siswaId).eq('tanggal', tgl).maybeSingle();
+  if (error) throw error;
+  return { ok: true, data: data ? { aktivitas: data.aktivitas || {}, guruId: data.guru_id, tanggal: data.tanggal } : null };
+}
+
+async function _saveBukuSekolah({ siswaId, jenjang, tanggal, aktivitas, guruId } = {}) {
+  const tgl = tanggal || _isoToday();
+  const akt = typeof aktivitas === 'string' ? JSON.parse(aktivitas) : (aktivitas || {});
+  const { error } = await _sb.from('buku_sekolah').upsert(
+    { siswa_id: siswaId, jenjang: (jenjang || '').toUpperCase(), tanggal: tgl, aktivitas: akt, guru_id: guruId || null, updated_at: new Date().toISOString() },
+    { onConflict: 'siswa_id,tanggal' }
+  );
+  if (error) throw error;
+  return { ok: true, message: 'Aktivitas sekolah tersimpan' };
+}
+
+async function _getBukuRumah({ siswaId, tanggal } = {}) {
+  const tgl = tanggal || _isoToday();
+  const { data, error } = await _sb.from('buku_rumah')
+    .select('*').eq('siswa_id', siswaId).eq('tanggal', tgl).maybeSingle();
+  if (error) throw error;
+  return { ok: true, data: data ? { aktivitas: data.aktivitas || {}, tanggal: data.tanggal } : null };
+}
+
+async function _saveBukuRumah({ siswaId, jenjang, tanggal, aktivitas } = {}) {
+  const tgl = tanggal || _isoToday();
+  const akt = typeof aktivitas === 'string' ? JSON.parse(aktivitas) : (aktivitas || {});
+  const { error } = await _sb.from('buku_rumah').upsert(
+    { siswa_id: siswaId, jenjang: (jenjang || '').toUpperCase(), tanggal: tgl, aktivitas: akt, updated_at: new Date().toISOString() },
+    { onConflict: 'siswa_id,tanggal' }
+  );
+  if (error) throw error;
+  return { ok: true, message: 'Aktivitas rumah tersimpan' };
+}
+
+async function _getRekapBuku({ siswaId, startDate, endDate } = {}) {
+  const [{ data: sekolah, error: e1 }, { data: rumah, error: e2 }] = await Promise.all([
+    _sb.from('buku_sekolah').select('tanggal, aktivitas, guru_id').eq('siswa_id', siswaId).gte('tanggal', startDate).lte('tanggal', endDate).order('tanggal'),
+    _sb.from('buku_rumah').select('tanggal, aktivitas').eq('siswa_id', siswaId).gte('tanggal', startDate).lte('tanggal', endDate).order('tanggal'),
+  ]);
+  if (e1) throw e1;
+  if (e2) throw e2;
+  return { ok: true, sekolah: sekolah || [], rumah: rumah || [] };
+}
+
+async function _getNilaiKeaktifan({ siswaId, bulan, tahun } = {}) {
+  const bln  = String(bulan).padStart(2, '0');
+  const startDate = `${tahun}-${bln}-01`;
+  const endDate   = `${tahun}-${bln}-31`;
+  const { data, error } = await _sb.from('buku_rumah')
+    .select('tanggal').eq('siswa_id', siswaId).gte('tanggal', startDate).lte('tanggal', endDate);
+  if (error) throw error;
+  return { ok: true, jumlahHari: (data || []).length, bulan, tahun };
 }
 
 /* ─── Utility ────────────────────────────────────────────────── */
