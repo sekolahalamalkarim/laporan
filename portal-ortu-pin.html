@@ -758,6 +758,26 @@ function loadBpSekolahOrtu() {
   });
 }
 
+function _bp3Val(v) {
+  if (v === 'ya' || v === true || v === 'true') return 'ya';
+  if (v === 'tidak' || v === false || v === 'false') return 'tidak';
+  return '-';
+}
+function _bp3Style(v) {
+  if (v === 'ya')    return { txt:'✓', col:'var(--success)' };
+  if (v === 'tidak') return { txt:'✗', col:'#C62828' };
+  return { txt:'—', col:'var(--gray-400)' };
+}
+function bp3Cycle(btn) {
+  const cur = btn.dataset.val || '-';
+  const next = cur==='-'?'ya':cur==='ya'?'tidak':'-';
+  const { txt, col } = _bp3Style(next);
+  btn.dataset.val = next;
+  btn.textContent = txt;
+  btn.style.color = col;
+  btn.style.borderColor = col;
+}
+
 function _renderBpSekolahOrtu(data, jenjang) {
   const el = document.getElementById('bp-sekolah-view');
   if (!data) {
@@ -766,7 +786,7 @@ function _renderBpSekolahOrtu(data, jenjang) {
   }
   const schema = BUKU_SEKOLAH_DEF[jenjang] || BUKU_SEKOLAH_DEF['SD'];
   let html = '<div class="success-banner">✅ Laporan dari guru sudah tersedia.</div>';
-  html += '<div class="table-wrapper"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th style="padding:5px 8px">Aktivitas</th><th style="width:90px;text-align:center;padding:5px 8px">Hasil</th></tr></thead><tbody>';
+  html += '<div class="table-wrapper"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th style="padding:5px 8px">Aktivitas</th><th style="width:70px;text-align:center;padding:5px 8px">Hasil</th></tr></thead><tbody>';
   schema.forEach(kat => {
     html += `<tr><td colspan="2" style="padding:5px 10px;font-weight:800;font-size:11px;color:var(--primary-dark);background:var(--secondary)">${kat.kat}. ${kat.label}</td></tr>`;
     kat.items.forEach(item => {
@@ -774,8 +794,8 @@ function _renderBpSekolahOrtu(data, jenjang) {
       if (item.type === 'pesan') {
         html += `<tr><td style="padding:5px 10px;font-size:12px;font-weight:600" colspan="2">${item.label}<br><span style="font-size:11px;font-weight:400;color:var(--gray-700)">${val||'—'}</span></td></tr>`;
       } else if (item.type === 'ceklis') {
-        const ok = val === true || val === 'true';
-        html += `<tr><td style="padding:5px 10px;font-size:12px">${item.label}</td><td style="text-align:center;font-weight:800;font-size:14px;color:${ok?'var(--success)':'var(--gray-300)'}">${ok?'✓':'—'}</td></tr>`;
+        const { txt, col } = _bp3Style(_bp3Val(val));
+        html += `<tr><td style="padding:5px 10px;font-size:12px">${item.label}</td><td style="text-align:center;font-weight:800;font-size:18px;color:${col}">${txt}</td></tr>`;
       } else {
         html += `<tr><td style="padding:5px 10px;font-size:12px">${item.label}</td><td style="padding:5px 10px;color:var(--gray-700);font-size:11px">${val||'—'}</td></tr>`;
       }
@@ -798,8 +818,8 @@ function _renderBpRumahForm(murid, prefill) {
     kat.items.forEach(item => {
       const val = data[item.key];
       if (item.type === 'ceklis') {
-        const chk = val === true || val === 'true';
-        html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:11px;padding:4px">${rn++}</td><td style="font-size:12px;padding:7px 10px">${item.label}</td><td style="text-align:center"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" data-key="${item.key}" ${chk?'checked':''} style="width:17px;height:17px;cursor:pointer"><span style="font-size:12px;color:var(--gray-500)">Ya</span></label></td></tr>`;
+        const v = _bp3Val(val); const { txt, col } = _bp3Style(v);
+        html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:11px;padding:4px">${rn++}</td><td style="font-size:12px;padding:7px 10px">${item.label}</td><td style="text-align:center"><button class="bp3-toggle" data-key="${item.key}" data-val="${v}" onclick="bp3Cycle(this)" style="font-size:18px;font-weight:800;border:2px solid ${col};border-radius:50%;width:38px;height:38px;background:none;cursor:pointer;color:${col};line-height:1;padding:0">${txt}</button></td></tr>`;
       } else {
         html += `<tr><td style="text-align:center;color:var(--gray-500);font-size:11px;padding:4px">${rn++}</td><td style="font-size:12px;padding:7px 10px">${item.label}</td><td style="padding:4px 6px"><input type="text" data-key="${item.key}" value="${(val||'').toString().replace(/"/g,'&quot;')}" style="width:100%;padding:6px 9px;border:1.5px solid var(--gray-300);border-radius:7px;font-size:12px;font-family:inherit;box-sizing:border-box"></td></tr>`;
       }
@@ -817,7 +837,7 @@ function _saveBpRumah() {
   const murid = selectedMurid; if (!murid) return;
   const el = document.getElementById('bp-rumah-form');
   const aktivitas = {};
-  el.querySelectorAll('input[type=checkbox][data-key]').forEach(cb => { aktivitas[cb.dataset.key] = cb.checked; });
+  el.querySelectorAll('.bp3-toggle[data-key]').forEach(btn => { const v=btn.dataset.val||'-'; aktivitas[btn.dataset.key]=v==='ya'?'ya':v==='tidak'?'tidak':null; });
   el.querySelectorAll('input[type=text][data-key]').forEach(inp => { aktivitas[inp.dataset.key] = inp.value.trim(); });
   const btn = el.querySelector('button.btn-sm-green');
   if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Mengirim...'; }
