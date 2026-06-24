@@ -51,7 +51,7 @@ async function apiCall(action, payload = {}) {
       /* JOB TRACKER */
       case 'saveJobTracker':     return await _saveJobTracker(payload);
       case 'getJobTrackerToday': return await _getJobTrackerToday(payload);
-      case 'getAllJobTracker':   return await _getAllJobTracker();
+      case 'getAllJobTracker':   return await _getAllJobTracker(payload);
 
       /* KPI HARIAN */
       case 'saveKpiHarian':      return await _saveKpiHarian(payload);
@@ -169,7 +169,7 @@ function _mapUser(u) {
 async function _saveUser({ username, password, role, nama, jabatan, namaAnak, jenjang, tipeGuru, kelasAmpu, isNew }) {
   if (!username || !password || !role || !nama)
     throw new Error('Field wajib tidak lengkap (username/password/role/nama)');
-  const validRoles = ['guru', 'ortu', 'pimpinan', 'admin'];
+  const validRoles = ['guru', 'kepala sekolah', 'ortu', 'pimpinan', 'admin'];
   if (!validRoles.includes(role)) throw new Error('Role tidak valid');
 
   const row = {
@@ -354,7 +354,7 @@ async function _getAllJobTracker({ jenjang } = {}) {
   // Jenjang difilter client-side agar fallback ke semua jika belum ada jenjang di DB
   const [{ data: rawGuru, error: e1 }, { data: kvRows, error: e2 }] = await Promise.all([
     _sb.from('users').select('nama, jabatan, tipe_guru, kelas_ampu, jenjang')
-       .eq('role', 'guru').eq('active', 'Y'),
+       .in('role', ['guru', 'kepala sekolah']).eq('active', 'Y'),
     _sb.from('app_config').select('key, value').like('key', 'job_%'),
   ]);
   if (e1) throw e1;

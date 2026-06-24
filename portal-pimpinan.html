@@ -266,12 +266,30 @@
 
       <!-- Akun Pengguna -->
       <div class="card">
-        <div class="card-header">
+        <div class="card-header" style="flex-wrap:wrap;gap:8px">
           <div class="card-title">👤 Akun Pengguna</div>
-          <button class="btn btn-green" onclick="openUserModal()">+ Tambah Akun</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" onclick="showImportPanel('akun')">📥 Import Excel</button>
+            <button class="btn btn-green" onclick="openUserModal()">+ Tambah Akun</button>
+          </div>
         </div>
         <div class="info-banner">💡 Tambahkan akun guru dan orangtua di sini. Password bisa dibagikan langsung ke pengguna.</div>
+        <!-- Filter bar -->
+        <div style="display:flex;gap:8px;padding:6px 0 12px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--gray-300);margin-bottom:10px">
+          <select id="uf-role" onchange="applyUserFilter()" style="padding:6px 10px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;background:white">
+            <option value="">Semua Role</option>
+            <option value="guru">Guru</option>
+            <option value="kepala sekolah">Kepala Sekolah</option>
+            <option value="ortu">Ortu</option>
+            <option value="pimpinan">Pimpinan</option>
+          </select>
+          <input type="text" id="uf-search" placeholder="Cari nama / jabatan / username..." oninput="applyUserFilter()"
+            style="padding:6px 10px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;min-width:200px;flex:1" />
+          <button class="btn btn-outline btn-sm" onclick="resetUserFilter()">✕ Reset</button>
+          <span id="uf-count" style="font-size:12px;color:var(--gray-500);white-space:nowrap"></span>
+        </div>
         <div class="table-wrapper" id="users-table"></div>
+        <div id="users-pagination" style="display:flex;justify-content:center;gap:6px;margin-top:12px;flex-wrap:wrap"></div>
       </div>
       <!-- IMPORT EXCEL (di atas list) -->
       <div class="card">
@@ -340,6 +358,7 @@
       <select id="u-role" onchange="toggleRoleFields()">
         <option value="">-- Pilih Role --</option>
         <option value="guru">🧑‍🏫 Guru / Karyawan</option>
+        <option value="kepala sekolah">🏫 Kepala Sekolah</option>
         <option value="ortu">👨‍👩‍👧 Orangtua</option>
         <option value="pimpinan">👔 Pimpinan Jenjang</option>
         <option value="admin">🔑 Admin (Akses Penuh)</option>
@@ -406,6 +425,8 @@ const MY_JENJANG = IS_ADMIN ? '' : (currentUser.jenjang || '');
 
 const TODAY_ISO = new Date().toISOString().split('T')[0];
 let allJobData = {}, allKpiData = {}, allUsers = [], allMurid = [], allBukuStatus = {};
+let userFilterSearch = '', userFilterRole = '', userPage = 1;
+const USER_PAGE_SIZE = 15;
 let muridFilterJenjang = '', muridFilterKelas = '', muridFilterSearch = '';
 
 function toast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.style.background=err?'#C62828':'#1B5E20';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
@@ -662,7 +683,7 @@ function exportKpiRekap(){
     // Kumpulkan semua tanggal unik
     const allDates=[...new Set(guruList.flatMap(g=>Object.keys(g.dates||{})))].sort();
 
-    const KPI_LABELS=['Hadir tepat waktu','Berpakaian rapi','Kelas inspirasi pagi','ID Card/atribut','Absen mengajar','Sikap & adab'];
+    const KPI_LABELS=['Berpenampilan rapi','ID Card','Tugas harian & absensi','Info positif sosmed','Ibadah harian'];
 
     // Sheet 1: Ringkasan rata-rata per guru per bulan
     const summaryRows=[['No','Nama Guru','Jabatan','Jenjang','Hari Isi','Rata-rata KPI','Predikat']];
@@ -704,12 +725,10 @@ function renderKpiRekap(){
   if(!rows.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><p>Belum ada data KPI hari ini</p></div>';return;}
 
   const KPI_ITEMS=[
-    'Mengisi absensi hadir tepat waktu',
-    'Berpakaian rapi, sopan, dan sesuai ketentuan sekolah',
-    'Mengikuti kelas inspirasi pagi',
-    'Menggunakan ID Card/atribut lengkap',
-    'Mengisi Absen mengajar harian',
-    'Menjaga sikap, adab, dan komunikasi selama di sekolah',
+    'Berpenampilan rapi, sopan, dan sesuai syariat Islam serta ketentuan Al-Karim.',
+    'Menggunakan ID Card sebagai identitas selama menjalankan tugas.',
+    'Melengkapi Tugas harian, termasuk absensi dan jurnal mengajar, dengan tertib.',
+    'Berpartisipasi aktif menyebarkan informasi positif Sekolah ke sosial media',
   ];
 
   let html=`<div class="table-wrapper"><table><thead><tr>
@@ -800,8 +819,46 @@ function loadManajemenData(){
   loadJadwal();
 }
 
+function applyUserFilter() {
+  userFilterSearch = (document.getElementById('uf-search')||{}).value?.toLowerCase().trim() || '';
+  userFilterRole   = (document.getElementById('uf-role')||{}).value || '';
+  userPage = 1;
+  renderUsersTable();
+}
+function resetUserFilter() {
+  userFilterSearch=''; userFilterRole=''; userPage=1;
+  const s=document.getElementById('uf-search'); if(s) s.value='';
+  const r=document.getElementById('uf-role');   if(r) r.value='';
+  renderUsersTable();
+}
+
 function renderUsersTable(){
   const el=document.getElementById('users-table');
+  const pgEl=document.getElementById('users-pagination');
+
+  // Apply filters
+  let list = allUsers.filter(u => {
+    if (userFilterRole && u.role !== userFilterRole) return false;
+    if (userFilterSearch) {
+      const s = userFilterSearch;
+      const detail = u.role==='ortu' ? (u.namaAnak||'') : (u.jabatan||'');
+      if (!u.nama.toLowerCase().includes(s) && !detail.toLowerCase().includes(s) && !u.username.toLowerCase().includes(s)) return false;
+    }
+    return true;
+  });
+
+  // Count badge
+  const cntEl = document.getElementById('uf-count');
+  if (cntEl) cntEl.textContent = list.length < allUsers.length
+    ? list.length + ' dari ' + allUsers.length + ' akun'
+    : allUsers.length + ' akun';
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(list.length / USER_PAGE_SIZE));
+  if (userPage > totalPages) userPage = totalPages;
+  const pageList = list.slice((userPage-1)*USER_PAGE_SIZE, userPage*USER_PAGE_SIZE);
+
+  // Render table
   let html=`<table><thead><tr>
     <th>Username</th><th>Password</th><th style="width:90px">Role</th>
     <th>Nama Lengkap</th><th>Jabatan / Nama Anak</th>
@@ -809,15 +866,22 @@ function renderUsersTable(){
     <th style="width:110px">Kelas Ampu</th>
     <th style="width:120px">Aksi</th>
   </tr></thead><tbody>`;
-  allUsers.forEach(u=>{
-    const roleBadge=u.role==='guru'?'<span class="badge badge-guru">Guru</span>':u.role==='ortu'?'<span class="badge badge-ortu">Ortu</span>':'<span class="badge badge-pimpinan">Pimpinan</span>';
+  pageList.forEach(u=>{
+    const isGuruLike = u.role==='guru' || u.role==='kepala sekolah';
+    const roleBadge = u.role==='guru'
+      ? '<span class="badge badge-guru">Guru</span>'
+      : u.role==='kepala sekolah'
+        ? '<span class="badge" style="background:#EDE7F6;color:#4527A0">Kepala Sekolah</span>'
+        : u.role==='ortu'
+          ? '<span class="badge badge-ortu">Ortu</span>'
+          : '<span class="badge badge-pimpinan">Pimpinan</span>';
     const detail=u.role==='ortu'?(u.namaAnak+' ('+u.jenjang+')'):u.jabatan;
-    const tipeCell = u.role==='guru'
+    const tipeCell = isGuruLike
       ? (u.tipeGuru==='mapel'
           ? '<span class="badge" style="background:#FFF3E0;color:#E65100">Mapel</span>'
           : '<span class="badge" style="background:#E8F5E9;color:#2E7D32">Kelas</span>')
       : '<span style="color:var(--gray-300)">—</span>';
-    const kelasCell = u.role==='guru' && u.kelasAmpu
+    const kelasCell = isGuruLike && u.kelasAmpu
       ? u.kelasAmpu.split(',').map(k=>`<span class="badge" style="background:#E3F2FD;color:#1565C0;margin:1px">${k.trim()}</span>`).join(' ')
       : '<span style="color:var(--gray-300)">—</span>';
     html+=`<tr>
@@ -834,9 +898,24 @@ function renderUsersTable(){
       </td>
     </tr>`;
   });
-  if(!allUsers.length)html+='<tr><td colspan="8"><div class="empty-state" style="padding:20px"><div class="empty-icon">👤</div><p>Belum ada akun</p></div></td></tr>';
+  if(!pageList.length)html+='<tr><td colspan="8"><div class="empty-state" style="padding:20px"><div class="empty-icon">👤</div><p>Tidak ada akun yang cocok</p></div></td></tr>';
   html+='</tbody></table>';
   el.innerHTML=html;
+
+  // Render pagination
+  if (pgEl) {
+    if (totalPages <= 1) { pgEl.innerHTML=''; return; }
+    let pg = '';
+    for (let i=1; i<=totalPages; i++) {
+      const active = i===userPage ? 'style="background:var(--primary);color:#fff;border-color:var(--primary)"' : '';
+      pg += `<button class="btn btn-outline btn-sm" ${active} onclick="userPage=${i};renderUsersTable()" style="min-width:36px;padding:4px 10px">${i}</button>`;
+    }
+    // Prev / Next
+    pgEl.innerHTML =
+      `<button class="btn btn-outline btn-sm" onclick="if(userPage>1){userPage--;renderUsersTable()}" ${userPage===1?'disabled':''}>‹</button>` +
+      pg +
+      `<button class="btn btn-outline btn-sm" onclick="if(userPage<${totalPages}){userPage++;renderUsersTable()}" ${userPage===totalPages?'disabled':''}>›</button>`;
+  }
 }
 
 function renderMuridTable(){
@@ -975,17 +1054,18 @@ function deleteAllMurid(){
 /* USER MODAL */
 function toggleRoleFields(){
   const role=document.getElementById('u-role').value;
+  const isGuruLike = role==='guru' || role==='kepala sekolah';
   document.getElementById('field-jabatan').style.display=role==='ortu'?'none':'block';
-  document.getElementById('field-tipe-guru').style.display=role==='guru'?'block':'none';
-  document.getElementById('field-kelas-ampu').style.display=role==='guru'?'block':'none';
+  document.getElementById('field-tipe-guru').style.display=isGuruLike?'block':'none';
+  document.getElementById('field-kelas-ampu').style.display=isGuruLike?'block':'none';
   document.getElementById('field-anak').style.display=role==='ortu'?'block':'none';
-  // Jenjang: tampil untuk guru (jenjang mengajar), pimpinan (jenjang yg dikelola), dan ortu
-  document.getElementById('field-jenjang').style.display=['guru','pimpinan','ortu'].includes(role)?'block':'none';
+  // Jenjang: tampil untuk guru/kepala sekolah, pimpinan, dan ortu
+  document.getElementById('field-jenjang').style.display=(isGuruLike||role==='pimpinan'||role==='ortu')?'block':'none';
   // Label jenjang sesuai role
   const jLabel = document.querySelector('#field-jenjang label');
   if(jLabel){
     if(role==='pimpinan') jLabel.textContent='Jenjang yang Dikelola';
-    else if(role==='guru') jLabel.textContent='Jenjang Mengajar';
+    else if(isGuruLike) jLabel.textContent='Jenjang Mengajar';
     else jLabel.textContent='Jenjang';
   }
 }
@@ -1230,6 +1310,29 @@ const IMPORT_CONFIG = {
     template: [['Nama','Username','Password','Jabatan','Tipe Guru','Kelas Ampu'],['Budi Santoso','budi.santoso','alkarim123','Guru Kelas 3A','kelas','3A'],['Dewi Lestari','dewi.lestari','alkarim123','Guru Mapel IPA','mapel','']],
     filename: 'template_import_guru.xlsx',
   },
+  akun: {
+    label: 'Akun Pengguna',
+    info: 'Kolom wajib: <strong>Nama</strong>, <strong>Username</strong>, <strong>Role</strong> (guru/kepala sekolah/ortu/pimpinan). Kolom opsional: Password (default: alkarim123), Jabatan, Nama Anak, Jenjang, Tipe Guru (kelas/mapel), Kelas Ampu.',
+    cols: ['Nama','Username','Password','Role','Jabatan','Nama Anak','Jenjang','Tipe Guru','Kelas Ampu'],
+    map: row => ({
+      nama:      row['Nama']       ||row['nama']       ||'',
+      username:  row['Username']   ||row['username']   ||'',
+      password:  row['Password']   ||row['password']   ||'alkarim123',
+      role:      row['Role']       ||row['role']       ||'guru',
+      jabatan:   row['Jabatan']    ||row['jabatan']    ||'',
+      namaAnak:  row['Nama Anak']  ||row['nama anak']  ||'',
+      jenjang:   row['Jenjang']    ||row['jenjang']    ||'',
+      tipeGuru:  row['Tipe Guru']  ||row['tipe guru']  ||'',
+      kelasAmpu: row['Kelas Ampu'] ||row['kelas ampu'] ||'',
+    }),
+    template: [
+      ['Nama','Username','Password','Role','Jabatan','Nama Anak','Jenjang','Tipe Guru','Kelas Ampu'],
+      ['Budi Santoso','budi.santoso','alkarim123','guru','Guru Kelas 3A','','','kelas','3A'],
+      ['Ibu Rina','rina123','alkarim123','ortu','','Ahmad Fauzi','SD','',''],
+      ['Ditha Rahmawati','ditha.ks','alkarim123','pimpinan','Kepala Sekolah','','','',''],
+    ],
+    filename: 'template_import_akun.xlsx',
+  },
 };
 
 function showImportPanel(type) {
@@ -1278,7 +1381,9 @@ function previewImport() {
           ? [r.nama,r.kelas,r.jenjang,r.usernameOrtu||'—']
           : importType==='guru'
             ? [r.nama,r.username||'(auto)',r.password,r.jabatan,r.tipeGuru,r.kelasAmpu||'—']
-            : [r.nama,r.username||'(auto)',r.password,r.namaAnak,r.jenjang];
+            : importType==='akun'
+              ? [r.nama,r.username||'(auto)',r.password,r.role,r.jabatan||r.namaAnak||'—',r.namaAnak||'—',r.jenjang||'—',r.tipeGuru||'—',r.kelasAmpu||'—']
+              : [r.nama,r.username||'(auto)',r.password,r.namaAnak,r.jenjang];
         preview += `<tr>${vals.map(v=>`<td style="font-size:12px">${v}</td>`).join('')}</tr>`;
       });
       preview += '</tbody></table></div>';

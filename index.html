@@ -108,10 +108,10 @@
   }
 
   function redirectUser(role) {
-    if (role === 'guru')                     window.location.href = 'portal-guru.html';
-    else if (role === 'ortu')                window.location.href = 'portal-ortu.html';
-    else if (role === 'pimpinan')            window.location.href = 'portal-pimpinan.html';
-    else if (role === 'admin')               window.location.href = 'portal-pimpinan.html';
+    if (role === 'guru' || role === 'kepala sekolah') window.location.href = 'portal-guru.html';
+    else if (role === 'ortu')                         window.location.href = 'portal-ortu.html';
+    else if (role === 'pimpinan')                     window.location.href = 'portal-pimpinan.html';
+    else if (role === 'admin')                        window.location.href = 'portal-pimpinan.html';
   }
 
   function setLoading(on) {
