@@ -370,6 +370,8 @@
       <select id="u-tipeGuru">
         <option value="kelas">🏫 Guru Kelas (Buku Penghubung + Rencana Kerja + KPI)</option>
         <option value="mapel">📚 Guru Mapel (Rencana Kerja + KPI)</option>
+        <option value="shadow">👥 Guru Shadow (Rencana Kerja + KPI)</option>
+        <option value="freelance">🔗 Guru Freelance (Rencana Kerja + KPI)</option>
       </select>
     </div>
     <div id="field-kelas-ampu" class="form-group" style="display:none">
@@ -879,7 +881,11 @@ function renderUsersTable(){
     const tipeCell = isGuruLike
       ? (u.tipeGuru==='mapel'
           ? '<span class="badge" style="background:#FFF3E0;color:#E65100">Mapel</span>'
-          : '<span class="badge" style="background:#E8F5E9;color:#2E7D32">Kelas</span>')
+          : u.tipeGuru==='shadow'
+            ? '<span class="badge" style="background:#EDE7F6;color:#512DA8">Shadow</span>'
+            : u.tipeGuru==='freelance'
+              ? '<span class="badge" style="background:#E8EAF6;color:#283593">Freelance</span>'
+              : '<span class="badge" style="background:#E8F5E9;color:#2E7D32">Kelas</span>')
       : '<span style="color:var(--gray-300)">—</span>';
     const kelasCell = isGuruLike && u.kelasAmpu
       ? u.kelasAmpu.split(',').map(k=>`<span class="badge" style="background:#E3F2FD;color:#1565C0;margin:1px">${k.trim()}</span>`).join(' ')
@@ -1296,7 +1302,7 @@ const IMPORT_CONFIG = {
   },
   guru: {
     label: 'Guru',
-    info: 'Kolom wajib: <strong>Nama</strong>. Kolom opsional: Username (auto-generate jika kosong), Password (default: alkarim123), Jabatan, Tipe Guru (kelas/mapel), Kelas Ampu.',
+    info: 'Kolom wajib: <strong>Nama</strong>. Kolom opsional: Username (auto-generate jika kosong), Password (default: alkarim123), Jabatan, Tipe Guru (kelas/mapel/shadow/freelance), Kelas Ampu.',
     cols: ['Nama','Username','Password','Jabatan','Tipe Guru','Kelas Ampu'],
     map: row => ({
       nama: row['Nama']||row['nama']||'',

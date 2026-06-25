@@ -424,14 +424,16 @@ document.getElementById('page-title').textContent = 'Portal Guru — ' + current
 document.getElementById('page-subtitle').textContent = (currentUser.jabatan||'') + '  |  ' + TODAY_LABEL;
 document.getElementById('kpi-tanggal-badge').textContent = '📅 ' + TODAY_LABEL;
 
-// Hide buku tab for guru mapel
-if (tipeGuru === 'mapel') {
+// Tipe guru yang HANYA punya Rencana Kerja + KPI (tanpa Buku Penghubung)
+const IS_MAPEL_LIKE = ['mapel','shadow','freelance'].includes(tipeGuru);
+
+// Hide buku tab untuk guru mapel / shadow / freelance
+if (IS_MAPEL_LIKE) {
   document.getElementById('btn-tab-buku').style.display = 'none';
 }
 
-// Load murid for buku penghubung
-// Semua guru NON-mapel bisa akses (tipeGuru 'kelas', kosong, atau nilai lain selain 'mapel')
-if (tipeGuru !== 'mapel') {
+// Load murid untuk buku penghubung — hanya guru kelas
+if (!IS_MAPEL_LIKE) {
   apiCall('getMurid').then(res => {
     const sel = document.getElementById('siswa-select');
 
