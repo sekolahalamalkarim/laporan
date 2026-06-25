@@ -996,34 +996,40 @@ async function _batchImportMurid({ rows }) {
 }
 
 async function _batchImportUsers({ rows }) {
-  const { data: existing } = await _sb.from('users').select('username');
+  // Ambil existing usernames untuk hitung skipped (boleh gagal — upsert tetap aman)
+  const { data: existing } = await _sb.from('users').select('username').eq('active','Y');
   const existingUsernames = (existing || []).map(u => u.username.toLowerCase());
 
-  const newRows = (rows || [])
-    .filter(r => r.nama && r.username && !existingUsernames.includes(r.username.toLowerCase()))
-    .map(r => ({
-      username:   r.username,
-      password:   r.password   || 'alkarim123',
-      role:       r.role       || 'guru',
-      nama:       r.nama,
-      jabatan:    r.jabatan    || '',
-      nama_anak:  r.namaAnak   || '',
-      jenjang:    r.jenjang    || '',
-      active:     'Y',
-      tipe_guru:  r.tipeGuru   || '',
-      kelas_ampu: r.kelasAmpu  || '',
-    }));
+  const validRows = (rows || []).filter(r => r.nama && r.username);
+  const newRows = validRows.map(r => ({
+    username:   r.username,
+    password:   r.password   || 'alkarim123',
+    role:       r.role       || 'guru',
+    nama:       r.nama,
+    jabatan:    r.jabatan    || '',
+    nama_anak:  r.namaAnak   || '',
+    jenjang:    r.jenjang    || '',
+    active:     'Y',
+    tipe_guru:  r.tipeGuru   || '',
+    kelas_ampu: r.kelasAmpu  || '',
+  }));
 
-  const skipped = (rows || []).length - newRows.length;
+  // Upsert dengan ignoreDuplicates — username sudah ada = dilewati, bukan error
   if (newRows.length > 0) {
-    const { error } = await _sb.from('users').insert(newRows);
+    const { error } = await _sb.from('users')
+      .upsert(newRows, { onConflict: 'username', ignoreDuplicates: true });
     if (error) throw error;
   }
-  return {
-    ok: true,
-    message: `Import selesai: ${newRows.length} akun ditambahkan, ${skipped} dilewati`,
-    added: newRows.length, skipped,
-  };
+
+  const skipped = validRows.filter(r => existingUsernames.includes(r.username.toLowerCase())).length;
+  const added   = newRows.length - skipped;
+  const invalid = (rows || []).length - validRows.length;
+
+  let msg = `Import selesai: ${added} akun ditambahkan`;
+  if (skipped)  msg += `, ${skipped} dilewati (username sudah ada)`;
+  if (invalid)  msg += `, ${invalid} baris tidak valid (nama/username kosong)`;
+
+  return { ok: true, message: msg, added, skipped };
 }
 
 /* ─── BUKU PENGHUBUNG DIGITAL ────────────────────────────────── */
