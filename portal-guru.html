@@ -560,9 +560,12 @@ function renderPagi() {
   if (submitted) {
     badge.innerHTML = '<span class="badge badge-selesai">✅ Sudah Submit</span>';
     banner.className = 'success-banner';
-    banner.innerHTML = '✅ Rencana pagi sudah disubmit ke pimpinan. Isi laporan sore mulai pukul ' + jadwal.jamBukaSore + '.';
-    addBtn.disabled = true; submitBtn.disabled = true;
-    document.querySelectorAll('#pagi-tbody input, #pagi-tbody select').forEach(el=>el.disabled=true);
+    banner.innerHTML = '✅ Rencana pagi sudah disubmit ke pimpinan. Isi laporan sore mulai pukul ' + jadwal.jamBukaSore + '. <em style="opacity:.8">(Kamu masih bisa tambah tugas & klik Update)</em>';
+    // Tetap bisa edit & tambah — hanya ubah label tombol submit
+    addBtn.disabled = false;
+    submitBtn.disabled = false;
+    submitBtn.textContent = '🔄 Update Rencana Pagi';
+    document.querySelectorAll('#pagi-tbody input, #pagi-tbody select').forEach(el=>el.disabled=false);
     // Show sore section
     showSoreSection();
   } else if (!open) {
@@ -575,6 +578,7 @@ function renderPagi() {
     badge.innerHTML = '<span class="badge badge-onprogres">🟢 Buka</span>';
     banner.innerHTML = '';
     addBtn.disabled = false; submitBtn.disabled = false;
+    submitBtn.textContent = '📤 Submit Rencana Pagi';
   }
 }
 
@@ -598,20 +602,25 @@ function addPagiRow() {
 
 function submitPagi() {
   if (!isWindowOpen(jadwal.jamBuka, jadwal.jamTutup)) { toast('🔒 Di luar jam pengisian pagi!', true); return; }
-  if (isPagiSubmitted()) { toast('✅ Rencana pagi sudah disubmit!'); return; }
   const valid = pagiRows.filter(r => r.agenda.trim());
   if (!valid.length) { toast('⚠️ Tambahkan minimal 1 tugas terlebih dahulu', true); return; }
-  toast('📤 Mengirim rencana pagi...');
+  const isUpdate = isPagiSubmitted();
+  toast(isUpdate ? '🔄 Memperbarui rencana pagi...' : '📤 Mengirim rencana pagi...');
   apiCall('saveJobTracker', {
     karyawan: currentUser.nama, jabatan: currentUser.jabatan,
     tanggal: TODAY_ISO, tasks: JSON.stringify(valid), sesi: 'pagi'
   }).then(res => {
     if (res.ok) {
       markPagi(valid);
-      soreRows = valid.map(t => ({ agenda: t.agenda, target: t.target, status: 'On Progres', bukti: '', catatan: '' }));
+      // Merge sore rows: tugas lama → pertahankan status/bukti, tugas baru → tambah dengan default
+      const existingSore = soreRows.reduce((m, r) => { m[r.agenda] = r; return m; }, {});
+      soreRows = valid.map(t => existingSore[t.agenda]
+        ? { ...existingSore[t.agenda], agenda: t.agenda, target: t.target }
+        : { agenda: t.agenda, target: t.target, status: 'On Progres', bukti: '', catatan: '' }
+      );
       renderPagi();
       renderSoreTable();
-      toast('📤 Rencana pagi terkirim ke pimpinan!');
+      toast(isUpdate ? '🔄 Rencana pagi berhasil diperbarui!' : '📤 Rencana pagi terkirim ke pimpinan!');
     } else { toast('⚠️ ' + res.error, true); }
   });
 }

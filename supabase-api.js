@@ -44,6 +44,7 @@ async function apiCall(action, payload = {}) {
       case 'saveMurid':          return await _saveMurid(payload);
       case 'deleteMurid':        return await _deleteMurid(payload);
       case 'batchDeleteMurid':   return await _batchDeleteMurid(payload);
+      case 'truncateAllMurid':   return await _truncateAllMurid();
       case 'generatePin':        return await _generatePin(payload);
       case 'resetPin':           return await _generatePin(payload);
       case 'verifyPin':          return await _verifyPin(payload);
@@ -259,6 +260,16 @@ async function _batchDeleteMurid({ ids }) {
   return { ok: true, message: `${ids.length} murid berhasil dihapus` };
 }
 
+async function _truncateAllMurid() {
+  // Hard delete semua + reset sequence ID ke 1
+  // Membutuhkan Postgres function: truncate_murid() — jalankan di Supabase SQL Editor:
+  // CREATE OR REPLACE FUNCTION truncate_murid()
+  // RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN TRUNCATE TABLE murid RESTART IDENTITY; END; $$;
+  const { error } = await _sb.rpc('truncate_murid');
+  if (error) throw error;
+  return { ok: true, message: 'Semua data murid dihapus & ID direset ke 1' };
+}
+
 async function _generatePin({ muridId }) {
   if (!muridId) throw new Error('muridId wajib');
   const pin = String(Math.floor(1000 + Math.random() * 9000));
@@ -431,7 +442,7 @@ async function _getAllKpiHarian({ tanggal, jenjang } = {}) {
   const today = tanggal || _isoToday();
   // Ambil semua guru, filter jenjang client-side (fallback jika belum ada data jenjang)
   const [{ data: rawGuru2, error: e1 }, { data: kvRows, error: e2 }] = await Promise.all([
-    _sb.from('users').select('nama, jabatan, jenjang').eq('role', 'guru').eq('active', 'Y'),
+    _sb.from('users').select('nama, jabatan, jenjang').in('role', ['guru','kepala sekolah']).eq('active', 'Y'),
     _sb.from('app_config').select('key, value').like('key', `kpi_harian_%_${today}`),
   ]);
   if (e1) throw e1;

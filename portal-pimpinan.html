@@ -1044,17 +1044,32 @@ function deleteAllMurid(){
   const ketik=prompt('Ketik persis  saya mau hapus  untuk konfirmasi:');
   if((ketik||'').trim().toLowerCase()!=='saya mau hapus'){toast('❌ Konfirmasi tidak sesuai, hapus dibatalkan',true);return;}
 
-  const ids=allMurid.map(m=>m.id);
-  toast('🗑️ Menghapus semua '+ids.length+' data siswa...');
-  apiCall('batchDeleteMurid',{ids}).then(res=>{
-    if(res.ok){
-      toast('✅ Semua data siswa berhasil dihapus');
-      resetMuridFilter();
-      loadManajemenData();
-    } else {
-      toast('⚠️ '+res.error,true);
-    }
-  });
+  const resetId = confirm('🔢 Reset ID ke 1?\n\n✅ OK  → Hapus semua + ID mulai dari 1 lagi\n❌ Batal → Hapus semua, ID lanjut dari nomor sebelumnya\n\n(Pilih OK jika kamu ingin import ulang dari awal)');
+
+  if(resetId){
+    toast('🗑️ Menghapus semua data & mereset ID...');
+    apiCall('truncateAllMurid',{}).then(res=>{
+      if(res.ok){
+        toast('✅ '+res.message);
+        resetMuridFilter();
+        loadManajemenData();
+      } else {
+        toast('⚠️ '+res.error+' (Jalankan SQL: CREATE OR REPLACE FUNCTION truncate_murid() RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN TRUNCATE TABLE murid RESTART IDENTITY; END; $$;)',true);
+      }
+    });
+  } else {
+    const ids=allMurid.map(m=>m.id);
+    toast('🗑️ Menghapus semua '+ids.length+' data siswa...');
+    apiCall('batchDeleteMurid',{ids}).then(res=>{
+      if(res.ok){
+        toast('✅ Semua data siswa berhasil dihapus');
+        resetMuridFilter();
+        loadManajemenData();
+      } else {
+        toast('⚠️ '+res.error,true);
+      }
+    });
+  }
 }
 
 /* USER MODAL */
@@ -1302,18 +1317,23 @@ const IMPORT_CONFIG = {
   },
   guru: {
     label: 'Guru',
-    info: 'Kolom wajib: <strong>Nama</strong>. Kolom opsional: Username (auto-generate jika kosong), Password (default: alkarim123), Jabatan, Tipe Guru (kelas/mapel/shadow/freelance), Kelas Ampu.',
-    cols: ['Nama','Username','Password','Jabatan','Tipe Guru','Kelas Ampu'],
+    info: 'Kolom wajib: <strong>Nama</strong>, <strong>Jenjang</strong> (TK/SD/SMP/SMA/ALC). Kolom opsional: Username (auto-generate jika kosong), Password (default: alkarim123), Jabatan, Tipe Guru (kelas/mapel/shadow/freelance), Kelas Ampu.',
+    cols: ['Nama','Username','Password','Jenjang','Jabatan','Tipe Guru','Kelas Ampu'],
     map: row => ({
-      nama: row['Nama']||row['nama']||'',
-      username: row['Username']||row['username']||'',
-      password: row['Password']||row['password']||'alkarim123',
-      jabatan: row['Jabatan']||row['jabatan']||'',
-      tipeGuru: row['Tipe Guru']||row['tipe guru']||'kelas',
-      kelasAmpu: row['Kelas Ampu']||row['kelas ampu']||'',
+      nama:      row['Nama']       ||row['nama']       ||'',
+      username:  row['Username']   ||row['username']   ||'',
+      password:  row['Password']   ||row['password']   ||'alkarim123',
+      jenjang:   row['Jenjang']    ||row['jenjang']    ||'',
+      jabatan:   row['Jabatan']    ||row['jabatan']    ||'',
+      tipeGuru:  row['Tipe Guru']  ||row['tipe guru']  ||'kelas',
+      kelasAmpu: row['Kelas Ampu'] ||row['kelas ampu'] ||'',
       role: 'guru',
     }),
-    template: [['Nama','Username','Password','Jabatan','Tipe Guru','Kelas Ampu'],['Budi Santoso','budi.santoso','alkarim123','Guru Kelas 3A','kelas','3A'],['Dewi Lestari','dewi.lestari','alkarim123','Guru Mapel IPA','mapel','']],
+    template: [
+      ['Nama','Username','Password','Jenjang','Jabatan','Tipe Guru','Kelas Ampu'],
+      ['Budi Santoso','budi.santoso','alkarim123','SD','Guru Kelas 3A','kelas','3A'],
+      ['Dewi Lestari','dewi.lestari','alkarim123','SMP','Guru Mapel IPA','mapel',''],
+    ],
     filename: 'template_import_guru.xlsx',
   },
   akun: {
@@ -1386,7 +1406,7 @@ function previewImport() {
         const vals = importType==='murid'
           ? [r.nama,r.kelas,r.jenjang,r.usernameOrtu||'—']
           : importType==='guru'
-            ? [r.nama,r.username||'(auto)',r.password,r.jabatan,r.tipeGuru,r.kelasAmpu||'—']
+            ? [r.nama,r.username||'(auto)',r.password,r.jenjang||'—',r.jabatan,r.tipeGuru,r.kelasAmpu||'—']
             : importType==='akun'
               ? [r.nama,r.username||'(auto)',r.password,r.role,r.jabatan||r.namaAnak||'—',r.namaAnak||'—',r.jenjang||'—',r.tipeGuru||'—',r.kelasAmpu||'—']
               : [r.nama,r.username||'(auto)',r.password,r.namaAnak,r.jenjang];
