@@ -101,6 +101,17 @@ async function apiCall(action, payload = {}) {
       case 'batchImportMurid':   return await _batchImportMurid(payload);
       case 'batchImportUsers':   return await _batchImportUsers(payload);
 
+      /* JOB TRACKER BY DATE */
+      case 'getAllJobTrackerByDate': return await _getAllJobTrackerByDate(payload);
+
+      /* KPI RANGE */
+      case 'getKpiHarianRange':  return await _getKpiHarianRange(payload);
+
+      /* TIPE CONFIG */
+      case 'getTipeConfig':      return await _getTipeConfig();
+      case 'saveTipeConfig':     return await _saveTipeConfig(payload);
+      case 'deleteTipeConfig':   return await _deleteTipeConfig(payload);
+
       default: return { ok: false, error: 'Action tidak dikenal: ' + action };
     }
   } catch (err) {
@@ -1101,6 +1112,164 @@ async function _getNilaiKeaktifan({ siswaId, bulan, tahun } = {}) {
     .select('tanggal').eq('siswa_id', siswaId).gte('tanggal', startDate).lte('tanggal', endDate);
   if (error) throw error;
   return { ok: true, jumlahHari: (data || []).length, bulan, tahun };
+}
+
+/* ─── JOB TRACKER BY DATE (historis) ────────────────────────── */
+
+async function _getAllJobTrackerByDate({ tanggal, jenjang } = {}) {
+  const date = tanggal || _isoToday();
+  const isToday = date === _isoToday();
+
+  // Untuk hari ini — pakai KV (real-time)
+  if (isToday) return _getAllJobTracker({ jenjang });
+
+  // Untuk tanggal lampau — query tabel job_tracker
+  const [{ data: rawGuru, error: e1 }, { data: jobRows, error: e2 }] = await Promise.all([
+    _sb.from('users').select('nama, jabatan, tipe_guru, kelas_ampu, jenjang')
+       .in('role', ['guru', 'kepala sekolah']).eq('active', 'Y'),
+    _sb.from('job_tracker').select('*').eq('tanggal', date).order('karyawan').order('no'),
+  ]);
+  if (e1) throw e1;
+  if (e2) throw e2;
+
+  let guruList = rawGuru || [];
+  if (jenjang) {
+    const jL = jenjang.toLowerCase();
+    guruList = guruList.filter(g => (g.jenjang || '').toLowerCase() === jL);
+  }
+
+  // Grupkan baris per karyawan & sesi
+  const byGuru = {};
+  (jobRows || []).forEach(r => {
+    if (!byGuru[r.karyawan]) byGuru[r.karyawan] = { pagi: [], sore: [] };
+    (r.sesi === 'Sore' ? byGuru[r.karyawan].sore : byGuru[r.karyawan].pagi).push(r);
+  });
+
+  const grouped = {};
+  guruList.forEach(g => {
+    const gd  = byGuru[g.nama] || { pagi: [], sore: [] };
+    const soreMap = {};
+    gd.sore.forEach(r => { soreMap[r.agenda] = r; });
+
+    // Tugas dari sesi pagi — overlay status dari sore
+    let tasks = gd.pagi.map(r => ({
+      agenda:  r.agenda,
+      target:  r.target_selesai || '',
+      status:  soreMap[r.agenda]?.status || (gd.sore.length ? 'Tidak Selesai' : 'On Progres'),
+      bukti:   soreMap[r.agenda]?.bukti   || '',
+      catatan: soreMap[r.agenda]?.catatan || '',
+      skor:    soreMap[r.agenda]?.skor    ?? null,
+    }));
+
+    // Jika hanya ada sore (tidak ada pagi di DB), tampilkan dari sore langsung
+    if (tasks.length === 0 && gd.sore.length > 0) {
+      tasks = gd.sore.map(r => ({
+        agenda: r.agenda, target: r.target_selesai || '',
+        status: r.status, bukti: r.bukti || '', catatan: r.catatan || '', skor: r.skor ?? null,
+      }));
+    }
+
+    const nilaiRekap = gd.sore.length
+      ? (gd.sore.find(r => r.nilai_rekap !== null && r.nilai_rekap !== undefined)?.nilai_rekap ?? null)
+      : null;
+
+    grouped[g.nama] = {
+      karyawan:        g.nama,
+      jabatan:         g.jabatan   || '',
+      tipeGuru:        g.tipe_guru || 'kelas',
+      jenjang:         g.jenjang   || '',
+      tasks,
+      nilaiRekap,
+      pagiSubmittedAt: gd.pagi.length > 0 ? date : null,
+      soreSubmittedAt: gd.sore.length > 0 ? date : null,
+      tanggal:         date,
+    };
+  });
+
+  return { ok: true, data: grouped, tanggal: date };
+}
+
+/* ─── KPI HARIAN RANGE ───────────────────────────────────────── */
+
+async function _getKpiHarianRange({ startDate, endDate, jenjang } = {}) {
+  const start = startDate || _isoToday();
+  const end   = endDate   || _isoToday();
+
+  const [{ data: rawGuru, error: e1 }, { data: kpiRows, error: e2 }] = await Promise.all([
+    _sb.from('users').select('nama, jabatan, jenjang')
+       .in('role', ['guru', 'kepala sekolah']).eq('active', 'Y'),
+    _sb.from('kpi_harian').select('*')
+       .gte('tanggal', start).lte('tanggal', end)
+       .eq('no', 1) // hanya ambil baris no=1 yang berisi total_skor per hari
+       .order('tanggal').order('guru'),
+  ]);
+  if (e1) throw e1;
+  if (e2) throw e2;
+
+  let guruList = rawGuru || [];
+  if (jenjang) {
+    const jL = jenjang.toLowerCase();
+    guruList = guruList.filter(g => (g.jenjang || '').toLowerCase() === jL);
+  }
+  const guruNames = new Set(guruList.map(g => g.nama));
+
+  // grouped[nama] = { guru, jabatan, jenjang, scores: [number, ...], dates: [str, ...] }
+  const grouped = {};
+  guruList.forEach(g => {
+    grouped[g.nama] = { guru: g.nama, jabatan: g.jabatan || '', jenjang: g.jenjang || '', scores: [], dates: [] };
+  });
+
+  (kpiRows || []).forEach(r => {
+    if (!guruNames.has(r.guru)) return;
+    if (r.total_skor === null || r.total_skor === undefined) return;
+    if (!grouped[r.guru]) grouped[r.guru] = { guru: r.guru, jabatan: r.jabatan || '', jenjang: '', scores: [], dates: [] };
+    grouped[r.guru].scores.push(r.total_skor);
+    grouped[r.guru].dates.push(r.tanggal);
+  });
+
+  // Hitung statistik per guru
+  const result = Object.values(grouped).map(g => {
+    const s = g.scores;
+    const avg   = s.length ? Math.round(s.reduce((a, b) => a + b, 0) / s.length) : null;
+    const min   = s.length ? Math.min(...s) : null;
+    const max   = s.length ? Math.max(...s) : null;
+    const count = s.length;
+    return { guru: g.guru, jabatan: g.jabatan, jenjang: g.jenjang, avg, min, max, count, dates: g.dates };
+  });
+
+  return { ok: true, data: result, startDate: start, endDate: end };
+}
+
+/* ─── TIPE CONFIG ─────────────────────────────────────────────── */
+
+async function _getTipeConfig() {
+  const { data, error } = await _sb.from('tipe_config').select('*').eq('active', true).order('tipe');
+  if (error) throw error;
+  const map = {};
+  (data || []).forEach(t => { map[t.tipe] = t; });
+  return { ok: true, data: map, list: data || [] };
+}
+
+async function _saveTipeConfig({ tipe, label, canBuku, canRencana, canKpi }) {
+  if (!tipe || !label) throw new Error('Tipe dan label wajib diisi');
+  const row = {
+    tipe: tipe.toLowerCase().trim(),
+    label: label.trim(),
+    can_buku:    !!canBuku,
+    can_rencana: canRencana !== false,
+    can_kpi:     canKpi !== false,
+    active: true,
+  };
+  const { error } = await _sb.from('tipe_config').upsert(row, { onConflict: 'tipe' });
+  if (error) throw error;
+  return { ok: true, message: `Tipe "${label}" berhasil disimpan` };
+}
+
+async function _deleteTipeConfig({ tipe }) {
+  if (!tipe) throw new Error('Tipe wajib');
+  const { error } = await _sb.from('tipe_config').update({ active: false }).eq('tipe', tipe);
+  if (error) throw error;
+  return { ok: true, message: `Tipe "${tipe}" berhasil dihapus` };
 }
 
 /* ─── Utility ────────────────────────────────────────────────── */

@@ -118,7 +118,7 @@
         <div class="card-header">
           <div class="card-title">Agenda Harian — Semua Karyawan</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <select id="filter-jenjang" style="padding:7px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;outline:none;font-family:inherit" onchange="loadAllJob()">
+            <select id="filter-jenjang" style="padding:7px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;outline:none;font-family:inherit" onchange="loadJobByDate()">
               <option value="">Semua Jenjang</option>
               <option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option>
             </select>
@@ -131,9 +131,14 @@
               <option value="On Progres">⏳ On Progres</option>
               <option value="Tidak Selesai">❌ Tidak Selesai</option>
             </select>
-            <button class="btn btn-outline btn-sm" onclick="loadAllJob()">🔄 Refresh</button>
+            <div style="display:flex;align-items:center;gap:6px;background:#F5F5F5;border-radius:8px;padding:4px 10px;border:1.5px solid var(--gray-300)">
+              <span style="font-size:11px;font-weight:700;color:var(--gray-500)">📅 TGL</span>
+              <input type="date" id="filter-tanggal" style="border:none;background:transparent;font-size:13px;font-family:inherit;outline:none;color:var(--gray-700)" onchange="loadJobByDate()" />
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="loadJobByDate()">🔄 Refresh</button>
           </div>
         </div>
+        <div id="job-date-banner" style="display:none;background:#E3F2FD;border-left:4px solid #1565C0;padding:8px 14px;border-radius:0 8px 8px 0;font-size:12px;color:#1565C0;margin-bottom:10px"></div>
         <div class="table-wrapper">
           <table><thead><tr>
             <th>Karyawan</th><th>Jabatan</th><th style="width:60px">Jenjang</th>
@@ -166,14 +171,46 @@
       <!-- KPI Harian -->
       <div class="card" style="margin-top:0">
         <div class="card-header">
-          <div class="card-title">⭐ Rekap KPI Harian Guru</div>
+          <div class="card-title">⭐ KPI Harian — Hari Ini</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-outline btn-sm" onclick="apiCall('getAllKpiHarian',{jenjang:MY_JENJANG||null}).then(r=>{if(r.ok){allKpiData=r.data;renderKpiRekap();toast('✅ KPI diperbarui');}})">🔄 Refresh Hari Ini</button>
-            <button class="btn btn-outline btn-sm" onclick="exportKpiRekap()">⬇️ Export KPI Bulanan</button>
+            <button class="btn btn-outline btn-sm" onclick="apiCall('getAllKpiHarian',{jenjang:MY_JENJANG||null}).then(r=>{if(r.ok){allKpiData=r.data;renderKpiRekap();toast('✅ KPI diperbarui');}})">🔄 Refresh</button>
+            <button class="btn btn-outline btn-sm" onclick="exportKpiRekap()">⬇️ Export Bulanan</button>
             <input type="month" id="kpi-month-picker" style="padding:4px 8px;border:1px solid var(--gray-300);border-radius:8px;font-size:12px;color:var(--gray-700)" title="Pilih bulan untuk export KPI">
           </div>
         </div>
         <div id="kpi-rekap-container"><div class="empty-state"><div class="empty-icon">⭐</div><p>Memuat data KPI...</p></div></div>
+      </div>
+
+      <!-- Rekap Nilai Per Guru (date range) -->
+      <div class="card">
+        <div class="card-header" style="flex-wrap:wrap;gap:8px">
+          <div class="card-title">📊 Rekap Nilai Per Guru</div>
+          <span style="font-size:12px;color:var(--gray-500)">Rata-rata nilai KPI dalam rentang tanggal</span>
+        </div>
+        <!-- Filter bar -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;background:#F5F5F5;border-radius:10px;padding:14px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--gray-700);margin-bottom:4px;text-transform:uppercase">Dari Tanggal</div>
+            <input type="date" id="rekap-nilai-start" style="padding:8px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none" />
+          </div>
+          <div style="color:var(--gray-400);font-size:18px;padding-bottom:4px">→</div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--gray-700);margin-bottom:4px;text-transform:uppercase">Sampai Tanggal</div>
+            <input type="date" id="rekap-nilai-end" style="padding:8px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none" />
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--gray-700);margin-bottom:4px;text-transform:uppercase">Jenjang</div>
+            <select id="rekap-nilai-jenjang" style="padding:8px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none">
+              <option value="">Semua Jenjang</option>
+              <option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option>
+            </select>
+          </div>
+          <button class="btn btn-green" onclick="loadRekapNilai()" style="height:38px">🔍 Lihat Rekap</button>
+          <button class="btn btn-outline" onclick="exportRekapNilai()" style="height:38px">⬇️ Export Excel</button>
+        </div>
+        <div id="rekap-nilai-container">
+          <div class="empty-state"><div class="empty-icon">📊</div><p>Pilih rentang tanggal lalu klik "Lihat Rekap"</p></div>
+        </div>
       </div>
     </div>
 
@@ -317,6 +354,49 @@
         </div>
       </div>
 
+      <!-- Konfigurasi Tipe Guru — admin only -->
+      <div class="card" id="card-tipe-config" style="display:none">
+        <div class="card-header" style="flex-wrap:wrap;gap:8px">
+          <div class="card-title">⚙️ Konfigurasi Tipe Guru</div>
+          <button class="btn btn-green btn-sm" onclick="showTipeForm()">+ Tambah Tipe</button>
+        </div>
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">
+          Atur tipe guru dan akses fitur yang diperoleh. Perubahan berlaku saat guru login ulang.
+        </p>
+        <!-- Form tambah/edit -->
+        <div id="tipe-form" style="display:none;background:#F5F5F5;border-radius:10px;padding:16px;margin-bottom:16px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--gray-700);text-transform:uppercase;display:block;margin-bottom:4px">ID Tipe <span style="color:var(--gray-500);font-weight:400">(huruf kecil, unik)</span></label>
+              <input type="text" id="tc-tipe" placeholder="cth: koordinator" style="width:100%;padding:9px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit" />
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--gray-700);text-transform:uppercase;display:block;margin-bottom:4px">Label Tampilan</label>
+              <input type="text" id="tc-label" placeholder="cth: Koordinator Kelas" style="width:100%;padding:9px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit" />
+            </div>
+          </div>
+          <div style="display:flex;gap:24px;margin-bottom:14px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="tc-buku" style="width:16px;height:16px" /> Buku Penghubung
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="tc-rencana" checked style="width:16px;height:16px" /> Rencana Kerja
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="tc-kpi" checked style="width:16px;height:16px" /> KPI Harian
+            </label>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-green btn-sm" onclick="saveTipeConfig()">💾 Simpan Tipe</button>
+            <button class="btn btn-outline btn-sm" onclick="hideTipeForm()">Batal</button>
+          </div>
+        </div>
+        <!-- Tabel tipe -->
+        <div id="tipe-config-table-wrap">
+          <div style="text-align:center;padding:20px;color:var(--gray-500)">⏳ Memuat...</div>
+        </div>
+      </div>
+
       <!-- Data Murid -->
       <div class="card">
         <div class="card-header" style="flex-wrap:wrap;gap:8px">
@@ -370,8 +450,13 @@
       <select id="u-tipeGuru">
         <option value="kelas">🏫 Guru Kelas (Buku Penghubung + Rencana Kerja + KPI)</option>
         <option value="mapel">📚 Guru Mapel (Rencana Kerja + KPI)</option>
-        <option value="shadow">👥 Guru Shadow (Rencana Kerja + KPI)</option>
+        <option value="shadow">👥 Guru Shadow (Buku Penghubung + Rencana Kerja + KPI)</option>
         <option value="freelance">🔗 Guru Freelance (Rencana Kerja + KPI)</option>
+        <option value="asisten teacher">🤝 Asisten Teacher (Rencana Kerja + KPI)</option>
+        <option value="kemediaan">📸 Kemediaan (Rencana Kerja + KPI)</option>
+        <option value="administrasi">📋 Administrasi (Rencana Kerja + KPI)</option>
+        <option value="satpam">🛡️ Satpam (Rencana Kerja + KPI)</option>
+        <option value="office boy">🧹 Office Boy (Rencana Kerja + KPI)</option>
       </select>
     </div>
     <div id="field-kelas-ampu" class="form-group" style="display:none">
@@ -440,15 +525,47 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 /* LOAD ALL JOB */
 function loadAllJob(silent=false){
+  // Dipanggil oleh auto-refresh (selalu hari ini)
+  const jenjangFilter = document.getElementById('filter-jenjang')?.value || MY_JENJANG;
+  // Reset tanggal ke hari ini jika dipanggil langsung (bukan dari date picker)
+  const tgl = document.getElementById('filter-tanggal');
+  if (tgl && (!tgl.value || tgl.value === TODAY_ISO)) {
+    if(tgl.value !== TODAY_ISO) tgl.value = TODAY_ISO;
+    loadJobByDate(true, silent);
+  } else {
+    loadJobByDate(false, silent);
+  }
+}
+
+function loadJobByDate(forceToday=false, silent=false){
   if(!silent) toast('🔄 Memuat data...');
   const jenjangFilter = document.getElementById('filter-jenjang')?.value || MY_JENJANG;
+  const tglInput = document.getElementById('filter-tanggal');
+  const tgl = forceToday ? TODAY_ISO : (tglInput?.value || TODAY_ISO);
+  const isToday = tgl === TODAY_ISO;
+
+  // Update banner
+  const banner = document.getElementById('job-date-banner');
+  if (banner) {
+    if (!isToday) {
+      const d = new Date(tgl + 'T00:00:00');
+      const label = d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+      banner.style.display = '';
+      banner.innerHTML = `📅 Menampilkan data historis: <strong>${label}</strong> — <a href="#" onclick="resetJobDate();return false;" style="color:#1565C0">Kembali ke Hari Ini</a>`;
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
+  const jobAction  = isToday ? 'getAllJobTracker' : 'getAllJobTrackerByDate';
+  const jobPayload = { jenjang: jenjangFilter || null, tanggal: tgl };
+
   Promise.all([
-    apiCall('getAllJobTracker', { jenjang: jenjangFilter || null }),
-    apiCall('getAllKpiHarian',  { jenjang: jenjangFilter || null }),
+    apiCall(jobAction, jobPayload),
+    isToday ? apiCall('getAllKpiHarian', { jenjang: jenjangFilter || null }) : Promise.resolve({ ok: false }),
   ]).then(([jobRes, kpiRes])=>{
     if(jobRes.ok && jobRes.data){
       allJobData = jobRes.data;
-      // Perbarui dropdown filter karyawan
       const prevVal = document.getElementById('filter-karyawan').value;
       const sel = document.getElementById('filter-karyawan');
       sel.innerHTML = '<option value="">Semua Karyawan</option>';
@@ -457,8 +574,8 @@ function loadAllJob(silent=false){
         if(k===prevVal) o.selected=true;
         sel.appendChild(o);
       });
-      renderJobTable();
-      renderStats();
+      renderJobTable(tgl);
+      if(isToday) renderStats();
       if(!silent) toast('✅ Data berhasil dimuat');
     } else {
       console.error('getAllJobTracker error:', jobRes.error);
@@ -467,22 +584,27 @@ function loadAllJob(silent=false){
     if(kpiRes.ok && kpiRes.data){
       allKpiData = kpiRes.data;
       renderKpiRekap();
-    } else if(kpiRes.error){
-      console.error('getAllKpiHarian error:', kpiRes.error);
     }
   }).catch(err=>{
-    console.error('loadAllJob exception:', err);
+    console.error('loadJobByDate exception:', err);
     if(!silent) toast('⚠️ Error: '+err.message, true);
   });
 }
 
-// Auto-refresh setiap 2 menit (silent — tidak tampilkan toast)
-setInterval(()=>loadAllJob(true), 2*60*1000);
+function resetJobDate(){
+  const tgl = document.getElementById('filter-tanggal');
+  if (tgl) tgl.value = TODAY_ISO;
+  loadJobByDate(true);
+}
 
-function renderJobTable(){
+// Auto-refresh setiap 2 menit — hanya jika tampilan hari ini
+setInterval(()=>{ const tgl=document.getElementById('filter-tanggal'); if(!tgl||tgl.value===TODAY_ISO) loadJobByDate(true, true); }, 2*60*1000);
+
+function renderJobTable(viewDate){
   const tb=document.getElementById('job-tbody');
   const fNama=document.getElementById('filter-karyawan').value;
   const fStatus=document.getElementById('filter-status').value;
+  const currentDate = viewDate || (document.getElementById('filter-tanggal')?.value) || TODAY_ISO;
   tb.innerHTML='';
   const allList = Object.values(allJobData);
   if(!allList.length){
@@ -491,9 +613,9 @@ function renderJobTable(){
   }
   allList.forEach(k=>{
     if(fNama&&k.karyawan!==fNama)return;
-    const isToday = k.tanggal === TODAY_ISO;
-    const hasTasks = isToday && (k.tasks||[]).length > 0;
-    const submitted = isToday && !!k.pagiSubmittedAt;
+    const isToday = currentDate === TODAY_ISO;
+    const hasTasks = (k.tasks||[]).length > 0;
+    const submitted = !!k.pagiSubmittedAt;
 
     // Guru belum submit sama sekali — tampilkan baris "Belum Submit"
     if(!submitted && !hasTasks){
@@ -505,7 +627,7 @@ function renderJobTable(){
         <td style="color:var(--gray-500);font-size:12px">${k.jabatan}</td>
         <td style="font-size:11px;text-align:center;color:var(--gray-500)">${k.jenjang||'—'}</td>
         <td style="font-size:11px;color:var(--gray-500)">—</td>
-        <td colspan="5" style="color:var(--gray-400);font-style:italic;font-size:13px">⏳ Belum mengisi rencana kerja hari ini</td>`;
+        <td colspan="5" style="color:var(--gray-400);font-style:italic;font-size:13px">${isToday ? '⏳ Belum mengisi rencana kerja hari ini' : '— Tidak ada data untuk tanggal ini'}</td>`;
       tb.appendChild(tr);
       const sep=document.createElement('tr');sep.className='sep-row';sep.innerHTML='<td colspan="9"></td>';tb.appendChild(sep);
       return;
@@ -879,15 +1001,18 @@ function renderUsersTable(){
           ? '<span class="badge badge-ortu">Ortu</span>'
           : '<span class="badge badge-pimpinan">Pimpinan</span>';
     const detail=u.role==='ortu'?(u.namaAnak+' ('+u.jenjang+')'):u.jabatan;
-    const tipeCell = isGuruLike
-      ? (u.tipeGuru==='mapel'
-          ? '<span class="badge" style="background:#FFF3E0;color:#E65100">Mapel</span>'
-          : u.tipeGuru==='shadow'
-            ? '<span class="badge" style="background:#EDE7F6;color:#512DA8">Shadow</span>'
-            : u.tipeGuru==='freelance'
-              ? '<span class="badge" style="background:#E8EAF6;color:#283593">Freelance</span>'
-              : '<span class="badge" style="background:#E8F5E9;color:#2E7D32">Kelas</span>')
-      : '<span style="color:var(--gray-300)">—</span>';
+    const _tipeBadge = t => {
+      if (t==='mapel')           return '<span class="badge" style="background:#FFF3E0;color:#E65100">Mapel</span>';
+      if (t==='shadow')          return '<span class="badge" style="background:#EDE7F6;color:#512DA8">Shadow</span>';
+      if (t==='freelance')       return '<span class="badge" style="background:#E8EAF6;color:#283593">Freelance</span>';
+      if (t==='asisten teacher') return '<span class="badge" style="background:#E8F5E9;color:#1B5E20">Asisten</span>';
+      if (t==='kemediaan')       return '<span class="badge" style="background:#FCE4EC;color:#880E4F">Kemediaan</span>';
+      if (t==='administrasi')    return '<span class="badge" style="background:#F3E5F5;color:#6A1B9A">Administrasi</span>';
+      if (t==='satpam')          return '<span class="badge" style="background:#E8EAF6;color:#1A237E">Satpam</span>';
+      if (t==='office boy')      return '<span class="badge" style="background:#FFF8E1;color:#E65100">Office Boy</span>';
+      return '<span class="badge" style="background:#E8F5E9;color:#2E7D32">Kelas</span>';
+    };
+    const tipeCell = isGuruLike ? _tipeBadge(u.tipeGuru) : '<span style="color:var(--gray-300)">—</span>';
     const kelasCell = isGuruLike && u.kelasAmpu
       ? u.kelasAmpu.split(',').map(k=>`<span class="badge" style="background:#E3F2FD;color:#1565C0;margin:1px">${k.trim()}</span>`).join(' ')
       : '<span style="color:var(--gray-300)">—</span>';
@@ -1299,13 +1424,28 @@ function generatePinMurid(id, nama) {
   if (IS_ADMIN) {
     if (badge) { badge.textContent = '👑 ADMIN'; badge.style.display='inline'; badge.style.background='#6c3483'; }
     if (sub)   sub.textContent = 'Akses penuh semua jenjang — TK, SD, SMP, SMA, ALC';
+    const cardTipe = document.getElementById('card-tipe-config');
+    if (cardTipe) { cardTipe.style.display = ''; loadTipeConfig(); }
   } else if (MY_JENJANG) {
     if (badge) { badge.textContent = MY_JENJANG; badge.style.display='inline'; }
     if (sub)   sub.textContent = 'Monitoring kinerja karyawan & siswa jenjang ' + MY_JENJANG;
   }
 })();
-// Set default month picker ke bulan ini
-(function(){ const mp=document.getElementById('kpi-month-picker'); if(mp) mp.value=TODAY_ISO.substring(0,7); })();
+// Set default pickers
+(function(){
+  const mp = document.getElementById('kpi-month-picker');
+  if(mp) mp.value = TODAY_ISO.substring(0,7);
+  const ft = document.getElementById('filter-tanggal');
+  if(ft) ft.value = TODAY_ISO;
+  // Set default rekap nilai date range: 30 hari terakhir
+  const rv1 = document.getElementById('rekap-nilai-start');
+  const rv2 = document.getElementById('rekap-nilai-end');
+  if(rv1 && rv2) {
+    const s = new Date(TODAY_ISO); s.setDate(s.getDate()-29);
+    rv1.value = s.toISOString().split('T')[0];
+    rv2.value = TODAY_ISO;
+  }
+})();
 loadAllJob();
 renderRekap('harian');
 
@@ -1455,6 +1595,204 @@ function doImport() {
       toast('⚠️ ' + res.error, true);
       document.getElementById('import-actions').style.display = 'block';
     }
+  });
+}
+
+/* ============================================================
+   REKAP NILAI PER GURU (DATE RANGE)
+   ============================================================ */
+let _rekapNilaiData = [];
+
+function loadRekapNilai() {
+  const start   = document.getElementById('rekap-nilai-start')?.value;
+  const end     = document.getElementById('rekap-nilai-end')?.value;
+  const jenjang = document.getElementById('rekap-nilai-jenjang')?.value || (MY_JENJANG||null);
+  if (!start || !end) { toast('⚠️ Pilih rentang tanggal terlebih dahulu', true); return; }
+  if (start > end)    { toast('⚠️ Tanggal awal tidak boleh melebihi tanggal akhir', true); return; }
+  const wrap = document.getElementById('rekap-nilai-container');
+  wrap.innerHTML = '<div style="text-align:center;padding:20px;color:var(--gray-500)">⏳ Memuat data rekap nilai...</div>';
+  toast('🔍 Memuat rekap nilai...');
+  apiCall('getKpiHarianRange', { startDate: start, endDate: end, jenjang }).then(res => {
+    if (!res.ok) { wrap.innerHTML = '<div style="color:var(--danger);padding:12px">⚠️ Gagal: '+res.error+'</div>'; return; }
+    _rekapNilaiData = res.data || [];
+    renderRekapNilai(start, end);
+    toast('✅ Rekap nilai dimuat');
+  });
+}
+
+function renderRekapNilai(start, end) {
+  const wrap = document.getElementById('rekap-nilai-container');
+  const data = _rekapNilaiData;
+  if (!data.length) { wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><p>Tidak ada data KPI dalam rentang tanggal ini</p></div>'; return; }
+
+  const startLabel = new Date(start+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  const endLabel   = new Date(end  +'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+
+  const _pred = v => v===null ? ['—','var(--gray-500)'] : v>=90 ? ['⭐ Sangat Baik','var(--primary)'] : v>=80 ? ['✅ Baik','var(--success)'] : v>=70 ? ['🔵 Cukup','#1565C0'] : ['⚠️ Perlu Perhatian','var(--warning)'];
+  const _bar  = v => v===null ? '' : `<div style="height:6px;border-radius:3px;background:#E0E0E0;margin-top:4px;width:100%"><div style="height:6px;border-radius:3px;background:${_pred(v)[1]};width:${v}%"></div></div>`;
+
+  let html = `<div style="font-size:12px;color:var(--gray-500);margin-bottom:12px">Periode: <strong>${startLabel}</strong> s/d <strong>${endLabel}</strong></div>
+  <div class="table-wrapper"><table><thead><tr>
+    <th style="width:32px">No</th>
+    <th>Nama Guru</th>
+    <th style="width:70px;text-align:center">Jenjang</th>
+    <th style="width:75px;text-align:center">Hari Isi</th>
+    <th style="width:100px;text-align:center">Rata-rata</th>
+    <th style="width:70px;text-align:center">Min</th>
+    <th style="width:70px;text-align:center">Max</th>
+    <th style="width:130px">Predikat</th>
+  </tr></thead><tbody>`;
+
+  // Sort by avg desc (null at bottom)
+  const sorted = [...data].sort((a,b) => (b.avg ?? -1) - (a.avg ?? -1));
+  sorted.forEach((r, i) => {
+    const pred = _pred(r.avg);
+    html += `<tr>
+      <td style="text-align:center;font-weight:700">${i+1}</td>
+      <td>
+        <div style="font-weight:700">${r.guru}</div>
+        <div style="font-size:11px;color:var(--gray-500)">${r.jabatan}</div>
+      </td>
+      <td style="text-align:center;font-size:12px">${r.jenjang||'—'}</td>
+      <td style="text-align:center;color:var(--gray-700)">${r.count}</td>
+      <td style="text-align:center">
+        <span style="font-size:18px;font-weight:900;color:${pred[1]}">${r.avg !== null ? r.avg : '—'}</span>
+        ${_bar(r.avg)}
+      </td>
+      <td style="text-align:center;color:var(--danger);font-weight:700">${r.min !== null ? r.min : '—'}</td>
+      <td style="text-align:center;color:var(--success);font-weight:700">${r.max !== null ? r.max : '—'}</td>
+      <td style="font-weight:700;color:${pred[1]};font-size:12px">${pred[0]}</td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  wrap.innerHTML = html;
+}
+
+function exportRekapNilai() {
+  const start   = document.getElementById('rekap-nilai-start')?.value;
+  const end     = document.getElementById('rekap-nilai-end')?.value;
+  if (!_rekapNilaiData.length) { toast('⚠️ Muat rekap nilai terlebih dahulu', true); return; }
+
+  const header = [['No','Nama Guru','Jabatan','Jenjang','Hari Isi KPI','Rata-rata Nilai','Nilai Min','Nilai Max','Predikat']];
+  const rows = [..._rekapNilaiData].sort((a,b) => (b.avg??-1)-(a.avg??-1)).map((r,i) => {
+    const pred = r.avg===null?'Belum Ada Data':r.avg>=90?'Sangat Baik':r.avg>=80?'Baik':r.avg>=70?'Cukup':'Perlu Perhatian';
+    return [i+1, r.guru, r.jabatan, r.jenjang||'—', r.count, r.avg!==null?r.avg:'—', r.min!==null?r.min:'—', r.max!==null?r.max:'—', pred];
+  });
+
+  const wb = XLSX.utils.book_new();
+  const titleRows = [
+    ['Rekap Nilai KPI Per Guru — Sekolah Alam Al-Karim'],
+    ['Periode:', start + ' s/d ' + end],
+    [],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet([...titleRows, ...header, ...rows]);
+  ws['!cols'] = [{wch:5},{wch:25},{wch:20},{wch:10},{wch:12},{wch:15},{wch:10},{wch:10},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Rekap Nilai');
+  XLSX.writeFile(wb, `Rekap_Nilai_Guru_${start}_sd_${end}.xlsx`);
+  toast('✅ Export rekap nilai berhasil!');
+}
+
+/* ============================================================
+   KONFIGURASI TIPE GURU
+   ============================================================ */
+let _tipeConfigList = [];
+
+function loadTipeConfig() {
+  const wrap = document.getElementById('tipe-config-table-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div style="text-align:center;padding:16px;color:var(--gray-500)">⏳ Memuat konfigurasi...</div>';
+  apiCall('getTipeConfig').then(res => {
+    if (!res.ok) { wrap.innerHTML = '<div style="color:var(--danger);padding:12px">⚠️ Gagal memuat: ' + res.error + '</div>'; return; }
+    _tipeConfigList = res.list || [];
+    renderTipeConfigTable(_tipeConfigList);
+  });
+}
+
+const _TIPE_BUILTIN = ['kelas','mapel','shadow','freelance','asisten teacher','kemediaan','administrasi'];
+
+function renderTipeConfigTable(list) {
+  const wrap = document.getElementById('tipe-config-table-wrap');
+  if (!wrap) return;
+  if (!list.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:20px;color:var(--gray-500)">Belum ada konfigurasi tipe. Klik "+ Tambah Tipe" untuk mulai.<br><small>Tip: Tipe bawaan (kelas, mapel, dll) tidak perlu ditambahkan, sudah tersedia otomatis.</small></div>';
+    return;
+  }
+  const ck = v => v ? '<span style="color:#2E7D32;font-weight:700">✅</span>' : '<span style="color:#C62828">❌</span>';
+  let h = `<table class="data-table"><thead><tr>
+    <th>Tipe (ID)</th><th>Label</th>
+    <th style="text-align:center">Buku Penghubung</th>
+    <th style="text-align:center">Rencana Kerja</th>
+    <th style="text-align:center">KPI Harian</th>
+    <th style="text-align:center">Aksi</th>
+  </tr></thead><tbody>`;
+  list.forEach(t => {
+    const isBuiltin = _TIPE_BUILTIN.includes(t.tipe);
+    h += `<tr>
+      <td style="font-family:monospace;font-weight:700">${t.tipe}</td>
+      <td>${t.label}</td>
+      <td style="text-align:center">${ck(t.can_buku)}</td>
+      <td style="text-align:center">${ck(t.can_rencana)}</td>
+      <td style="text-align:center">${ck(t.can_kpi)}</td>
+      <td style="text-align:center;white-space:nowrap">
+        <button class="btn btn-outline btn-sm" onclick="editTipeConfig(${JSON.stringify(t).replace(/"/g,'&quot;')})">✏️ Edit</button>
+        ${isBuiltin ? '<span style="font-size:11px;color:var(--gray-500);margin-left:4px">bawaan</span>' : `<button class="btn btn-red btn-sm" style="margin-left:4px" onclick="deleteTipeConfig('${t.tipe}')">✕</button>`}
+      </td>
+    </tr>`;
+  });
+  h += '</tbody></table>';
+  h += '<p style="font-size:11px;color:var(--gray-500);margin-top:8px">💡 Tipe bawaan selalu tersedia meskipun tidak ada di daftar ini. Daftar ini digunakan untuk menambah tipe kustom atau mengubah akses tipe bawaan.</p>';
+  wrap.innerHTML = h;
+}
+
+function showTipeForm(data) {
+  const form = document.getElementById('tipe-form');
+  form.style.display = 'block';
+  if (data) {
+    document.getElementById('tc-tipe').value = data.tipe;
+    document.getElementById('tc-tipe').disabled = true; // ID tidak bisa diubah saat edit
+    document.getElementById('tc-label').value = data.label;
+    document.getElementById('tc-buku').checked = !!data.can_buku;
+    document.getElementById('tc-rencana').checked = data.can_rencana !== false;
+    document.getElementById('tc-kpi').checked = data.can_kpi !== false;
+  } else {
+    document.getElementById('tc-tipe').value = '';
+    document.getElementById('tc-tipe').disabled = false;
+    document.getElementById('tc-label').value = '';
+    document.getElementById('tc-buku').checked = false;
+    document.getElementById('tc-rencana').checked = true;
+    document.getElementById('tc-kpi').checked = true;
+  }
+  document.getElementById('tc-tipe').focus();
+}
+
+function hideTipeForm() {
+  document.getElementById('tipe-form').style.display = 'none';
+  document.getElementById('tc-tipe').disabled = false;
+}
+
+function editTipeConfig(data) {
+  showTipeForm(data);
+}
+
+function saveTipeConfig() {
+  const tipe    = document.getElementById('tc-tipe').value.trim().toLowerCase();
+  const label   = document.getElementById('tc-label').value.trim();
+  const canBuku    = document.getElementById('tc-buku').checked;
+  const canRencana = document.getElementById('tc-rencana').checked;
+  const canKpi     = document.getElementById('tc-kpi').checked;
+  if (!tipe || !label) { toast('⚠️ ID Tipe dan Label wajib diisi', true); return; }
+  toast('💾 Menyimpan...');
+  apiCall('saveTipeConfig', { tipe, label, canBuku, canRencana, canKpi }).then(res => {
+    if (res.ok) { toast('✅ ' + res.message); hideTipeForm(); loadTipeConfig(); }
+    else         { toast('⚠️ ' + res.error, true); }
+  });
+}
+
+function deleteTipeConfig(tipe) {
+  if (!confirm(`Hapus tipe "${tipe}"? Guru yang memiliki tipe ini akan mengikuti aturan bawaan.`)) return;
+  apiCall('deleteTipeConfig', { tipe }).then(res => {
+    if (res.ok) { toast('✅ ' + res.message); loadTipeConfig(); }
+    else         { toast('⚠️ ' + res.error, true); }
   });
 }
 </script>

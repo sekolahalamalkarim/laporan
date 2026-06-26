@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portal Guru — Sekolah Alam Al-Karim</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="supabase-api.js"></script>
   <style>
     :root {
@@ -230,7 +231,7 @@
       <div class="card" id="bp-rekap-card" style="display:none">
         <div class="card-header">
           <div class="card-title">📊 Rekap 7 Hari Terakhir</div>
-          <button class="btn btn-outline" style="font-size:12px;padding:5px 12px" onclick="downloadRekapGuruCSV()">⬇️ Download CSV (30 Hari)</button>
+          <button class="btn btn-outline" style="font-size:12px;padding:5px 12px" onclick="downloadRekapGuruCSV()">⬇️ Download Excel (30 Hari)</button>
         </div>
         <div id="bp-rekap-content"></div>
       </div>
@@ -424,12 +425,47 @@ document.getElementById('page-title').textContent = 'Portal Guru — ' + current
 document.getElementById('page-subtitle').textContent = (currentUser.jabatan||'') + '  |  ' + TODAY_LABEL;
 document.getElementById('kpi-tanggal-badge').textContent = '📅 ' + TODAY_LABEL;
 
-// Tipe guru yang HANYA punya Rencana Kerja + KPI (tanpa Buku Penghubung)
-const IS_MAPEL_LIKE = ['mapel','shadow','freelance'].includes(tipeGuru);
+// Tipe guru yang HANYA punya Rencana Kerja + KPI (tanpa Buku Penghubung) — fallback bawaan
+const _TIPE_NO_BUKU_DEFAULT = ['mapel','freelance','asisten teacher','kemediaan','administrasi','satpam','office boy'];
+let IS_MAPEL_LIKE = _TIPE_NO_BUKU_DEFAULT.includes(tipeGuru);
 
-// Hide buku tab untuk guru mapel / shadow / freelance
-if (IS_MAPEL_LIKE) {
-  document.getElementById('btn-tab-buku').style.display = 'none';
+function applyTipePermissions(canBuku) {
+  // Hanya atur visibilitas tab — loading murid ditangani blok inisialisasi di bawah
+  document.getElementById('btn-tab-buku').style.display = canBuku ? '' : 'none';
+}
+
+// Aplikasikan setting bawaan dulu (sync — tidak ada flash)
+applyTipePermissions(!IS_MAPEL_LIKE);
+
+// Lalu load dari DB — override jika ada konfigurasi khusus untuk tipe ini
+apiCall('getTipeConfig').then(res => {
+  if (res.ok && res.data && res.data[tipeGuru] !== undefined) {
+    const cfg = res.data[tipeGuru];
+    const canBuku = !!cfg.can_buku;
+    const wasmapelLike = IS_MAPEL_LIKE;
+    if (canBuku !== !wasmapelLike) {
+      IS_MAPEL_LIKE = !canBuku;
+      applyTipePermissions(canBuku);
+      // Jika tipe sebelumnya no-buku dan DB mengizinkan buku, load murid sekarang
+      if (canBuku && wasmapelLike) {
+        const sel = document.getElementById('siswa-select');
+        if (sel && sel.options.length <= 1) loadMuridForBuku();
+      }
+    }
+  }
+}).catch(() => {}); // silently ignore, gunakan fallback bawaan
+
+function loadMuridForBuku() {
+  apiCall('getMurid').then(res => {
+    const sel = document.getElementById('siswa-select');
+    if (!sel) return;
+    (res.data || []).forEach(m => {
+      const o = document.createElement('option');
+      o.value = m.nama; o.textContent = m.nama + ' (' + m.kelas + ')';
+      sel.appendChild(o);
+    });
+    (res.data || []).forEach(m => { siswaJenjangMap[m.nama] = m.jenjang || 'SD'; });
+  });
 }
 
 // Load murid untuk buku penghubung — hanya guru kelas
@@ -843,7 +879,7 @@ const BUKU_SEKOLAH_DEF = {
       {key:'tahsin',            label:'Tahsin',                               type:'tulis'},
       {key:'tahfidz',           label:'Tahfidz',                              type:'tulis'},
       {key:'hafalan_doa_hadis', label:'Hafalan Doa/Hadis',                    type:'tulis'},
-      {key:'berinfaq',          label:'Berinfaq',                             type:'tulis'},
+      {key:'berinfaq',          label:'Berinfaq',                             type:'ceklis'},
       {key:'akhlak',            label:'Menerapkan akhlak dan adab yang baik', type:'ceklis'},
     ]},
     { kat:'C', label:'Pesan Khusus', items:[
@@ -892,7 +928,6 @@ const BUKU_SEKOLAH_DEF = {
     { kat:'B', label:'Pencapaian Keagamaan', items:[
       {key:'sholat_duha',       label:'Sholat Duha',                          type:'ceklis'},
       {key:'sholat_dzuhur',     label:'Sholat Duhur',                         type:'ceklis'},
-      {key:'sholat_asar',       label:'Sholat Asar',                          type:'ceklis'},
       {key:'tahsin',            label:'Tahsin',                               type:'tulis'},
       {key:'tahfidz',           label:'Tahfidz',                              type:'tulis'},
       {key:'hafalan_doa_hadis', label:'Hafalan Doa/Hadis',                    type:'tulis'},
@@ -1033,7 +1068,7 @@ const BUKU_RUMAH_DEF = {
       {key:'bekal_sehat',  label:'Membawa bekal makanan sehat dan bergizi seimbang',                type:'ceklis'},
       {key:'hp_tv',        label:'Penggunaan HP/TV maksimal 30 menit',                              type:'ceklis'},
     ]},
-    { kat:'C', label:'Memuliakan Orangtua', items:[
+    { kat:'C', label:'Kemandirian', items:[
       {key:'toilet_training', label:'Toilet Training',                      type:'ceklis'},
       {key:'makan_rapi',      label:'Makan dan Minum dengan rapi',          type:'ceklis'},
       {key:'pakai_baju',      label:'Memakai dan melepas pakaian sendiri',  type:'ceklis'},
@@ -1197,20 +1232,80 @@ function downloadRekapGuruCSV() {
     const jenjang = _bpCurrentJenjang || 'SD';
     const sSchema = BUKU_SEKOLAH_DEF[jenjang] || BUKU_SEKOLAH_DEF['SD'];
     const rSchema = BUKU_RUMAH_DEF[jenjang] || BUKU_RUMAH_DEF['SD'];
+    const sKats = sSchema;
+    const rKats = rSchema;
     const sKeys = sSchema.flatMap(k => k.items);
     const rKeys = rSchema.flatMap(k => k.items);
     const sMap = {}; (res.sekolah||[]).forEach(r => sMap[r.tanggal] = r.aktivitas||{});
     const rMap = {}; (res.rumah||[]).forEach(r => rMap[r.tanggal] = r.aktivitas||{});
-    const header = ['Tanggal', ...sKeys.map(i=>'[Sekolah] '+i.label), ...rKeys.map(i=>'[Rumah] '+i.label)];
     const dates = []; const cur = new Date(startDate); const last = new Date(end);
     while (cur <= last) { dates.push(cur.toISOString().split('T')[0]); cur.setDate(cur.getDate()+1); }
-    const _v = v => v===true?'Ya':v===false?'Tidak':(v||'—');
-    const rows = dates.map(tgl => [tgl, ...sKeys.map(i=>_v((sMap[tgl]||{})[i.key])), ...rKeys.map(i=>_v((rMap[tgl]||{})[i.key]))]);
-    const csv = '﻿' + [header,...rows].map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
-    const a = document.createElement('a');
-    a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
-    a.download = 'BukuPenghubung_'+siswa.replace(/\s+/g,'_')+'_'+TODAY_ISO+'.csv';
-    a.click(); toast('✅ Rekap berhasil diunduh!');
+    const _v = v => v===true?'Ya':v===false?'Tidak':(v==null||v===''?'—':v);
+
+    const wb = XLSX.utils.book_new();
+
+    // ── Sheet 1: Aktivitas Sekolah ──
+    const sekolahRows = [
+      ['Rekap Buku Penghubung — Aktivitas di Sekolah'],
+      ['Siswa:', siswa, '', 'Jenjang:', jenjang, '', 'Periode:', startDate + ' s/d ' + end],
+      [],
+    ];
+    sKats.forEach(kat => {
+      sekolahRows.push(['Bagian ' + kat.kat + ' — ' + kat.label]);
+      sekolahRows.push(['Tanggal', ...kat.items.map(i => i.label)]);
+      dates.forEach(tgl => {
+        sekolahRows.push([tgl, ...kat.items.map(i => _v((sMap[tgl]||{})[i.key]))]);
+      });
+      sekolahRows.push([]);
+    });
+    const ws1 = XLSX.utils.aoa_to_sheet(sekolahRows);
+    ws1['!cols'] = [{ wch: 14 }, ...sKeys.map(() => ({ wch: 22 }))];
+    XLSX.utils.book_append_sheet(wb, ws1, 'Aktivitas Sekolah');
+
+    // ── Sheet 2: Aktivitas Rumah ──
+    const rumahRows = [
+      ['Rekap Buku Penghubung — Aktivitas di Rumah'],
+      ['Siswa:', siswa, '', 'Jenjang:', jenjang, '', 'Periode:', startDate + ' s/d ' + end],
+      [],
+    ];
+    rKats.forEach(kat => {
+      rumahRows.push(['Bagian ' + kat.kat + ' — ' + kat.label]);
+      rumahRows.push(['Tanggal', ...kat.items.map(i => i.label)]);
+      dates.forEach(tgl => {
+        rumahRows.push([tgl, ...kat.items.map(i => _v((rMap[tgl]||{})[i.key]))]);
+      });
+      rumahRows.push([]);
+    });
+    const ws2 = XLSX.utils.aoa_to_sheet(rumahRows);
+    ws2['!cols'] = [{ wch: 14 }, ...rKeys.map(() => ({ wch: 28 }))];
+    XLSX.utils.book_append_sheet(wb, ws2, 'Aktivitas Rumah');
+
+    // ── Sheet 3: Ringkasan ──
+    const totalDays = dates.length;
+    const sumRows = [
+      ['Ringkasan Rekap — Buku Penghubung'],
+      ['Siswa:', siswa, 'Jenjang:', jenjang, 'Periode:', startDate + ' s/d ' + end],
+      [],
+      ['', 'Item', 'Bagian', 'Jumlah Ya', 'Jumlah Tidak', 'Total Hari', '% Ya'],
+    ];
+    sKeys.forEach(item => {
+      const kat = sKats.find(k => k.items.find(i => i.key===item.key));
+      const ya = dates.filter(tgl => (sMap[tgl]||{})[item.key]===true).length;
+      const tdk = dates.filter(tgl => (sMap[tgl]||{})[item.key]===false).length;
+      sumRows.push(['Sekolah', item.label, 'Bagian '+(kat?.kat||''), ya, tdk, totalDays, ya?Math.round(ya/totalDays*100)+'%':'—']);
+    });
+    rKeys.forEach(item => {
+      const kat = rKats.find(k => k.items.find(i => i.key===item.key));
+      const ya = dates.filter(tgl => (rMap[tgl]||{})[item.key]===true).length;
+      const tdk = dates.filter(tgl => (rMap[tgl]||{})[item.key]===false).length;
+      sumRows.push(['Rumah', item.label, 'Bagian '+(kat?.kat||''), ya, tdk, totalDays, ya?Math.round(ya/totalDays*100)+'%':'—']);
+    });
+    const ws3 = XLSX.utils.aoa_to_sheet(sumRows);
+    ws3['!cols'] = [{wch:10},{wch:40},{wch:12},{wch:10},{wch:12},{wch:12},{wch:8}];
+    XLSX.utils.book_append_sheet(wb, ws3, 'Ringkasan');
+
+    XLSX.writeFile(wb, 'BukuPenghubung_'+siswa.replace(/\s+/g,'_')+'_'+TODAY_ISO+'.xlsx');
+    toast('✅ Rekap XLSX berhasil diunduh!');
   });
 }
 
