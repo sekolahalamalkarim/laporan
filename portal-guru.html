@@ -202,7 +202,10 @@
             <div class="card-title">📓 Buku Penghubung — Aktivitas Sekolah</div>
             <div class="card-subtitle" id="bp-guru-subtitle" style="font-size:12px;color:var(--gray-500);margin-top:2px">Pilih siswa dan isi laporan hari ini</div>
           </div>
-          <span class="date-badge" id="bp-guru-date">📅 Hari ini</span>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="date" id="bp-guru-date-picker" style="padding:5px 9px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:12px;font-family:inherit;outline:none" title="Lihat riwayat pengisian">
+            <button class="btn btn-outline" style="font-size:12px;padding:5px 11px" onclick="loadBpSekolahByDate()">🔍 Lihat</button>
+          </div>
         </div>
         <div style="margin-bottom:14px">
           <label style="font-size:13px;font-weight:700;display:block;margin-bottom:6px">Pilih Siswa :</label>
@@ -424,6 +427,13 @@ document.getElementById('user-pill').textContent = '🧑‍🏫 ' + currentUser.
 document.getElementById('page-title').textContent = 'Portal Guru — ' + currentUser.nama;
 document.getElementById('page-subtitle').textContent = (currentUser.jabatan||'') + '  |  ' + TODAY_LABEL;
 document.getElementById('kpi-tanggal-badge').textContent = '📅 ' + TODAY_LABEL;
+// Set max date picker agar tidak bisa pilih masa depan
+(function() {
+  const gp = document.getElementById('bp-guru-date-picker');
+  if (gp) { gp.value = TODAY_ISO; gp.max = TODAY_ISO; }
+  const op = document.getElementById('bp-ortu-date-picker');
+  if (op) { op.value = TODAY_ISO; op.max = TODAY_ISO; }
+})();
 
 // Tipe guru yang HANYA punya Rencana Kerja + KPI (tanpa Buku Penghubung) — fallback bawaan
 const _TIPE_NO_BUKU_DEFAULT = ['mapel','freelance','asisten teacher','kemediaan','administrasi','satpam','office boy'];
@@ -1092,19 +1102,35 @@ function loadBukuPenghubungGuru() {
   }
   _bpCurrentSiswa = siswa;
   _bpCurrentJenjang = (siswaJenjangMap[siswa] || 'SD').toUpperCase();
-  document.getElementById('bp-guru-date').textContent = '📅 ' + TODAY_LABEL;
-  document.getElementById('bp-guru-subtitle').textContent = siswa + ' — ' + _bpCurrentJenjang;
-  const picker = document.getElementById('bp-ortu-date-picker');
-  picker.value = TODAY_ISO; picker.max = TODAY_ISO;
-  document.getElementById('bp-sekolah-form-wrap').innerHTML = '<div style="text-align:center;padding:20px;color:var(--gray-500)">⏳ Memuat...</div>';
-  apiCall('getBukuSekolah', { siswaId: siswa, tanggal: TODAY_ISO }).then(res => {
-    const existing = (res.ok && res.data) ? res.data.aktivitas : {};
-    _renderBpSekolahForm(siswa, _bpCurrentJenjang, TODAY_ISO, existing);
-  }).catch(() => _renderBpSekolahForm(siswa, _bpCurrentJenjang, TODAY_ISO, {}));
+  document.getElementById('bp-guru-subtitle').textContent = siswa + ' — ' + _bpCurrentJenjang + ' · Hari ini';
+  // Reset date picker ke hari ini
+  const guruPicker = document.getElementById('bp-guru-date-picker');
+  guruPicker.value = TODAY_ISO; guruPicker.max = TODAY_ISO;
+  const ortuPicker = document.getElementById('bp-ortu-date-picker');
+  ortuPicker.value = TODAY_ISO; ortuPicker.max = TODAY_ISO;
+  // Load form sekolah hari ini
+  loadBpSekolahByDate();
   document.getElementById('bp-ortu-card').style.display = '';
   document.getElementById('bp-rekap-card').style.display = '';
   loadOrtuViewGuru();
   _loadRekapGuru();
+}
+
+function loadBpSekolahByDate() {
+  const siswa = _bpCurrentSiswa; if (!siswa) return;
+  const picker = document.getElementById('bp-guru-date-picker');
+  const tgl = picker.value || TODAY_ISO;
+  const isToday = tgl === TODAY_ISO;
+  // Update subtitle dengan info tanggal
+  const tglLabel = isToday
+    ? 'Hari ini'
+    : new Date(tgl + 'T00:00:00').toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  document.getElementById('bp-guru-subtitle').textContent = siswa + ' — ' + (_bpCurrentJenjang||'SD') + ' · ' + tglLabel;
+  document.getElementById('bp-sekolah-form-wrap').innerHTML = '<div style="text-align:center;padding:20px;color:var(--gray-500)">⏳ Memuat...</div>';
+  apiCall('getBukuSekolah', { siswaId: siswa, tanggal: tgl }).then(res => {
+    const existing = (res.ok && res.data) ? res.data.aktivitas : {};
+    _renderBpSekolahForm(siswa, _bpCurrentJenjang || 'SD', tgl, existing);
+  }).catch(() => _renderBpSekolahForm(siswa, _bpCurrentJenjang || 'SD', tgl, {}));
 }
 function _bp3Val(v) {
   if (v === 'ya' || v === true || v === 'true') return 'ya';
