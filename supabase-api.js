@@ -395,8 +395,11 @@ async function _getAllJobTracker({ jenjang } = {}) {
     .forEach(r => { kvMap[r.key] = r.value; });
 
   const grouped = {};
+  const todayISO = _isoToday();
   guruList.forEach(g => {
-    const d = kvMap[`job_${g.nama}`] || null;
+    // Hanya pakai KV jika tanggalnya memang hari ini — hindari data lama dari hari sebelumnya
+    const raw = kvMap[`job_${g.nama}`] || null;
+    const d = (raw && raw.tanggal === todayISO) ? raw : null;
     grouped[g.nama] = {
       karyawan:        g.nama,
       jabatan:         g.jabatan    || '',
