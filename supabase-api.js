@@ -106,7 +106,8 @@ async function apiCall(action, payload = {}) {
       case 'getAllJobTrackerByDate': return await _getAllJobTrackerByDate(payload);
 
       /* KPI RANGE */
-      case 'getKpiHarianRange':  return await _getKpiHarianRange(payload);
+      case 'getKpiHarianRange':    return await _getKpiHarianRange(payload);
+      case 'getJobTrackerRange':   return await _getJobTrackerRange(payload);
 
       /* TIPE CONFIG */
       case 'getTipeConfig':      return await _getTipeConfig();
@@ -1258,6 +1259,53 @@ async function _getKpiHarianRange({ startDate, endDate, jenjang } = {}) {
     const max   = s.length ? Math.max(...s) : null;
     const count = s.length;
     return { guru: g.guru, jabatan: g.jabatan, jenjang: g.jenjang, avg, min, max, count, dates: g.dates };
+  });
+
+  return { ok: true, data: result, startDate: start, endDate: end };
+}
+
+async function _getJobTrackerRange({ startDate, endDate, jenjang } = {}) {
+  const start = startDate || _isoToday();
+  const end   = endDate   || _isoToday();
+
+  const [{ data: rawGuru, error: e1 }, { data: jobRows, error: e2 }] = await Promise.all([
+    _sb.from('users').select('nama, jabatan, jenjang')
+       .in('role', ['guru', 'kepala sekolah']).eq('active', 'Y'),
+    // nilai_rekap hanya ada di baris no=1 sesi Sore (set saat submit sore)
+    _sb.from('job_tracker').select('karyawan, tanggal, nilai_rekap')
+       .gte('tanggal', start).lte('tanggal', end)
+       .eq('no', 1).eq('sesi', 'Sore')
+       .not('nilai_rekap', 'is', null)
+       .order('tanggal').order('karyawan'),
+  ]);
+  if (e1) throw e1;
+  if (e2) throw e2;
+
+  let guruList = rawGuru || [];
+  if (jenjang) {
+    const jL = jenjang.toLowerCase();
+    guruList = guruList.filter(g => (g.jenjang || '').toLowerCase() === jL);
+  }
+  const guruNames = new Set(guruList.map(g => g.nama));
+
+  const grouped = {};
+  guruList.forEach(g => {
+    grouped[g.nama] = { guru: g.nama, jabatan: g.jabatan || '', jenjang: g.jenjang || '', scores: [] };
+  });
+
+  (jobRows || []).forEach(r => {
+    if (!guruNames.has(r.karyawan)) return;
+    if (r.nilai_rekap === null || r.nilai_rekap === undefined) return;
+    if (!grouped[r.karyawan]) return;
+    grouped[r.karyawan].scores.push(r.nilai_rekap);
+  });
+
+  const result = Object.values(grouped).map(g => {
+    const s   = g.scores;
+    const avg = s.length ? Math.round(s.reduce((a, b) => a + b, 0) / s.length) : null;
+    const min = s.length ? Math.min(...s) : null;
+    const max = s.length ? Math.max(...s) : null;
+    return { guru: g.guru, jabatan: g.jabatan, jenjang: g.jenjang, avg, min, max, count: s.length };
   });
 
   return { ok: true, data: result, startDate: start, endDate: end };

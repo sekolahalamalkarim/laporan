@@ -212,6 +212,68 @@
           <div class="empty-state"><div class="empty-icon">📊</div><p>Pilih rentang tanggal lalu klik "Lihat Rekap"</p></div>
         </div>
       </div>
+
+      <!-- Rekap Job Tracker per Guru (date range) -->
+      <div class="card">
+        <div class="card-header" style="flex-wrap:wrap;gap:8px">
+          <div class="card-title">📋 Rekap Job Tracker per Guru</div>
+          <span style="font-size:12px;color:var(--gray-500)">Rata-rata nilai agenda kerja dalam rentang tanggal</span>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;background:#F5F5F5;border-radius:10px;padding:14px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--gray-700);margin-bottom:4px;text-transform:uppercase">Dari Tanggal</div>
+            <input type="date" id="rekap-job-start" style="padding:8px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none" />
+          </div>
+          <div style="color:var(--gray-400);font-size:18px;padding-bottom:4px">→</div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--gray-700);margin-bottom:4px;text-transform:uppercase">Sampai Tanggal</div>
+            <input type="date" id="rekap-job-end" style="padding:8px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none" />
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--gray-700);margin-bottom:4px;text-transform:uppercase">Jenjang</div>
+            <select id="rekap-job-jenjang" style="padding:8px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none">
+              <option value="">Semua Jenjang</option>
+              <option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option>
+            </select>
+          </div>
+          <button class="btn btn-green" onclick="loadRekapJob()" style="height:38px">🔍 Lihat Rekap</button>
+          <button class="btn btn-outline" onclick="exportRekapJob()" style="height:38px">⬇️ Export Excel</button>
+        </div>
+        <div id="rekap-job-container">
+          <div class="empty-state"><div class="empty-icon">📋</div><p>Pilih rentang tanggal lalu klik "Lihat Rekap"</p></div>
+        </div>
+      </div>
+
+      <!-- Nilai Akhir Gabungan KPI + Job Tracker -->
+      <div class="card">
+        <div class="card-header" style="flex-wrap:wrap;gap:8px">
+          <div class="card-title">🏆 Nilai Akhir (KPI + Job Tracker)</div>
+          <span style="font-size:12px;color:var(--gray-500)">Gabungan KPI 50% + Job Tracker 50%</span>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;background:#F5F5F5;border-radius:10px;padding:14px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--gray-700);margin-bottom:4px;text-transform:uppercase">Dari Tanggal</div>
+            <input type="date" id="rekap-akhir-start" style="padding:8px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none" />
+          </div>
+          <div style="color:var(--gray-400);font-size:18px;padding-bottom:4px">→</div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--gray-700);margin-bottom:4px;text-transform:uppercase">Sampai Tanggal</div>
+            <input type="date" id="rekap-akhir-end" style="padding:8px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none" />
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--gray-700);margin-bottom:4px;text-transform:uppercase">Jenjang</div>
+            <select id="rekap-akhir-jenjang" style="padding:8px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none">
+              <option value="">Semua Jenjang</option>
+              <option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option>
+            </select>
+          </div>
+          <button class="btn btn-green" onclick="loadNilaiAkhir()" style="height:38px">🔍 Lihat Nilai Akhir</button>
+          <button class="btn btn-outline" onclick="exportNilaiAkhir()" style="height:38px">⬇️ Export Excel</button>
+        </div>
+        <div id="rekap-akhir-container">
+          <div class="empty-state"><div class="empty-icon">🏆</div><p>Pilih rentang tanggal lalu klik "Lihat Nilai Akhir"</p></div>
+        </div>
+      </div>
     </div>
 
     <!-- BUKU PENGHUBUNG MONITOR -->
@@ -1468,14 +1530,13 @@ function generatePinMurid(id, nama) {
   if(mp) mp.value = TODAY_ISO.substring(0,7);
   const ft = document.getElementById('filter-tanggal');
   if(ft) ft.value = TODAY_ISO;
-  // Set default rekap nilai date range: 30 hari terakhir
-  const rv1 = document.getElementById('rekap-nilai-start');
-  const rv2 = document.getElementById('rekap-nilai-end');
-  if(rv1 && rv2) {
-    const s = new Date(TODAY_ISO); s.setDate(s.getDate()-29);
-    rv1.value = s.toISOString().split('T')[0];
-    rv2.value = TODAY_ISO;
-  }
+  // Set default date range (30 hari terakhir) untuk semua card rekap
+  const _30DaysAgo = (()=>{ const s=new Date(TODAY_ISO); s.setDate(s.getDate()-29); return s.toISOString().split('T')[0]; })();
+  [['rekap-nilai-start','rekap-nilai-end'],['rekap-job-start','rekap-job-end'],['rekap-akhir-start','rekap-akhir-end']].forEach(([id1,id2])=>{
+    const e1=document.getElementById(id1), e2=document.getElementById(id2);
+    if(e1) e1.value=_30DaysAgo;
+    if(e2) e2.value=TODAY_ISO;
+  });
 })();
 loadAllJob();
 renderRekap('harian');
@@ -1721,6 +1782,184 @@ function exportRekapNilai() {
   XLSX.utils.book_append_sheet(wb, ws, 'Rekap Nilai');
   XLSX.writeFile(wb, `Rekap_Nilai_Guru_${start}_sd_${end}.xlsx`);
   toast('✅ Export rekap nilai berhasil!');
+}
+
+/* ============================================================
+   REKAP JOB TRACKER PER GURU
+   ============================================================ */
+let _rekapJobData = [];
+
+function loadRekapJob() {
+  const start   = document.getElementById('rekap-job-start')?.value;
+  const end     = document.getElementById('rekap-job-end')?.value;
+  const jenjang = document.getElementById('rekap-job-jenjang')?.value || (MY_JENJANG||null);
+  if (!start || !end) { toast('⚠️ Pilih rentang tanggal terlebih dahulu', true); return; }
+  if (start > end)    { toast('⚠️ Tanggal awal tidak boleh melebihi tanggal akhir', true); return; }
+  const wrap = document.getElementById('rekap-job-container');
+  wrap.innerHTML = '<div style="text-align:center;padding:20px;color:var(--gray-500)">⏳ Memuat rekap job tracker...</div>';
+  toast('🔍 Memuat rekap job tracker...');
+  apiCall('getJobTrackerRange', { startDate: start, endDate: end, jenjang }).then(res => {
+    if (!res.ok) { wrap.innerHTML = '<div style="color:var(--danger);padding:12px">⚠️ Gagal: '+res.error+'</div>'; return; }
+    _rekapJobData = res.data || [];
+    renderRekapJob(start, end);
+    toast('✅ Rekap job tracker dimuat');
+  });
+}
+
+function renderRekapJob(start, end) {
+  const wrap = document.getElementById('rekap-job-container');
+  const data = _rekapJobData;
+  if (!data.length) { wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>Tidak ada data job tracker dalam rentang tanggal ini</p></div>'; return; }
+
+  const startLabel = new Date(start+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  const endLabel   = new Date(end  +'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  const _pred = v => v===null?['—','var(--gray-500)']:v>=90?['⭐ Sangat Baik','var(--primary)']:v>=80?['✅ Baik','var(--success)']:v>=70?['🔵 Cukup','#1565C0']:['⚠️ Perlu Perhatian','var(--warning)'];
+  const _bar  = v => v===null?'':` <div style="height:6px;border-radius:3px;background:#E0E0E0;margin-top:4px"><div style="height:6px;border-radius:3px;background:${_pred(v)[1]};width:${v}%"></div></div>`;
+
+  let html = `<div style="font-size:12px;color:var(--gray-500);margin-bottom:12px">Periode: <strong>${startLabel}</strong> s/d <strong>${endLabel}</strong></div>
+  <div class="table-wrapper"><table><thead><tr>
+    <th style="width:32px">No</th><th>Nama Guru</th>
+    <th style="width:70px;text-align:center">Jenjang</th>
+    <th style="width:85px;text-align:center">Hari Submit</th>
+    <th style="width:100px;text-align:center">Rata-rata</th>
+    <th style="width:70px;text-align:center">Min</th>
+    <th style="width:70px;text-align:center">Max</th>
+    <th style="width:130px">Predikat</th>
+  </tr></thead><tbody>`;
+  [...data].sort((a,b)=>(b.avg??-1)-(a.avg??-1)).forEach((r,i)=>{
+    const pred = _pred(r.avg);
+    html += `<tr>
+      <td style="text-align:center;font-weight:700">${i+1}</td>
+      <td><div style="font-weight:700">${r.guru}</div><div style="font-size:11px;color:var(--gray-500)">${r.jabatan}</div></td>
+      <td style="text-align:center;font-size:12px">${r.jenjang||'—'}</td>
+      <td style="text-align:center;color:var(--gray-700)">${r.count}</td>
+      <td style="text-align:center"><span style="font-size:18px;font-weight:900;color:${pred[1]}">${r.avg!==null?r.avg:'—'}</span>${_bar(r.avg)}</td>
+      <td style="text-align:center;color:var(--danger);font-weight:700">${r.min!==null?r.min:'—'}</td>
+      <td style="text-align:center;color:var(--success);font-weight:700">${r.max!==null?r.max:'—'}</td>
+      <td style="font-weight:700;color:${pred[1]};font-size:12px">${pred[0]}</td>
+    </tr>`;
+  });
+  wrap.innerHTML = html + '</tbody></table></div>';
+}
+
+function exportRekapJob() {
+  const start = document.getElementById('rekap-job-start')?.value;
+  const end   = document.getElementById('rekap-job-end')?.value;
+  if (!_rekapJobData.length) { toast('⚠️ Muat rekap job tracker terlebih dahulu', true); return; }
+  const header = [['No','Nama Guru','Jabatan','Jenjang','Hari Submit','Rata-rata Nilai','Nilai Min','Nilai Max','Predikat']];
+  const rows = [..._rekapJobData].sort((a,b)=>(b.avg??-1)-(a.avg??-1)).map((r,i)=>{
+    const pred = r.avg===null?'Belum Ada Data':r.avg>=90?'Sangat Baik':r.avg>=80?'Baik':r.avg>=70?'Cukup':'Perlu Perhatian';
+    return [i+1,r.guru,r.jabatan,r.jenjang||'—',r.count,r.avg!==null?r.avg:'—',r.min!==null?r.min:'—',r.max!==null?r.max:'—',pred];
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([['Rekap Job Tracker Per Guru — Sekolah Alam Al-Karim'],['Periode:',start+' s/d '+end],[]], ...[[...header,...rows]]);
+  // rebuild correctly
+  const wsData = [['Rekap Job Tracker Per Guru — Sekolah Alam Al-Karim'],['Periode:',start+' s/d '+end],[],...header,...rows];
+  const ws2 = XLSX.utils.aoa_to_sheet(wsData);
+  ws2['!cols']=[{wch:5},{wch:25},{wch:20},{wch:10},{wch:14},{wch:15},{wch:10},{wch:10},{wch:18}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Rekap Job Tracker');
+  XLSX.writeFile(wb,`Rekap_JobTracker_Guru_${start}_sd_${end}.xlsx`);
+  toast('✅ Export rekap job tracker berhasil!');
+}
+
+/* ============================================================
+   NILAI AKHIR GABUNGAN (KPI 50% + JOB TRACKER 50%)
+   ============================================================ */
+let _nilaiAkhirData = [];
+
+function loadNilaiAkhir() {
+  const start   = document.getElementById('rekap-akhir-start')?.value;
+  const end     = document.getElementById('rekap-akhir-end')?.value;
+  const jenjang = document.getElementById('rekap-akhir-jenjang')?.value || (MY_JENJANG||null);
+  if (!start || !end) { toast('⚠️ Pilih rentang tanggal terlebih dahulu', true); return; }
+  if (start > end)    { toast('⚠️ Tanggal awal tidak boleh melebihi tanggal akhir', true); return; }
+  const wrap = document.getElementById('rekap-akhir-container');
+  wrap.innerHTML = '<div style="text-align:center;padding:20px;color:var(--gray-500)">⏳ Memuat nilai akhir...</div>';
+  toast('🔍 Memuat nilai akhir (KPI + Job Tracker)...');
+  Promise.all([
+    apiCall('getKpiHarianRange',  { startDate: start, endDate: end, jenjang }),
+    apiCall('getJobTrackerRange', { startDate: start, endDate: end, jenjang }),
+  ]).then(([kpiRes, jobRes]) => {
+    if (!kpiRes.ok || !jobRes.ok) { wrap.innerHTML = '<div style="color:var(--danger);padding:12px">⚠️ Gagal memuat data</div>'; return; }
+    const kpiMap = {}; (kpiRes.data||[]).forEach(r => { kpiMap[r.guru] = r; });
+    const jobMap = {}; (jobRes.data||[]).forEach(r => { jobMap[r.guru] = r; });
+    const allNames = new Set([...Object.keys(kpiMap), ...Object.keys(jobMap)]);
+    _nilaiAkhirData = [];
+    allNames.forEach(nama => {
+      const kpi = kpiMap[nama]||null, job = jobMap[nama]||null;
+      const kpiAvg = kpi ? kpi.avg : null, jobAvg = job ? job.avg : null;
+      let nilaiAkhir = null;
+      if (kpiAvg !== null && jobAvg !== null) nilaiAkhir = Math.round((kpiAvg + jobAvg) / 2);
+      else if (kpiAvg !== null) nilaiAkhir = kpiAvg;
+      else if (jobAvg !== null) nilaiAkhir = jobAvg;
+      _nilaiAkhirData.push({ guru: nama, jabatan: (kpi||job)?.jabatan||'', jenjang: (kpi||job)?.jenjang||'', kpiCount: kpi?.count||0, kpiAvg, jobCount: job?.count||0, jobAvg, nilaiAkhir });
+    });
+    renderNilaiAkhir(start, end);
+    toast('✅ Nilai akhir dimuat');
+  });
+}
+
+function renderNilaiAkhir(start, end) {
+  const wrap = document.getElementById('rekap-akhir-container');
+  const data = _nilaiAkhirData;
+  if (!data.length) { wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">🏆</div><p>Tidak ada data dalam rentang tanggal ini</p></div>'; return; }
+
+  const startLabel = new Date(start+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  const endLabel   = new Date(end  +'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  const _pred = v => v===null?['—','var(--gray-500)']:v>=90?['⭐ Sangat Baik','var(--primary)']:v>=80?['✅ Baik','var(--success)']:v>=70?['🔵 Cukup','#1565C0']:['⚠️ Perlu Perhatian','var(--warning)'];
+  const _bar  = (v,col) => v===null?'':` <div style="height:6px;border-radius:3px;background:#E0E0E0;margin-top:3px"><div style="height:6px;border-radius:3px;background:${col};width:${v}%"></div></div>`;
+
+  let html = `<div style="font-size:12px;color:var(--gray-500);margin-bottom:12px">Periode: <strong>${startLabel}</strong> s/d <strong>${endLabel}</strong> &nbsp;·&nbsp; Bobot: KPI 50% + Job Tracker 50%</div>
+  <div class="table-wrapper"><table><thead><tr>
+    <th style="width:32px">No</th><th>Nama Guru</th>
+    <th style="width:65px;text-align:center">Jenjang</th>
+    <th style="width:90px;text-align:center">Avg KPI</th>
+    <th style="width:90px;text-align:center">Avg Job</th>
+    <th style="width:110px;text-align:center">Nilai Akhir</th>
+    <th style="width:130px">Predikat</th>
+  </tr></thead><tbody>`;
+  [...data].sort((a,b)=>(b.nilaiAkhir??-1)-(a.nilaiAkhir??-1)).forEach((r,i)=>{
+    const pred = _pred(r.nilaiAkhir), pKpi = _pred(r.kpiAvg), pJob = _pred(r.jobAvg);
+    html += `<tr>
+      <td style="text-align:center;font-weight:700">${i+1}</td>
+      <td><div style="font-weight:700">${r.guru}</div><div style="font-size:11px;color:var(--gray-500)">${r.jabatan}</div></td>
+      <td style="text-align:center;font-size:12px">${r.jenjang||'—'}</td>
+      <td style="text-align:center">
+        <div style="font-weight:700;color:${pKpi[1]}">${r.kpiAvg!==null?r.kpiAvg:'—'}</div>
+        <div style="font-size:10px;color:var(--gray-500)">${r.kpiCount} hari</div>
+        ${_bar(r.kpiAvg,pKpi[1])}
+      </td>
+      <td style="text-align:center">
+        <div style="font-weight:700;color:${pJob[1]}">${r.jobAvg!==null?r.jobAvg:'—'}</div>
+        <div style="font-size:10px;color:var(--gray-500)">${r.jobCount} hari</div>
+        ${_bar(r.jobAvg,pJob[1])}
+      </td>
+      <td style="text-align:center">
+        <span style="font-size:22px;font-weight:900;color:${pred[1]}">${r.nilaiAkhir!==null?r.nilaiAkhir:'—'}</span>
+        ${_bar(r.nilaiAkhir,pred[1])}
+      </td>
+      <td style="font-weight:700;color:${pred[1]};font-size:12px">${pred[0]}</td>
+    </tr>`;
+  });
+  wrap.innerHTML = html + '</tbody></table></div>';
+}
+
+function exportNilaiAkhir() {
+  const start = document.getElementById('rekap-akhir-start')?.value;
+  const end   = document.getElementById('rekap-akhir-end')?.value;
+  if (!_nilaiAkhirData.length) { toast('⚠️ Muat nilai akhir terlebih dahulu', true); return; }
+  const header = [['No','Nama Guru','Jabatan','Jenjang','Hari KPI','Avg KPI','Hari Job','Avg Job','Nilai Akhir','Predikat']];
+  const rows = [..._nilaiAkhirData].sort((a,b)=>(b.nilaiAkhir??-1)-(a.nilaiAkhir??-1)).map((r,i)=>{
+    const pred = r.nilaiAkhir===null?'Belum Ada Data':r.nilaiAkhir>=90?'Sangat Baik':r.nilaiAkhir>=80?'Baik':r.nilaiAkhir>=70?'Cukup':'Perlu Perhatian';
+    return [i+1,r.guru,r.jabatan,r.jenjang||'—',r.kpiCount,r.kpiAvg!==null?r.kpiAvg:'—',r.jobCount,r.jobAvg!==null?r.jobAvg:'—',r.nilaiAkhir!==null?r.nilaiAkhir:'—',pred];
+  });
+  const wsData = [['Nilai Akhir Guru (KPI 50% + Job Tracker 50%) — Sekolah Alam Al-Karim'],['Periode:',start+' s/d '+end],[],  ...header,...rows];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols']=[{wch:5},{wch:25},{wch:20},{wch:10},{wch:10},{wch:12},{wch:10},{wch:12},{wch:13},{wch:18}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Nilai Akhir');
+  XLSX.writeFile(wb,`Nilai_Akhir_Guru_${start}_sd_${end}.xlsx`);
+  toast('✅ Export nilai akhir berhasil!');
 }
 
 /* ============================================================
