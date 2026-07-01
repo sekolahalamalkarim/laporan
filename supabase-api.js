@@ -47,6 +47,7 @@ async function apiCall(action, payload = {}) {
       case 'truncateAllMurid':   return await _truncateAllMurid();
       case 'generatePin':        return await _generatePin(payload);
       case 'resetPin':           return await _generatePin(payload);
+      case 'batchGeneratePins':  return await _batchGeneratePins(payload);
       case 'verifyPin':          return await _verifyPin(payload);
 
       /* JOB TRACKER */
@@ -287,6 +288,25 @@ async function _generatePin({ muridId }) {
   const { error } = await _sb.from('murid').update({ pin }).eq('id', muridId);
   if (error) throw error;
   return { ok: true, pin, message: `PIN berhasil dibuat: ${pin}` };
+}
+
+async function _batchGeneratePins({ ids } = {}) {
+  if (!ids || !ids.length) throw new Error('ids wajib');
+  // Generate PIN unik untuk setiap siswa
+  const updates = ids.map(id => ({ id, pin: String(Math.floor(1000 + Math.random() * 9000)) }));
+  // Kirim dalam batch 100 agar tidak terlalu banyak request paralel
+  const BATCH = 100;
+  let failCount = 0;
+  for (let i = 0; i < updates.length; i += BATCH) {
+    const batch = updates.slice(i, i + BATCH);
+    const results = await Promise.all(
+      batch.map(({ id, pin }) =>
+        _sb.from('murid').update({ pin }).eq('id', id).then(({ error }) => error ? 1 : 0)
+      )
+    );
+    failCount += results.reduce((a, b) => a + b, 0);
+  }
+  return { ok: true, count: ids.length - failCount, pins: updates };
 }
 
 async function _verifyPin({ muridId, pin }) {

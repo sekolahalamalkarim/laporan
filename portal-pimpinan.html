@@ -403,7 +403,8 @@
           <div class="card-title">📚 Data Murid</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn-green btn-sm" onclick="openMuridModal()">+ Tambah Murid</button>
-            <button class="btn btn-outline btn-sm" onclick="downloadMuridExcel()">⬇️ Download Excel</button>
+            <button class="btn btn-outline btn-sm" onclick="generateAllPin()">🔑 Generate Semua PIN</button>
+            <button class="btn btn-outline btn-sm" onclick="downloadMuridExcel()">⬇️ Download Excel (+ PIN)</button>
             <button class="btn btn-red btn-sm" onclick="deleteAllMurid()">🗑️ Hapus Semua Siswa</button>
           </div>
         </div>
@@ -1139,10 +1140,12 @@ function downloadMuridExcel(){
   if(muridFilterJenjang) list=list.filter(m=>m.jenjang===muridFilterJenjang);
   if(muridFilterKelas){const k=muridFilterKelas;list=list.filter(m=>String(m.kelas).toLowerCase().includes(k));}
   if(muridFilterSearch){const s=muridFilterSearch;list=list.filter(m=>m.nama.toLowerCase().includes(s)||(m.namaOrtu||'').toLowerCase().includes(s));}
-  const rows=[['Nama','Kelas','Jenjang','Nama Orangtua','No HP Orangtua']];
-  list.forEach(m=>rows.push([m.nama,m.kelas||'',m.jenjang||'',m.namaOrtu||'',m.noHpOrtu||'']));
+  const rows=[['Nama','Kelas','Jenjang','Nama Orangtua','No HP Orangtua','PIN Ortu']];
+  list.forEach(m=>rows.push([m.nama,m.kelas||'',m.jenjang||'',m.namaOrtu||'',m.noHpOrtu||'',m.pin||'']));
   const ws=XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols']=[{wch:28},{wch:16},{wch:10},{wch:28},{wch:18}];
+  // Format kolom PIN sebagai text agar tidak kehilangan leading zero (meski 4 digit semua)
+  list.forEach((_,i)=>{const cell=ws[XLSX.utils.encode_cell({r:i+1,c:5})];if(cell&&cell.v)cell.t='s';});
+  ws['!cols']=[{wch:28},{wch:16},{wch:10},{wch:28},{wch:18},{wch:10}];
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Data Murid');
   const fname='data-murid'+(muridFilterJenjang?'-'+muridFilterJenjang:'')+(muridFilterKelas?'-kelas-'+muridFilterKelas:'')+'.xlsx';
@@ -1397,6 +1400,34 @@ function doAssignTugas() {
 }
 
 /* PIN MURID */
+function generateAllPin() {
+  // Gunakan list sesuai filter aktif (atau semua jika tidak ada filter)
+  let list = allMurid;
+  if (muridFilterJenjang) list = list.filter(m => m.jenjang === muridFilterJenjang);
+  if (muridFilterKelas) { const k = muridFilterKelas; list = list.filter(m => String(m.kelas).toLowerCase().includes(k)); }
+  if (muridFilterSearch) { const s = muridFilterSearch; list = list.filter(m => m.nama.toLowerCase().includes(s) || (m.namaOrtu||'').toLowerCase().includes(s)); }
+  if (!list.length) { toast('⚠️ Tidak ada siswa', true); return; }
+
+  const noPIN  = list.filter(m => !m.pin).length;
+  const hasPIN = list.filter(m =>  m.pin).length;
+  let msg = '🔑 Generate PIN untuk ' + list.length + ' siswa';
+  if (hasPIN > 0)
+    msg += '\n\n• ' + noPIN + ' siswa belum punya PIN → akan dibuat\n• ' + hasPIN + ' siswa sudah punya PIN → akan di-RESET';
+  else
+    msg += '\n\n• Semua ' + noPIN + ' siswa belum punya PIN → akan dibuat';
+  msg += '\n\nSetelah selesai, klik "Download Excel (+ PIN)" untuk melihat semua PIN.\n\nLanjutkan?';
+  if (!confirm(msg)) return;
+
+  const ids = list.map(m => m.id);
+  toast('⏳ Membuat ' + ids.length + ' PIN, mohon tunggu...');
+  apiCall('batchGeneratePins', { ids }).then(res => {
+    if (res.ok) {
+      toast('✅ ' + res.count + ' PIN berhasil dibuat! Download Excel untuk melihat hasilnya.');
+      loadManajemenData();
+    } else { toast('⚠️ ' + (res.error || 'Gagal'), true); }
+  }).catch(e => toast('⚠️ ' + (e.message || 'Error'), true));
+}
+
 function generatePinMurid(id, nama) {
   if (!confirm('Generate PIN baru untuk ' + nama + '? PIN lama akan diganti.')) return;
   toast('🔑 Membuat PIN...');
