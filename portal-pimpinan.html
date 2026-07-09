@@ -337,6 +337,31 @@
         </div>
       </div>
 
+      <!-- Label Buku Penghubung — admin/pimpinan only -->
+      <div class="card" id="card-buku-label" style="display:none">
+        <div class="card-header" style="flex-wrap:wrap;gap:8px">
+          <div class="card-title">📝 Label Buku Penghubung</div>
+          <button class="btn btn-green btn-sm" onclick="saveBukuLabel()">💾 Simpan Label</button>
+        </div>
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:14px">
+          Ubah teks label item yang tampil di form guru dan orangtua. Tipe item (ceklis/isian) tidak berubah.
+        </p>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
+          <select id="bl-jenjang" onchange="renderBukuLabelEditor()" style="padding:8px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none">
+            <option value="TK">TK</option>
+            <option value="SD" selected>SD</option>
+            <option value="SMP">SMP</option>
+            <option value="SMA">SMA</option>
+            <option value="ALC">ALC</option>
+          </select>
+          <div style="display:flex;gap:0;border:1.5px solid var(--gray-300);border-radius:8px;overflow:hidden">
+            <button id="bl-tab-sekolah" onclick="setBukuLabelTab('sekolah')" style="padding:7px 18px;font-size:13px;font-family:inherit;border:none;background:var(--green);color:#fff;cursor:pointer;font-weight:600">Sekolah</button>
+            <button id="bl-tab-rumah"   onclick="setBukuLabelTab('rumah')"   style="padding:7px 18px;font-size:13px;font-family:inherit;border:none;background:#fff;color:var(--gray-600);cursor:pointer">Rumah</button>
+          </div>
+        </div>
+        <div id="bl-editor-wrap"><div style="text-align:center;padding:20px;color:var(--gray-500)">⏳ Memuat...</div></div>
+      </div>
+
       <!-- JADWAL AGENDA -->
       <div class="card">
         <div class="card-header">
@@ -1519,6 +1544,8 @@ function generatePinMurid(id, nama) {
     if (sub)   sub.textContent = 'Akses penuh semua jenjang — TK, SD, SMP, SMA, ALC';
     const cardTipe = document.getElementById('card-tipe-config');
     if (cardTipe) { cardTipe.style.display = ''; loadTipeConfig(); }
+    const cardBukuLabel = document.getElementById('card-buku-label');
+    if (cardBukuLabel) { cardBukuLabel.style.display = ''; loadBukuLabelConfig(); }
   } else if (MY_JENJANG) {
     if (badge) { badge.textContent = MY_JENJANG; badge.style.display='inline'; }
     if (sub)   sub.textContent = 'Monitoring kinerja karyawan & siswa jenjang ' + MY_JENJANG;
@@ -1965,6 +1992,286 @@ function exportNilaiAkhir() {
 /* ============================================================
    KONFIGURASI TIPE GURU
    ============================================================ */
+// ══════════════════════════════════════════════════════════════
+//  BUKU LABEL CONFIG
+// ══════════════════════════════════════════════════════════════
+const _BP_LABEL_SCHEMA = {
+  sekolah: {
+    TK:  [
+      { kat:'A', label:'Kedisiplinan', items:[
+        {key:'hadir',label:'Hadir tepat waktu'},
+        {key:'perlengkapan',label:'Membawa perlengkapan pribadi (celemek, lap tangan, lap serbaguna, sajadah)'},
+      ]},
+      { kat:'B', label:'Pencapaian Keagamaan', items:[
+        {key:'sholat_duha',label:'Sholat Duha'},
+        {key:'baca_iqro',label:'Membaca Iqro'},
+        {key:'hafalan_quran',label:"Hafalan Al-Qur'an Surah"},
+        {key:'hafalan_doa',label:'Hafalan Doa'},
+        {key:'hafalan_hadis',label:'Hafalan Hadis'},
+        {key:'berinfaq',label:'Berinfaq'},
+      ]},
+      { kat:'C', label:'Pesan Khusus', items:[
+        {key:'pesan_khusus',label:'Pesan Khusus Fasilitator'},
+      ]},
+    ],
+    SD:  [
+      { kat:'A', label:'Kedisiplinan', items:[
+        {key:'hadir',label:'Hadir tepat waktu'},
+        {key:'perlengkapan',label:'Membawa perlengkapan pribadi (celemek, lap tangan, lap serbaguna, sajadah, alat sholat dll)'},
+      ]},
+      { kat:'B', label:'Pencapaian Keagamaan', items:[
+        {key:'sholat_duha',label:'Sholat Duha'},
+        {key:'sholat_dzuhur',label:'Sholat Duhur'},
+        {key:'sholat_asar',label:'Sholat Asar'},
+        {key:'tahsin',label:'Tahsin'},
+        {key:'tahfidz',label:'Tahfidz'},
+        {key:'hafalan_doa_hadis',label:'Hafalan Doa/Hadis'},
+        {key:'berinfaq',label:'Berinfaq'},
+        {key:'akhlak',label:'Menerapkan akhlak dan adab yang baik'},
+      ]},
+      { kat:'C', label:'Pesan Khusus', items:[
+        {key:'pesan_khusus',label:'Pesan Khusus Fasilitator'},
+      ]},
+    ],
+    SMP: [
+      { kat:'A', label:'Kedisiplinan', items:[
+        {key:'hadir',label:'Hadir tepat waktu'},
+        {key:'seragam',label:'Menggunakan seragam sesuai jadwal'},
+      ]},
+      { kat:'B', label:'Pencapaian Keagamaan', items:[
+        {key:'sholat_duha',label:'Sholat Duha'},
+        {key:'sholat_dzuhur',label:'Sholat Duhur'},
+        {key:'sholat_asar',label:'Sholat Asar'},
+        {key:'tahsin',label:'Tahsin'},
+        {key:'tahfidz',label:'Tahfidz'},
+        {key:'berinfaq',label:'Berinfaq'},
+      ]},
+      { kat:'C', label:'Pesan Khusus', items:[
+        {key:'pesan_khusus',label:'Pesan Khusus Fasilitator'},
+      ]},
+    ],
+    SMA: [
+      { kat:'A', label:'Kedisiplinan', items:[
+        {key:'hadir',label:'Hadir tepat waktu'},
+        {key:'seragam',label:'Menggunakan seragam sesuai jadwal'},
+      ]},
+      { kat:'B', label:'Pencapaian Keagamaan', items:[
+        {key:'sholat_duha',label:'Sholat Duha'},
+        {key:'sholat_dzuhur',label:'Sholat Duhur'},
+        {key:'sholat_asar',label:'Sholat Asar'},
+        {key:'tahsin',label:'Tahsin'},
+        {key:'tahfidz',label:'Tahfidz'},
+        {key:'berinfaq',label:'Berinfaq'},
+      ]},
+      { kat:'C', label:'Pesan Khusus', items:[
+        {key:'pesan_khusus',label:'Pesan Khusus Fasilitator'},
+      ]},
+    ],
+    ALC: [
+      { kat:'A', label:'Kedisiplinan', items:[
+        {key:'hadir',label:'Hadir tepat waktu'},
+        {key:'perlengkapan',label:'Membawa perlengkapan pribadi (celemek, lap tangan, lap serbaguna, sajadah, alat sholat dll)'},
+      ]},
+      { kat:'B', label:'Pencapaian Keagamaan', items:[
+        {key:'sholat_duha',label:'Sholat Duha'},
+        {key:'sholat_dzuhur',label:'Sholat Duhur'},
+        {key:'tahsin',label:'Tahsin'},
+        {key:'tahfidz',label:'Tahfidz'},
+        {key:'hafalan_doa_hadis',label:'Hafalan Doa/Hadis'},
+        {key:'berinfaq',label:'Berinfaq'},
+        {key:'akhlak',label:'Menerapkan akhlak dan adab yang baik'},
+      ]},
+      { kat:'C', label:'Pesan Khusus', items:[
+        {key:'pesan_khusus',label:'Pesan Khusus Fasilitator'},
+      ]},
+    ],
+  },
+  rumah: {
+    TK: [
+      { kat:'A', label:'Pembiasaan Ibadah Harian', items:[
+        {key:'sholat_dzuhur',label:'Shalat Dzuhur'},{key:'sholat_ashar',label:'Shalat Ashar'},
+        {key:'sholat_maghrib',label:'Shalat Maghrib'},{key:'sholat_isya',label:'Shalat Isya'},
+        {key:'sholat_subuh',label:'Shalat Subuh'},
+      ]},
+      { kat:'B', label:'Tilawah & Murojaah', items:[
+        {key:'baca_iqro',label:'Membaca Iqro'},{key:'murojaah',label:'Murojaah Hafalan'},
+      ]},
+      { kat:'C', label:'Home Challenges', items:[
+        {key:'hc_greeting',label:'Say "Good Morning" and "Good Night" in English'},
+        {key:'hc_count',label:'Count from 1–10 in English'},
+        {key:'hc_colors',label:'Name 5 colors in English'},
+        {key:'hc_polite',label:'Use "Please" and "Thank You" correctly'},
+      ]},
+      { kat:'D', label:'Kedisiplinan', items:[
+        {key:'jam_tidur',label:'Jam tidur maksimal pukul 21.00 WIB'},
+        {key:'hp_tv',label:'Penggunaan handphone/menonton tv maksimal 30 menit setiap harinya'},
+      ]},
+      { kat:'E', label:'Kemandirian & Tanggung Jawab', items:[
+        {key:'beres_mainan',label:'Membereskan mainan'},{key:'baju_sendiri',label:'Mengenakan baju sendiri'},
+        {key:'sepatu_sendiri',label:'Memakai sepatu dan kaus kaki sendiri'},{key:'toilet_training',label:'Toilet Training'},
+      ]},
+    ],
+    SD: [
+      { kat:'A', label:'Pembiasaan Ibadah Harian', items:[
+        {key:'sholat_dzuhur',label:'Shalat Dzuhur'},{key:'sholat_ashar',label:'Shalat Ashar'},
+        {key:'sholat_maghrib',label:'Shalat Maghrib'},{key:'sholat_isya',label:'Shalat Isya'},
+        {key:'sholat_subuh',label:'Shalat Subuh'},{key:'murojaah',label:"Murojaah Hafalan Al-Qur'an"},
+        {key:'baca_quran',label:"Membaca Al-Qur'an/Iqro"},
+      ]},
+      { kat:'B', label:'Kedisiplinan', items:[
+        {key:'hp_tv',label:'Penggunaan handphone/menonton tv maksimal 30 menit setiap harinya'},
+      ]},
+      { kat:'C', label:'Home Challenges', items:[
+        {key:'hc_words',label:'Learn 5 new English words'},
+        {key:'hc_activities',label:'Tell your daily activities in English'},
+        {key:'hc_greetings',label:'Practice English greetings at home'},
+      ]},
+      { kat:'D', label:'Kemandirian & Memuliakan Orangtua', items:[
+        {key:'rapikan_barang',label:'Merapikan barang Pribadi'},
+        {key:'pijat_ortu',label:'Memijit atau membantu orangtua'},
+        {key:'toilet_training',label:'Toilet Training'},
+      ]},
+      { kat:'E', label:'Taklim Keluarga (Minimal 1 minggu Sekali)', items:[
+        {key:'taklim',label:'Taklim Keluarga (min 1 minggu sekali)'},
+      ]},
+    ],
+    SMP: [
+      { kat:'A', label:'Pembiasaan Ibadah', items:[
+        {key:'sholat_dzuhur',label:'Sholat Dzuhur'},{key:'sholat_ashar',label:'Sholat Ashar'},
+        {key:'sholat_maghrib',label:'Sholat Maghrib'},{key:'sholat_isya',label:'Sholat Isya'},
+        {key:'sholat_subuh',label:'Sholat Subuh'},{key:'sholat_tahajud',label:'Sholat Tahajud'},
+        {key:'murojaah',label:"Murojaah Hafalan Al-Qur'an"},{key:'baca_quran',label:"Membaca Al-Qur'an Min ½ Juz"},
+      ]},
+      { kat:'B', label:'Kedisiplinan', items:[
+        {key:'hp_tv',label:'Penggunaan handphone/menonton tv maksimal 30 menit setiap harinya'},
+      ]},
+      { kat:'C', label:'Home Challenges', items:[
+        {key:'hc_vocab',label:'Learn and use 10 new vocabulary words'},
+        {key:'hc_video',label:'Watch an English video without Indonesian subtitles'},
+        {key:'hc_article',label:'Read an English article or story'},
+        {key:'hc_describe',label:'Describe an event that happened today in English'},
+      ]},
+      { kat:'D', label:'Memuliakan Orangtua', items:[
+        {key:'rapikan_barang',label:'Merapikan barang Pribadi'},
+        {key:'pijat_ortu',label:'Memijat Orangtua Minimal 1 Pekan Sekali'},
+      ]},
+      { kat:'E', label:'Taklim (Minimal 1 minggu Sekali)', items:[
+        {key:'taklim',label:'Taklim (min 1 minggu sekali)'},
+      ]},
+    ],
+    SMA: [
+      { kat:'A', label:'Pembiasaan Ibadah', items:[
+        {key:'sholat_dzuhur',label:'Sholat Dzuhur'},{key:'sholat_ashar',label:'Sholat Ashar'},
+        {key:'sholat_maghrib',label:'Sholat Maghrib'},{key:'sholat_isya',label:'Sholat Isya'},
+        {key:'sholat_subuh',label:'Sholat Subuh'},{key:'sholat_tahajud',label:'Sholat Tahajud'},
+        {key:'murojaah',label:"Murojaah Hafalan Al-Qur'an"},{key:'baca_quran',label:"Membaca Al-Qur'an Min ½ Juz"},
+      ]},
+      { kat:'B', label:'Kedisiplinan', items:[
+        {key:'baca_buku',label:'Membaca 1 buku/pekan'},
+        {key:'rapikan_kamar',label:'Membereskan kamar/barang Pribadi'},
+      ]},
+      { kat:'C', label:'Home Challenges', items:[
+        {key:'hc_article',label:'Read an English article, book, or news report'},
+        {key:'hc_vocab',label:'Learn and apply 10 new vocabulary words'},
+        {key:'hc_video',label:'Watch an English presentation or educational video'},
+        {key:'hc_present',label:'Present a topic in English for 3-5 minutes'},
+      ]},
+      { kat:'D', label:'E-Muda', items:[
+        {key:'emuda',label:'E-Muda berdakwah dalam keluarga/di lingkungan masyarakat (Minimal 2 Pekan Sekali)'},
+      ]},
+    ],
+    ALC: [
+      { kat:'A', label:'Pembiasaan Ibadah Harian', items:[
+        {key:'sholat_subuh',label:'Shalat Subuh'},{key:'sholat_dzuhur',label:'Shalat Dzuhur'},
+        {key:'sholat_ashar',label:'Shalat Ashar'},{key:'sholat_maghrib',label:'Shalat Maghrib'},
+        {key:'sholat_isya',label:'Shalat Isya'},{key:'sholat_dhuha',label:'Shalat Dhuha'},
+        {key:'asmaulhusna',label:'Mendengar/Membaca Asmaulhusna'},
+        {key:'baca_iqro',label:"Mengenal Huruf Hijaiyah/Membaca Iqro'"},
+      ]},
+      { kat:'B', label:'Kedisiplinan', items:[
+        {key:'jam_tidur',label:'Tidur maksimal pukul 21.00 WIB'},
+        {key:'bangun_subuh',label:'Bangun tidur sebelum adzan subuh/maksimal pukul 05.30 WIB'},
+        {key:'bekal_sehat',label:'Membawa bekal makanan sehat dan bergizi seimbang'},
+        {key:'hp_tv',label:'Penggunaan HP/TV maksimal 30 menit'},
+      ]},
+      { kat:'C', label:'Kemandirian', items:[
+        {key:'toilet_training',label:'Toilet Training'},
+        {key:'makan_rapi',label:'Makan dan Minum dengan rapi'},
+        {key:'pakai_baju',label:'Memakai dan melepas pakaian sendiri'},
+      ]},
+      { kat:'D', label:'Berkisah Siroh Bersama Keluarga (min 1 pekan sekali)', items:[
+        {key:'siroh',label:'Orangtua membacakan kisah Siroh minimal 1 pekan sekali'},
+      ]},
+    ],
+  },
+};
+
+let _bukuLabelData = { sekolah: {}, rumah: {} };
+let _bukuLabelActiveTab = 'sekolah';
+
+function loadBukuLabelConfig() {
+  document.getElementById('bl-editor-wrap').innerHTML = '<div style="text-align:center;padding:20px;color:var(--gray-500)">⏳ Memuat...</div>';
+  apiCall('getBukuLabelConfig').then(res => {
+    if (res.ok) _bukuLabelData = { sekolah: res.sekolah || {}, rumah: res.rumah || {} };
+    renderBukuLabelEditor();
+  });
+}
+
+function setBukuLabelTab(tab) {
+  _bukuLabelActiveTab = tab;
+  const btnS = document.getElementById('bl-tab-sekolah');
+  const btnR = document.getElementById('bl-tab-rumah');
+  btnS.style.background = tab === 'sekolah' ? 'var(--green)' : '#fff';
+  btnS.style.color      = tab === 'sekolah' ? '#fff' : 'var(--gray-600)';
+  btnS.style.fontWeight = tab === 'sekolah' ? '600' : '400';
+  btnR.style.background = tab === 'rumah'   ? 'var(--green)' : '#fff';
+  btnR.style.color      = tab === 'rumah'   ? '#fff' : 'var(--gray-600)';
+  btnR.style.fontWeight = tab === 'rumah'   ? '600' : '400';
+  renderBukuLabelEditor();
+}
+
+function renderBukuLabelEditor() {
+  const jenjang  = document.getElementById('bl-jenjang').value;
+  const schema   = (_BP_LABEL_SCHEMA[_bukuLabelActiveTab] || {})[jenjang] || [];
+  const overrides = ((_bukuLabelData[_bukuLabelActiveTab] || {})[jenjang]) || {};
+  const wrap = document.getElementById('bl-editor-wrap');
+  if (!schema.length) { wrap.innerHTML = '<p style="color:var(--gray-500);font-size:13px">Tidak ada item.</p>'; return; }
+  let html = '<div style="display:grid;gap:14px">';
+  schema.forEach(section => {
+    html += `<div>
+      <div style="font-size:11px;font-weight:700;color:var(--gray-700);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--gray-200)">${section.kat}. ${section.label}</div>
+      <div style="display:grid;gap:7px">`;
+    section.items.forEach(item => {
+      const oKey = section.kat + '.' + item.key;
+      const cur  = (overrides[oKey] !== undefined && overrides[oKey] !== '') ? overrides[oKey] : item.label;
+      html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center">
+        <div style="font-size:12px;color:var(--gray-500);padding:6px 9px;background:#F9F9F9;border-radius:6px;border:1px solid var(--gray-200);line-height:1.4">${item.label}</div>
+        <input type="text" data-key="${oKey}" value="${cur.replace(/"/g,'&quot;').replace(/'/g,'&#39;')}"
+          style="padding:7px 10px;border:1.5px solid var(--gray-300);border-radius:7px;font-size:13px;font-family:inherit;width:100%;box-sizing:border-box;outline:none" />
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+async function saveBukuLabel() {
+  const jenjang = document.getElementById('bl-jenjang').value;
+  const inputs  = document.querySelectorAll('#bl-editor-wrap input[data-key]');
+  const labels  = {};
+  inputs.forEach(inp => { labels[inp.dataset.key] = inp.value.trim(); });
+  const res = await apiCall('saveBukuLabelConfig', { tipe: _bukuLabelActiveTab, jenjang, labels });
+  if (res.ok) {
+    if (!_bukuLabelData[_bukuLabelActiveTab]) _bukuLabelData[_bukuLabelActiveTab] = {};
+    _bukuLabelData[_bukuLabelActiveTab][jenjang] = labels;
+    toast('✅ ' + res.message);
+  } else {
+    toast('❌ Gagal: ' + (res.error || 'Error'), 'danger');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
 let _tipeConfigList = [];
 
 function loadTipeConfig() {

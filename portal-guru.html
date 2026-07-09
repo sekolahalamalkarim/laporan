@@ -1091,6 +1091,32 @@ const BUKU_RUMAH_DEF = {
 
 let _bpCurrentSiswa = null;
 let _bpCurrentJenjang = null;
+let _bukuLabelLoaded = false;
+
+// Apply label overrides to BUKU_SEKOLAH_DEF and BUKU_RUMAH_DEF in-place
+function _applyBukuLabelOverrides(sekolahOvr, rumahOvr) {
+  [['sekolah', BUKU_SEKOLAH_DEF, sekolahOvr], ['rumah', BUKU_RUMAH_DEF, rumahOvr]].forEach(([, def, ovr]) => {
+    if (!ovr) return;
+    Object.entries(ovr).forEach(([jenjang, labels]) => {
+      if (!def[jenjang]) return;
+      def[jenjang].forEach(section => {
+        section.items.forEach(item => {
+          const oKey = section.kat + '.' + item.key;
+          if (labels[oKey] && labels[oKey].trim()) item.label = labels[oKey].trim();
+        });
+      });
+    });
+  });
+}
+
+function _ensureBukuLabels(cb) {
+  if (_bukuLabelLoaded) { cb(); return; }
+  apiCall('getBukuLabelConfig').then(res => {
+    if (res.ok) _applyBukuLabelOverrides(res.sekolah || {}, res.rumah || {});
+    _bukuLabelLoaded = true;
+    cb();
+  }).catch(() => { _bukuLabelLoaded = true; cb(); });
+}
 
 function loadBukuPenghubungGuru() {
   const siswa = document.getElementById('siswa-select').value;
@@ -1108,8 +1134,8 @@ function loadBukuPenghubungGuru() {
   guruPicker.value = TODAY_ISO; guruPicker.max = TODAY_ISO;
   const ortuPicker = document.getElementById('bp-ortu-date-picker');
   ortuPicker.value = TODAY_ISO; ortuPicker.max = TODAY_ISO;
-  // Load form sekolah hari ini
-  loadBpSekolahByDate();
+  // Load form sekolah hari ini (pastikan label override sudah dimuat dulu)
+  _ensureBukuLabels(() => loadBpSekolahByDate());
   document.getElementById('bp-ortu-card').style.display = '';
   document.getElementById('bp-rekap-card').style.display = '';
   loadOrtuViewGuru();

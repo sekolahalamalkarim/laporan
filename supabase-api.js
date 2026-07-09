@@ -114,6 +114,10 @@ async function apiCall(action, payload = {}) {
       case 'saveTipeConfig':     return await _saveTipeConfig(payload);
       case 'deleteTipeConfig':   return await _deleteTipeConfig(payload);
 
+      /* BUKU LABEL CONFIG */
+      case 'getBukuLabelConfig': return await _getBukuLabelConfig();
+      case 'saveBukuLabelConfig': return await _saveBukuLabelConfig(payload);
+
       default: return { ok: false, error: 'Action tidak dikenal: ' + action };
     }
   } catch (err) {
@@ -1341,6 +1345,29 @@ async function _deleteTipeConfig({ tipe }) {
   const { error } = await _sb.from('tipe_config').update({ active: false }).eq('tipe', tipe);
   if (error) throw error;
   return { ok: true, message: `Tipe "${tipe}" berhasil dihapus` };
+}
+
+/* ── Buku Label Config ──────────────────────────────────── */
+async function _getBukuLabelConfig() {
+  const [sekolah, rumah] = await Promise.all([
+    _kvGet('buku_label_sekolah'),
+    _kvGet('buku_label_rumah'),
+  ]);
+  return {
+    ok: true,
+    sekolah: sekolah || {},
+    rumah:   rumah   || {},
+  };
+}
+
+async function _saveBukuLabelConfig({ tipe, jenjang, labels }) {
+  // tipe: 'sekolah' | 'rumah', jenjang: 'SD'|'TK'|..., labels: { "A.key": "label", ... }
+  if (!tipe || !jenjang || !labels) throw new Error('tipe, jenjang, dan labels wajib');
+  const kvKey = `buku_label_${tipe}`;
+  const current = (await _kvGet(kvKey)) || {};
+  current[jenjang] = labels;
+  await _kvSet(kvKey, current);
+  return { ok: true, message: `Label buku ${tipe} jenjang ${jenjang} berhasil disimpan` };
 }
 
 /* ─── Utility ────────────────────────────────────────────────── */

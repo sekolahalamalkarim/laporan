@@ -621,6 +621,29 @@ const TODAY_ISO = new Date().toISOString().split('T')[0];
 
 let selectedJenjang = '', selectedMurid = null, muridList = [];
 let bukuGuruState = null, bukuOrtuHistory = [];
+let _bukuRumahLabelLoaded = false;
+
+function _applyRumahLabelOverrides(rumahOvr) {
+  if (!rumahOvr) return;
+  Object.entries(rumahOvr).forEach(([jenjang, labels]) => {
+    if (!BUKU_RUMAH_DEF[jenjang]) return;
+    BUKU_RUMAH_DEF[jenjang].forEach(section => {
+      section.items.forEach(item => {
+        const oKey = section.kat + '.' + item.key;
+        if (labels[oKey] && labels[oKey].trim()) item.label = labels[oKey].trim();
+      });
+    });
+  });
+}
+
+function _ensureRumahLabels(cb) {
+  if (_bukuRumahLabelLoaded) { cb(); return; }
+  apiCall('getBukuLabelConfig').then(res => {
+    if (res.ok) _applyRumahLabelOverrides(res.rumah || {});
+    _bukuRumahLabelLoaded = true;
+    cb();
+  }).catch(() => { _bukuRumahLabelLoaded = true; cb(); });
+}
 
 /* ========= HELPERS ========= */
 // Mengembalikan tanggal Senin pada minggu berjalan (YYYY-MM-DD)
@@ -774,19 +797,21 @@ function enterPortal(murid) {
   document.getElementById('portal-anak-info').textContent = murid.kelas + ' · Jenjang ' + murid.jenjang + '  |  ' + TODAY;
   document.getElementById('tanggal-badge').textContent = '📅 ' + TODAY;
 
-  // Load data buku penghubung
+  // Load data buku penghubung (pastikan label override dimuat dulu)
   const bp_dp = document.getElementById('bp-sekolah-date');
   if (bp_dp) { bp_dp.value = TODAY_ISO; bp_dp.max = TODAY_ISO; }
   document.getElementById('bp-sekolah-date-label').textContent = '📅 ' + TODAY;
   const siswaId = murid.nama;
   const jenjang = (murid.jenjang || 'SD').toUpperCase();
-  // Load today's school report (read-only)
-  apiCall('getBukuSekolah', { siswaId, tanggal: TODAY_ISO }).then(res => {
-    _renderBpSekolahOrtu((res.ok && res.data) ? res.data.aktivitas : null, jenjang);
-  });
-  // Load today's home report (editable)
-  apiCall('getBukuRumah', { siswaId, tanggal: TODAY_ISO }).then(res => {
-    _renderBpRumahForm(murid, (res.ok && res.data) ? res.data.aktivitas : null);
+  _ensureRumahLabels(() => {
+    // Load today's school report (read-only)
+    apiCall('getBukuSekolah', { siswaId, tanggal: TODAY_ISO }).then(res => {
+      _renderBpSekolahOrtu((res.ok && res.data) ? res.data.aktivitas : null, jenjang);
+    });
+    // Load today's home report (editable)
+    apiCall('getBukuRumah', { siswaId, tanggal: TODAY_ISO }).then(res => {
+      _renderBpRumahForm(murid, (res.ok && res.data) ? res.data.aktivitas : null);
+    });
   });
   // Load nilai keaktifan
   _loadNilaiKeaktifan(murid);
