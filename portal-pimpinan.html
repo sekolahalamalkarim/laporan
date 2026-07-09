@@ -294,6 +294,49 @@
     <!-- MANAJEMEN DATA -->
     <div id="tab-data" class="tab-content">
 
+      <!-- Konfigurasi Tipe Guru — admin only -->
+      <div class="card" id="card-tipe-config" style="display:none">
+        <div class="card-header" style="flex-wrap:wrap;gap:8px">
+          <div class="card-title">⚙️ Konfigurasi Tipe Guru</div>
+          <button class="btn btn-green btn-sm" onclick="showTipeForm()">+ Tambah Tipe</button>
+        </div>
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">
+          Atur tipe guru dan akses fitur yang diperoleh. Perubahan berlaku saat guru login ulang.
+        </p>
+        <!-- Form tambah/edit -->
+        <div id="tipe-form" style="display:none;background:#F5F5F5;border-radius:10px;padding:16px;margin-bottom:16px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--gray-700);text-transform:uppercase;display:block;margin-bottom:4px">ID Tipe <span style="color:var(--gray-500);font-weight:400">(huruf kecil, unik)</span></label>
+              <input type="text" id="tc-tipe" placeholder="cth: koordinator" style="width:100%;padding:9px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit" />
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--gray-700);text-transform:uppercase;display:block;margin-bottom:4px">Label Tampilan</label>
+              <input type="text" id="tc-label" placeholder="cth: Koordinator Kelas" style="width:100%;padding:9px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit" />
+            </div>
+          </div>
+          <div style="display:flex;gap:24px;margin-bottom:14px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="tc-buku" style="width:16px;height:16px" /> Buku Penghubung
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="tc-rencana" checked style="width:16px;height:16px" /> Rencana Kerja
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="tc-kpi" checked style="width:16px;height:16px" /> KPI Harian
+            </label>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-green btn-sm" onclick="saveTipeConfig()">💾 Simpan Tipe</button>
+            <button class="btn btn-outline btn-sm" onclick="hideTipeForm()">Batal</button>
+          </div>
+        </div>
+        <!-- Tabel tipe -->
+        <div id="tipe-config-table-wrap">
+          <div style="text-align:center;padding:20px;color:var(--gray-500)">⏳ Memuat...</div>
+        </div>
+      </div>
+
       <!-- JADWAL AGENDA -->
       <div class="card">
         <div class="card-header">
@@ -413,49 +456,6 @@
             <button class="btn btn-green" onclick="doImport()">✅ Import Sekarang</button>
             <button class="btn btn-outline" style="margin-left:8px" onclick="cancelImport()">Batal</button>
           </div>
-        </div>
-      </div>
-
-      <!-- Konfigurasi Tipe Guru — admin only -->
-      <div class="card" id="card-tipe-config" style="display:none">
-        <div class="card-header" style="flex-wrap:wrap;gap:8px">
-          <div class="card-title">⚙️ Konfigurasi Tipe Guru</div>
-          <button class="btn btn-green btn-sm" onclick="showTipeForm()">+ Tambah Tipe</button>
-        </div>
-        <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">
-          Atur tipe guru dan akses fitur yang diperoleh. Perubahan berlaku saat guru login ulang.
-        </p>
-        <!-- Form tambah/edit -->
-        <div id="tipe-form" style="display:none;background:#F5F5F5;border-radius:10px;padding:16px;margin-bottom:16px">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-            <div>
-              <label style="font-size:11px;font-weight:700;color:var(--gray-700);text-transform:uppercase;display:block;margin-bottom:4px">ID Tipe <span style="color:var(--gray-500);font-weight:400">(huruf kecil, unik)</span></label>
-              <input type="text" id="tc-tipe" placeholder="cth: koordinator" style="width:100%;padding:9px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit" />
-            </div>
-            <div>
-              <label style="font-size:11px;font-weight:700;color:var(--gray-700);text-transform:uppercase;display:block;margin-bottom:4px">Label Tampilan</label>
-              <input type="text" id="tc-label" placeholder="cth: Koordinator Kelas" style="width:100%;padding:9px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit" />
-            </div>
-          </div>
-          <div style="display:flex;gap:24px;margin-bottom:14px">
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-              <input type="checkbox" id="tc-buku" style="width:16px;height:16px" /> Buku Penghubung
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-              <input type="checkbox" id="tc-rencana" checked style="width:16px;height:16px" /> Rencana Kerja
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-              <input type="checkbox" id="tc-kpi" checked style="width:16px;height:16px" /> KPI Harian
-            </label>
-          </div>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-green btn-sm" onclick="saveTipeConfig()">💾 Simpan Tipe</button>
-            <button class="btn btn-outline btn-sm" onclick="hideTipeForm()">Batal</button>
-          </div>
-        </div>
-        <!-- Tabel tipe -->
-        <div id="tipe-config-table-wrap">
-          <div style="text-align:center;padding:20px;color:var(--gray-500)">⏳ Memuat...</div>
         </div>
       </div>
 
