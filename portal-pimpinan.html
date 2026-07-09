@@ -570,7 +570,7 @@ const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
 if (!currentUser || !['pimpinan','admin'].includes(currentUser.role)) window.location.href = 'index.html';
 
 // Jenjang filter: pimpinan sees own jenjang, admin sees all
-const IS_ADMIN = currentUser.role === 'admin';
+const IS_ADMIN = currentUser.role === 'admin' || currentUser.role === 'pimpinan';
 const MY_JENJANG = IS_ADMIN ? '' : (currentUser.jenjang || '');
 
 const TODAY_ISO = new Date().toISOString().split('T')[0];
