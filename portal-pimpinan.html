@@ -120,7 +120,7 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <select id="filter-jenjang" style="padding:7px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;outline:none;font-family:inherit" onchange="loadJobByDate()">
               <option value="">Semua Jenjang</option>
-              <option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option>
+              <option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option><option>Kemediaan</option><option>Admin</option>
             </select>
             <select id="filter-karyawan" style="padding:7px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;outline:none;font-family:inherit" onchange="renderJobTable()">
               <option value="">Semua Karyawan</option>
@@ -202,7 +202,7 @@
             <div style="font-size:11px;font-weight:700;color:var(--gray-700);margin-bottom:4px;text-transform:uppercase">Jenjang</div>
             <select id="rekap-nilai-jenjang" style="padding:8px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none">
               <option value="">Semua Jenjang</option>
-              <option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option>
+              <option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option><option>Kemediaan</option><option>Admin</option>
             </select>
           </div>
           <button class="btn btn-green" onclick="loadRekapNilai()" style="height:38px">🔍 Lihat Rekap</button>
@@ -233,7 +233,7 @@
             <div style="font-size:11px;font-weight:700;color:var(--gray-700);margin-bottom:4px;text-transform:uppercase">Jenjang</div>
             <select id="rekap-job-jenjang" style="padding:8px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none">
               <option value="">Semua Jenjang</option>
-              <option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option>
+              <option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option><option>Kemediaan</option><option>Admin</option>
             </select>
           </div>
           <button class="btn btn-green" onclick="loadRekapJob()" style="height:38px">🔍 Lihat Rekap</button>
@@ -264,7 +264,7 @@
             <div style="font-size:11px;font-weight:700;color:var(--gray-700);margin-bottom:4px;text-transform:uppercase">Jenjang</div>
             <select id="rekap-akhir-jenjang" style="padding:8px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none">
               <option value="">Semua Jenjang</option>
-              <option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option>
+              <option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option><option>Kemediaan</option><option>Admin</option>
             </select>
           </div>
           <button class="btn btn-green" onclick="loadNilaiAkhir()" style="height:38px">🔍 Lihat Nilai Akhir</button>
@@ -555,7 +555,7 @@
       <select id="u-namaAnak"><option value="">-- Pilih Murid --</option></select>
     </div>
     <div id="field-jenjang" class="form-group" style="display:none"><label>Jenjang</label>
-      <select id="u-jenjang"><option value="">--</option><option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option></select>
+      <select id="u-jenjang"><option value="">--</option><option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option><option>Kemediaan</option><option>Admin</option></select>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-user')">Batal</button>
