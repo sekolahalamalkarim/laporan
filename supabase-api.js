@@ -118,6 +118,11 @@ async function apiCall(action, payload = {}) {
       case 'getBukuLabelConfig': return await _getBukuLabelConfig();
       case 'saveBukuLabelConfig': return await _saveBukuLabelConfig(payload);
 
+      /* PAGI DRAFT (cross-device) */
+      case 'savePagiDraft':  return await _savePagiDraft(payload);
+      case 'getPagiDraft':   return await _getPagiDraft(payload);
+      case 'clearPagiDraft': return await _clearPagiDraft(payload);
+
       default: return { ok: false, error: 'Action tidak dikenal: ' + action };
     }
   } catch (err) {
@@ -1368,6 +1373,28 @@ async function _saveBukuLabelConfig({ tipe, jenjang, labels }) {
   current[jenjang] = labels;
   await _kvSet(kvKey, current);
   return { ok: true, message: `Label buku ${tipe} jenjang ${jenjang} berhasil disimpan` };
+}
+
+/* ─── PAGI DRAFT (cross-device) ─────────────────────────────── */
+
+async function _savePagiDraft({ karyawan, tasks, tanggal }) {
+  if (!karyawan || !tanggal) throw new Error('karyawan dan tanggal wajib');
+  await _kvSet(`pagi_draft_${karyawan}`, { tasks, tanggal });
+  return { ok: true };
+}
+
+async function _getPagiDraft({ karyawan, tanggal }) {
+  if (!karyawan || !tanggal) throw new Error('karyawan dan tanggal wajib');
+  const data = await _kvGet(`pagi_draft_${karyawan}`);
+  // Only return draft if it's for today (avoid stale drafts from previous days)
+  if (!data || data.tanggal !== tanggal) return { ok: true, tasks: null };
+  return { ok: true, tasks: data.tasks };
+}
+
+async function _clearPagiDraft({ karyawan }) {
+  if (!karyawan) throw new Error('karyawan wajib');
+  await _kvSet(`pagi_draft_${karyawan}`, null);
+  return { ok: true };
 }
 
 /* ─── Utility ────────────────────────────────────────────────── */

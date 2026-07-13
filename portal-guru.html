@@ -416,6 +416,7 @@ const kelasAmpuArr = kelasAmpu ? kelasAmpu.split(',').map(k => k.trim()).filter(
 let jadwal = { jamBuka:'05:00', jamTutup:'08:00', jamBukaSore:'15:00', jamTutupSore:'17:00' };
 let pagiRows = [];
 let soreRows = [];
+let _syncDraftTimer = null;
 let kpiHarianRows = KPI_HARIAN_ITEMS.map(lbl => ({ label: lbl, nilai: null }));
 let bukuGuruState = {}, bukuOrtuState = {}, siswaJenjangMap = {};
 
@@ -585,10 +586,24 @@ function lsKey(prefix){return prefix+'_'+currentUser.nama+'_'+TODAY_ISO;}
 function isPagiSubmitted(){return localStorage.getItem(lsKey('pagi'))==='1';}
 function isSoreSubmitted(){return localStorage.getItem(lsKey('sore'))==='1';}
 function isKpiSubmitted(){return localStorage.getItem(lsKey('kpi'))==='1';}
-function markPagi(tasks){localStorage.setItem(lsKey('pagi'),'1');localStorage.setItem(lsKey('pagi_tasks'),JSON.stringify(tasks));}
+function markPagi(tasks){localStorage.setItem(lsKey('pagi'),'1');localStorage.setItem(lsKey('pagi_tasks'),JSON.stringify(tasks));clearPagiDraft();}
 function markSore(){localStorage.setItem(lsKey('sore'),'1');}
 function markKpi(){localStorage.setItem(lsKey('kpi'),'1');}
 function getSavedPagiTasks(){try{return JSON.parse(localStorage.getItem(lsKey('pagi_tasks')))||[];}catch(e){return[];}}
+function syncPagiDraft(){
+  if(isPagiSubmitted()) return;
+  localStorage.setItem('pagi_draft_'+currentUser.nama, JSON.stringify(pagiRows));
+  // Debounced save to server (cross-device sync)
+  clearTimeout(_syncDraftTimer);
+  _syncDraftTimer = setTimeout(()=>{
+    apiCall('savePagiDraft',{karyawan:currentUser.nama, tasks:pagiRows, tanggal:TODAY_ISO});
+  }, 800);
+}
+function clearPagiDraft(){
+  localStorage.removeItem('pagi_draft_'+currentUser.nama);
+  apiCall('clearPagiDraft',{karyawan:currentUser.nama}); // fire-and-forget
+}
+function getPagiDraft(){try{return JSON.parse(localStorage.getItem('pagi_draft_'+currentUser.nama))||null;}catch(e){return null;}}
 
 // ══════════════════════════════════════════
 //  RENCANA KERJA — SESI PAGI
@@ -615,11 +630,12 @@ function renderPagi() {
     // Show sore section
     showSoreSection();
   } else if (!open) {
-    badge.innerHTML = '<span class="badge badge-draft">🔒 Terkunci</span>';
+    badge.innerHTML = '<span class="badge badge-draft">📝 Draft</span>';
     banner.className = 'warn-banner';
-    banner.innerHTML = `🔒 Pengisian rencana pagi hanya bisa dilakukan pukul <strong>${jadwal.jamBuka}</strong>–<strong>${jadwal.jamTutup}</strong>.`;
-    addBtn.disabled = true; submitBtn.disabled = true;
-    document.querySelectorAll('#pagi-tbody input, #pagi-tbody select').forEach(el=>el.disabled=true);
+    banner.innerHTML = `📝 Mode Draft — Tugas tersimpan otomatis, submit hanya bisa dilakukan pukul <strong>${jadwal.jamBuka}</strong>–<strong>${jadwal.jamTutup}</strong>.`;
+    addBtn.disabled = false; submitBtn.disabled = true;
+    submitBtn.textContent = '📤 Submit Rencana Pagi';
+    document.querySelectorAll('#pagi-tbody input, #pagi-tbody select').forEach(el=>el.disabled=false);
   } else {
     badge.innerHTML = '<span class="badge badge-onprogres">🟢 Buka</span>';
     banner.innerHTML = '';
@@ -634,9 +650,9 @@ function renderPagiTable() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="text-align:center;font-weight:800">${i+1}</td>
-      <td><input type="text" value="${r.agenda||''}" placeholder="Tulis agenda/tugas..." onchange="pagiRows[${i}].agenda=this.value"/></td>
-      <td><input type="date" value="${r.target||TODAY_ISO}" onchange="pagiRows[${i}].target=this.value"/></td>
-      <td><button class="btn btn-red btn-sm" onclick="pagiRows.splice(${i},1);renderPagiTable()">✕</button></td>`;
+      <td><input type="text" value="${r.agenda||''}" placeholder="Tulis agenda/tugas..." onchange="pagiRows[${i}].agenda=this.value;syncPagiDraft()"/></td>
+      <td><input type="date" value="${r.target||TODAY_ISO}" onchange="pagiRows[${i}].target=this.value;syncPagiDraft()"/></td>
+      <td><button class="btn btn-red btn-sm" onclick="pagiRows.splice(${i},1);renderPagiTable();syncPagiDraft()">✕</button></td>`;
     tb.appendChild(tr);
   });
 }
@@ -644,6 +660,7 @@ function renderPagiTable() {
 function addPagiRow() {
   pagiRows.push({ agenda:'', target:TODAY_ISO });
   renderPagiTable();
+  syncPagiDraft();
 }
 
 function submitPagi() {
@@ -691,9 +708,10 @@ function renderSore() {
   if (submitted) {
     badge.innerHTML = '<span class="badge badge-selesai">✅ Sudah Submit</span>';
     banner.className = 'success-banner';
-    banner.innerHTML = '✅ Laporan sore sudah disubmit. Lihat rekap nilai di bawah.';
-    submitBtn.disabled = true;
-    document.querySelectorAll('#sore-tbody select, #sore-tbody input').forEach(el=>el.disabled=true);
+    banner.innerHTML = '✅ Laporan sore sudah disubmit. <em style="opacity:.8">(Kamu masih bisa edit status & klik Update)</em>';
+    submitBtn.disabled = false;
+    submitBtn.textContent = '🔄 Update Laporan Sore';
+    document.querySelectorAll('#sore-tbody select, #sore-tbody input').forEach(el=>el.disabled=false);
     showRekapNilai();
   } else if (!open) {
     badge.innerHTML = '<span class="badge badge-draft">🔒 Terkunci</span>';
@@ -730,10 +748,12 @@ function renderSoreTable() {
 
 function submitSore() {
   if (!isWindowOpen(jadwal.jamBukaSore, jadwal.jamTutupSore)) { toast('🔒 Di luar jam laporan sore!', true); return; }
-  if (isSoreSubmitted()) { toast('✅ Laporan sore sudah disubmit!'); return; }
-  if (!isPagiSubmitted()) { toast('⚠️ Submit rencana pagi dahulu!', true); return; }
-  if (!soreRows.length) { toast('⚠️ Tidak ada tugas untuk dilaporkan', true); return; }
-  toast('📤 Mengirim laporan sore...');
+  if (!soreRows.length) {
+    if (!isPagiSubmitted()) { toast('⚠️ Submit rencana pagi dahulu!', true); return; }
+    toast('⚠️ Tidak ada tugas untuk dilaporkan', true); return;
+  }
+  const isUpdate = isSoreSubmitted();
+  toast(isUpdate ? '🔄 Memperbarui laporan sore...' : '📤 Mengirim laporan sore...');
   apiCall('saveJobTracker', {
     karyawan: currentUser.nama, jabatan: currentUser.jabatan,
     tanggal: TODAY_ISO, tasks: JSON.stringify(soreRows), sesi: 'sore'
@@ -742,7 +762,7 @@ function submitSore() {
       markSore();
       renderSore();
       showRekapNilai(res.nilaiRekap);
-      toast('📤 Laporan sore terkirim! Nilai rekap: ' + res.nilaiRekap);
+      toast(isUpdate ? '🔄 Laporan sore berhasil diperbarui!' : '📤 Laporan sore terkirim! Nilai rekap: ' + res.nilaiRekap);
     } else { toast('⚠️ ' + res.error, true); }
   });
 }
@@ -1389,13 +1409,34 @@ function init() {
 
     // Init pagi rows (if not yet submitted today)
     if (!isPagiSubmitted()) {
-      pagiRows = [{ agenda:'', target:TODAY_ISO }];
-      loadTugasPimpinan();
+      const localDraft = getPagiDraft();
+      if (localDraft && localDraft.length) {
+        // Found local draft — use immediately (fast path)
+        pagiRows = localDraft;
+        renderPagiTable();
+        renderPagi();
+        loadTugasPimpinan();
+      } else {
+        // No local draft — check server (cross-device)
+        apiCall('getPagiDraft', { karyawan: currentUser.nama, tanggal: TODAY_ISO }).then(r => {
+          if (r.ok && r.tasks && r.tasks.length) {
+            pagiRows = r.tasks;
+            localStorage.setItem('pagi_draft_'+currentUser.nama, JSON.stringify(r.tasks)); // cache locally
+          } else {
+            pagiRows = [{ agenda:'', target:TODAY_ISO }];
+          }
+          renderPagiTable();
+          renderPagi();
+          loadTugasPimpinan();
+        });
+      }
     } else {
       // Pagi already submitted — restore from localStorage or API
       const saved = getSavedPagiTasks();
       pagiRows = saved.length ? saved : [];
       soreRows = saved.map(t => ({ agenda: t.agenda, target: t.target, status: 'On Progres', catatan: '' }));
+      renderPagiTable();
+      renderPagi();
     }
 
     // If sore already submitted, restore sore rows from API
@@ -1408,9 +1449,6 @@ function init() {
         showRekapNilai(r.sore ? r.sore.nilaiRekap : null);
       });
     }
-
-    renderPagiTable();
-    renderPagi();
   });
 
   // Init KPI
