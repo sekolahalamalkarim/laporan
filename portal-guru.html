@@ -191,6 +191,35 @@
         <div id="rekap-content"></div>
       </div>
 
+      <!-- Siapkan Rencana Besok -->
+      <div class="card" id="card-besok" style="display:none">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📝 Siapkan Rencana Pagi Besok</div>
+            <div class="card-subtitle">Isi sekarang, besok pagi langsung siap di-submit</div>
+          </div>
+          <span class="badge badge-draft">Besok</span>
+        </div>
+        <div class="info-banner" style="margin-bottom:12px">
+          💡 Tugas untuk <strong id="besok-date-label"></strong> — tersimpan otomatis, besok buka portal langsung muncul.
+        </div>
+        <div id="besok-save-status" style="font-size:12px;color:var(--success);min-height:18px;margin-bottom:4px;text-align:right"></div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr>
+              <th style="width:36px">No</th>
+              <th>Tugas / Agenda</th>
+              <th style="width:130px">Target Selesai</th>
+              <th style="width:42px"></th>
+            </tr></thead>
+            <tbody id="besok-tbody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn btn-outline btn-sm" onclick="addBesokRow()">+ Tambah Tugas</button>
+        </div>
+      </div>
+
     </div>
 
     <!-- ========== BUKU PENGHUBUNG ========== -->
@@ -416,11 +445,14 @@ const kelasAmpuArr = kelasAmpu ? kelasAmpu.split(',').map(k => k.trim()).filter(
 let jadwal = { jamBuka:'05:00', jamTutup:'08:00', jamBukaSore:'15:00', jamTutupSore:'17:00' };
 let pagiRows = [];
 let soreRows = [];
+let besokRows = [];
 let _syncDraftTimer = null;
+let _syncBesokTimer = null;
 let kpiHarianRows = KPI_HARIAN_ITEMS.map(lbl => ({ label: lbl, nilai: null }));
 let bukuGuruState = {}, bukuOrtuState = {}, siswaJenjangMap = {};
 
 const TODAY_ISO = (()=>{ const d=new Date(); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; })();
+const TOMORROW_ISO = (()=>{ const d=new Date(); d.setDate(d.getDate()+1); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; })();
 const TODAY_LABEL = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
 // ── Init UI ────────────────────────────────────
@@ -592,18 +624,35 @@ function markKpi(){localStorage.setItem(lsKey('kpi'),'1');}
 function getSavedPagiTasks(){try{return JSON.parse(localStorage.getItem(lsKey('pagi_tasks')))||[];}catch(e){return[];}}
 function syncPagiDraft(){
   if(isPagiSubmitted()) return;
-  localStorage.setItem('pagi_draft_'+currentUser.nama, JSON.stringify(pagiRows));
-  // Debounced save to server (cross-device sync)
+  localStorage.setItem('pagi_draft_'+currentUser.nama, JSON.stringify({tasks:pagiRows, tanggal:TODAY_ISO}));
   clearTimeout(_syncDraftTimer);
   _syncDraftTimer = setTimeout(()=>{
     apiCall('savePagiDraft',{karyawan:currentUser.nama, tasks:pagiRows, tanggal:TODAY_ISO});
   }, 800);
 }
+function syncBesokDraft(){
+  localStorage.setItem('pagi_draft_'+currentUser.nama, JSON.stringify({tasks:besokRows, tanggal:TOMORROW_ISO}));
+  clearTimeout(_syncBesokTimer);
+  _syncBesokTimer = setTimeout(()=>{
+    apiCall('savePagiDraft',{karyawan:currentUser.nama, tasks:besokRows, tanggal:TOMORROW_ISO}).then(()=>{
+      const el = document.getElementById('besok-save-status');
+      if(el) el.textContent = '✅ Tersimpan di server';
+    });
+  }, 800);
+}
 function clearPagiDraft(){
   localStorage.removeItem('pagi_draft_'+currentUser.nama);
-  apiCall('clearPagiDraft',{karyawan:currentUser.nama}); // fire-and-forget
+  apiCall('clearPagiDraft',{karyawan:currentUser.nama});
 }
-function getPagiDraft(){try{return JSON.parse(localStorage.getItem('pagi_draft_'+currentUser.nama))||null;}catch(e){return null;}}
+function getPagiDraft(){
+  try{
+    const raw = JSON.parse(localStorage.getItem('pagi_draft_'+currentUser.nama));
+    if(!raw) return null;
+    if(Array.isArray(raw)) return raw; // backward compat (old format)
+    if(raw.tasks && raw.tanggal === TODAY_ISO) return raw.tasks; // new format — only if for today
+    return null;
+  }catch(e){return null;}
+}
 
 // ══════════════════════════════════════════
 //  RENCANA KERJA — SESI PAGI
@@ -629,6 +678,8 @@ function renderPagi() {
     document.querySelectorAll('#pagi-tbody input, #pagi-tbody select').forEach(el=>el.disabled=false);
     // Show sore section
     showSoreSection();
+    // Show besok planning section
+    showBesokSection();
   } else if (!open) {
     badge.innerHTML = '<span class="badge badge-draft">📝 Draft</span>';
     banner.className = 'warn-banner';
@@ -661,6 +712,53 @@ function addPagiRow() {
   pagiRows.push({ agenda:'', target:TODAY_ISO });
   renderPagiTable();
   syncPagiDraft();
+}
+
+// ══════════════════════════════════════════
+//  RENCANA BESOK
+// ══════════════════════════════════════════
+function showBesokSection() {
+  const card = document.getElementById('card-besok');
+  if (!card) return;
+  card.style.display = 'block';
+  // Set label tanggal besok
+  const el = document.getElementById('besok-date-label');
+  if (el) {
+    const d = new Date(TOMORROW_ISO + 'T00:00:00');
+    const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    el.textContent = days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  // Restore draft if besokRows is empty
+  if (!besokRows.length) {
+    try {
+      const raw = JSON.parse(localStorage.getItem('pagi_draft_'+currentUser.nama));
+      if (raw && raw.tanggal === TOMORROW_ISO && raw.tasks && raw.tasks.length) {
+        besokRows = raw.tasks;
+      }
+    } catch(e) {}
+    if (!besokRows.length) besokRows = [{ agenda:'', target:TOMORROW_ISO }];
+  }
+  renderBesokTable();
+}
+
+function renderBesokTable() {
+  const tb = document.getElementById('besok-tbody'); if (!tb) return; tb.innerHTML = '';
+  besokRows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="text-align:center;font-weight:800">${i+1}</td>
+      <td><input type="text" value="${r.agenda||''}" placeholder="Tulis agenda/tugas..." onchange="besokRows[${i}].agenda=this.value;syncBesokDraft()"/></td>
+      <td><input type="date" value="${r.target||TOMORROW_ISO}" onchange="besokRows[${i}].target=this.value;syncBesokDraft()"/></td>
+      <td><button class="btn btn-red btn-sm" onclick="besokRows.splice(${i},1);renderBesokTable();syncBesokDraft()">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function addBesokRow() {
+  besokRows.push({ agenda:'', target:TOMORROW_ISO });
+  renderBesokTable();
+  syncBesokDraft();
 }
 
 function submitPagi() {
