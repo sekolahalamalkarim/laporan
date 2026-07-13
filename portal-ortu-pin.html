@@ -617,7 +617,7 @@ const BUKU_RUMAH_DEF = {
 };
 
 const TODAY = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-const TODAY_ISO = new Date().toISOString().split('T')[0];
+const TODAY_ISO = (()=>{ const d=new Date(); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; })();
 
 let selectedJenjang = '', selectedMurid = null, muridList = [];
 let bukuGuruState = null, bukuOrtuHistory = [];

@@ -419,7 +419,7 @@ let soreRows = [];
 let kpiHarianRows = KPI_HARIAN_ITEMS.map(lbl => ({ label: lbl, nilai: null }));
 let bukuGuruState = {}, bukuOrtuState = {}, siswaJenjangMap = {};
 
-const TODAY_ISO = new Date().toISOString().split('T')[0];
+const TODAY_ISO = (()=>{ const d=new Date(); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; })();
 const TODAY_LABEL = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
 // ── Init UI ────────────────────────────────────
