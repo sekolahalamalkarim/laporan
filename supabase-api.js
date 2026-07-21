@@ -402,12 +402,18 @@ async function _getJobTrackerToday({ karyawan }) {
 }
 
 async function _getAllJobTracker({ jenjang } = {}) {
-  // Ambil SEMUA guru aktif + semua KV job_ dalam 2 query paralel
-  // Jenjang difilter client-side agar fallback ke semua jika belum ada jenjang di DB
+  // Ambil SEMUA guru aktif + KV job_ master dalam 2 query paralel.
+  // PENTING: filter job_pagi_ dan job_sore_ di level DB (bukan JS) agar tidak kena
+  // batas default 1000 baris Supabase. Key per-sesi per-hari (job_pagi_Ahmad_2026-07-01
+  // dst.) terus bertambah setiap hari dan akan memotong hasil sebelum key master sempat
+  // dikembalikan. Query ini hanya mengambil key master (job_Ahmad), jumlahnya ~jumlah guru.
   const [{ data: rawGuru, error: e1 }, { data: kvRows, error: e2 }] = await Promise.all([
     _sb.from('users').select('nama, jabatan, tipe_guru, kelas_ampu, jenjang')
        .in('role', ['guru', 'kepala sekolah']).eq('active', 'Y'),
-    _sb.from('app_config').select('key, value').like('key', 'job_%'),
+    _sb.from('app_config').select('key, value')
+       .like('key', 'job_%')
+       .not('key', 'like', 'job_pagi_%')
+       .not('key', 'like', 'job_sore_%'),
   ]);
   if (e1) throw e1;
   if (e2) throw e2;
@@ -420,9 +426,7 @@ async function _getAllJobTracker({ jenjang } = {}) {
   }
 
   const kvMap = {};
-  (kvRows || [])
-    .filter(r => !r.key.startsWith('job_pagi_') && !r.key.startsWith('job_sore_'))
-    .forEach(r => { kvMap[r.key] = r.value; });
+  (kvRows || []).forEach(r => { kvMap[r.key] = r.value; });
 
   const grouped = {};
   const todayISO = _isoToday();
