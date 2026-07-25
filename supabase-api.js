@@ -73,7 +73,7 @@ async function apiCall(action, payload = {}) {
       case 'saveBukuGuru':       return await _saveBukuGuru(payload);
       case 'getBukuGuru':        return await _getBukuGuru(payload);
       case 'publishBukuGuru':    return await _publishBukuGuru(payload);
-      case 'getAllBukuStatus':   return await _getAllBukuStatus();
+      case 'getAllBukuStatus':   return await _getAllBukuStatus(payload);
 
       /* BUKU ORTU */
       case 'saveBukuOrtu':       return await _saveBukuOrtu(payload);
@@ -704,6 +704,10 @@ const _BUKU_KAT_SMA = [
   { no: 5, label: 'Pesan Khusus', items: [
     { label: 'Pesan Khusus Fasilitator', type: 'text', weekly: true },
   ]},
+  { no: 6, label: 'Persetujuan Orangtua', items: [
+    { label: 'Mengetahui / Validasi Orangtua', opts: ['—','Sudah Mengetahui'], weekly: true },
+    { label: 'TTD Orangtua', type: 'text', weekly: true },
+  ]},
 ];
 
 const _BUKU_KAT_BY_JENJANG = {
@@ -799,18 +803,23 @@ async function _publishBukuGuru({ siswa }) {
   return { ok: true, message: `Buku penghubung ${siswa} berhasil dipublish` };
 }
 
-async function _getAllBukuStatus() {
-  const { data, error } = await _sb.from('buku_guru')
-    .select('siswa, status, created_at').order('created_at', { ascending: false });
-  if (error) throw error;
+async function _getAllBukuStatus({ tanggal } = {}) {
+  const tgl = tanggal || _isoToday();
+  // Ambil semua siswa_id yang sudah isi buku_sekolah (guru) dan buku_rumah (ortu) pada tanggal tsb
+  const [{ data: sekolah, error: e1 }, { data: rumah, error: e2 }] = await Promise.all([
+    _sb.from('buku_sekolah').select('siswa_id, updated_at').eq('tanggal', tgl),
+    _sb.from('buku_rumah').select('siswa_id, updated_at').eq('tanggal', tgl),
+  ]);
+  if (e1) throw e1;
+  if (e2) throw e2;
 
-  const result = {};
-  (data || []).forEach(row => {
-    if (!result[row.siswa]) {
-      result[row.siswa] = { published: row.status === 'Published', updatedAt: row.created_at };
-    }
-  });
-  return { ok: true, data: result };
+  // Map by siswa_id → timestamp
+  const sekolahMap = {};
+  (sekolah || []).forEach(r => { sekolahMap[r.siswa_id] = r.updated_at; });
+  const rumahMap = {};
+  (rumah || []).forEach(r => { rumahMap[r.siswa_id] = r.updated_at; });
+
+  return { ok: true, sekolahMap, rumahMap, tanggal: tgl };
 }
 
 /* ─── BUKU ORTU ──────────────────────────────────────────────── */

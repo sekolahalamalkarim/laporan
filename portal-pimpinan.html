@@ -279,10 +279,22 @@
     <!-- BUKU PENGHUBUNG MONITOR -->
     <div id="tab-buku" class="tab-content">
       <div class="card">
-        <div class="card-header">
+        <div class="card-header" style="flex-wrap:wrap;gap:8px">
           <div class="card-title">📖 Status Buku Penghubung Siswa</div>
-          <button class="btn btn-outline btn-sm" onclick="loadBukuStatus()">🔄 Refresh</button>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="date" id="buku-filter-tanggal" style="padding:6px 10px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none" onchange="loadBukuStatus()" />
+            <select id="buku-filter-jenjang" style="padding:6px 10px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none" onchange="loadBukuStatus()">
+              <option value="">Semua Jenjang</option>
+              <option value="TK">TK</option>
+              <option value="SD">SD</option>
+              <option value="SMP">SMP</option>
+              <option value="SMA">SMA</option>
+              <option value="ALC">ALC</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="loadBukuStatus()">🔄 Refresh</button>
+          </div>
         </div>
+        <div id="buku-status-banner" style="display:none;background:#FFF3CD;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px"></div>
         <div class="table-wrapper" id="buku-status-table"></div>
       </div>
       <div class="card">
@@ -789,7 +801,8 @@ function renderStats(){
     if(k.nilaiRekap!==null&&k.nilaiRekap!==undefined)nilaiArr.push(k.nilaiRekap);
   });
   const avgNilai = nilaiArr.length ? Math.round(nilaiArr.reduce((a,b)=>a+b,0)/nilaiArr.length) : null;
-  const pub=Object.values(allBukuStatus).filter(s=>s&&s.published).length;
+  const sm = (allBukuStatus&&allBukuStatus.sekolahMap)||{};
+  const pub = allMurid.filter(m=>sm[m.id]).length;
   document.getElementById('stats-grid').innerHTML=`
     <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Karyawan Aktif</div></div>
     <div class="stat-card"><div class="stat-value">${selesai}</div><div class="stat-label">✅ Tugas Selesai</div></div>
@@ -797,7 +810,7 @@ function renderStats(){
     <div class="stat-card red"><div class="stat-value">${tidakSelesai}</div><div class="stat-label">❌ Tidak Selesai</div></div>
     <div class="stat-card blue"><div class="stat-value">${avgNilai!==null?avgNilai+'%':'—'}</div><div class="stat-label">Rata-rata Nilai</div></div>
     <div class="stat-card" style="background:#E8EAF6"><div class="stat-value" style="color:#3949AB">${soreCount}/${total}</div><div class="stat-label">Selesai Sore</div></div>
-    <div class="stat-card purple"><div class="stat-value">${pub}/${allMurid.length||'—'}</div><div class="stat-label">Buku Published</div></div>`;
+    <div class="stat-card purple"><div class="stat-value">${pub}/${allMurid.length||'—'}</div><div class="stat-label">Buku Diisi</div></div>`;
 }
 
 /* REKAP */
@@ -995,27 +1008,86 @@ function renderKpiRekap(){
 
 /* BUKU STATUS */
 function loadBukuStatus(){
-  apiCall('getAllBukuStatus').then(res=>{
-    if(res.ok&&res.data)allBukuStatus=res.data;
-    renderBukuStatus();
-  });
+  // Set default tanggal ke hari ini kalau belum di-set
+  const tglInput = document.getElementById('buku-filter-tanggal');
+  if(tglInput && !tglInput.value) tglInput.value = TODAY_ISO;
+  const tgl = tglInput ? tglInput.value || TODAY_ISO : TODAY_ISO;
+  const jenjang = (document.getElementById('buku-filter-jenjang')||{}).value || '';
+
+  // Muat murid dulu jika belum ada
+  const doLoad = () => {
+    apiCall('getAllBukuStatus', { tanggal: tgl }).then(res=>{
+      if(res.ok){ allBukuStatus = { sekolahMap: res.sekolahMap||{}, rumahMap: res.rumahMap||{}, tanggal: res.tanggal }; }
+      renderBukuStatus(tgl, jenjang);
+    });
+  };
+  if(!allMurid.length){
+    apiCall('getMurid').then(res=>{ if(res.ok) allMurid=res.data||[]; doLoad(); });
+  } else { doLoad(); }
 }
-function renderBukuStatus(){
+
+function _fmtWaktu(iso){
+  if(!iso)return'—';
+  try{ const d=new Date(iso); return d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}); }catch(e){return'—';}
+}
+
+function renderBukuStatus(tgl, jenjang){
   const el=document.getElementById('buku-status-table');
-  let html=`<table><thead><tr>
-    <th>Nama Siswa</th><th style="width:160px">Status Guru</th>
-    <th style="width:160px">Status Ortu</th><th>Update Terakhir</th>
+  const banner=document.getElementById('buku-status-banner');
+  const isToday = (tgl||TODAY_ISO)===TODAY_ISO;
+  if(!isToday&&banner){
+    const d=new Date((tgl||TODAY_ISO)+'T00:00:00');
+    banner.style.display='';
+    banner.innerHTML=`📅 Menampilkan data tanggal: <strong>${d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</strong>`;
+  } else if(banner){ banner.style.display='none'; }
+
+  const sm = (allBukuStatus&&allBukuStatus.sekolahMap)||{};
+  const rm = (allBukuStatus&&allBukuStatus.rumahMap)||{};
+
+  let list = allMurid;
+  if(jenjang) list = list.filter(m=>m.jenjang===jenjang);
+
+  // Hitung summary
+  const totalGuru = list.filter(m=>sm[m.id]).length;
+  const totalOrtu = list.filter(m=>rm[m.id]).length;
+
+  let html=`
+  <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+    <div style="background:#E8F5E9;border-radius:10px;padding:10px 18px;font-size:13px">
+      <span style="font-weight:800;font-size:20px;color:#2E7D32">${totalGuru}</span>
+      <span style="color:#388E3C"> / ${list.length}</span>
+      <div style="color:#555;font-size:11px;margin-top:2px">Guru sudah isi</div>
+    </div>
+    <div style="background:#E3F2FD;border-radius:10px;padding:10px 18px;font-size:13px">
+      <span style="font-weight:800;font-size:20px;color:#1565C0">${totalOrtu}</span>
+      <span style="color:#1976D2"> / ${list.length}</span>
+      <div style="color:#555;font-size:11px;margin-top:2px">Orangtua sudah isi</div>
+    </div>
+  </div>
+  <table><thead><tr>
+    <th>Nama Siswa</th>
+    <th style="width:150px">Status Guru</th>
+    <th style="width:150px">Status Ortu</th>
+    <th style="width:110px">Isi Guru</th>
+    <th style="width:110px">Isi Ortu</th>
   </tr></thead><tbody>`;
-  allMurid.forEach(m=>{
-    const gs=allBukuStatus[m.nama];
+
+  list.forEach(m=>{
+    const guruOk = !!sm[m.id];
+    const ortuOk = !!rm[m.id];
     html+=`<tr>
       <td style="font-weight:700">${m.nama} <span style="color:var(--gray-500);font-size:11px">(${m.kelas})</span></td>
-      <td>${gs?(gs.published?'<span class="badge badge-approved">✅ Published</span>':'<span class="badge badge-draft">✏️ Draft</span>'):'<span class="badge badge-pending">— Belum Diisi</span>'}</td>
-      <td>—</td>
-      <td style="font-size:12px;color:var(--gray-500)">${gs?gs.updatedAt||'—':'—'}</td>
+      <td>${guruOk
+        ? '<span class="badge badge-approved">✅ Sudah Isi</span>'
+        : '<span class="badge badge-pending">— Belum Diisi</span>'}</td>
+      <td>${ortuOk
+        ? '<span class="badge badge-approved">✅ Sudah Isi</span>'
+        : '<span class="badge badge-pending">— Belum Diisi</span>'}</td>
+      <td style="font-size:12px;color:var(--gray-500)">${_fmtWaktu(sm[m.id])}</td>
+      <td style="font-size:12px;color:var(--gray-500)">${_fmtWaktu(rm[m.id])}</td>
     </tr>`;
   });
-  if(!allMurid.length)html+='<tr><td colspan="4"><div class="empty-state" style="padding:20px"><div class="empty-icon">📚</div><p>Belum ada data murid. Tambahkan di tab Manajemen Data.</p></div></td></tr>';
+  if(!list.length) html+='<tr><td colspan="5"><div class="empty-state" style="padding:20px"><div class="empty-icon">📚</div><p>Belum ada data murid atau tidak ada siswa untuk jenjang ini.</p></div></td></tr>';
   html+='</tbody></table>';
   el.innerHTML=html;
   document.getElementById('ortu-report-table').innerHTML='<div class="empty-state"><div class="empty-icon">🔄</div><p>Klik Refresh untuk memuat laporan terbaru</p></div>';
@@ -2066,6 +2138,10 @@ const _BP_LABEL_SCHEMA = {
       ]},
       { kat:'C', label:'Pesan Khusus', items:[
         {key:'pesan_khusus',label:'Pesan Khusus Fasilitator'},
+      ]},
+      { kat:'D', label:'Persetujuan Orangtua', items:[
+        {key:'mengetahui_ortu',label:'Mengetahui / Validasi Orangtua'},
+        {key:'ttd_ortu',label:'TTD Orangtua'},
       ]},
     ],
     ALC: [
