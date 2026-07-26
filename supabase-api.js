@@ -704,10 +704,6 @@ const _BUKU_KAT_SMA = [
   { no: 5, label: 'Pesan Khusus', items: [
     { label: 'Pesan Khusus Fasilitator', type: 'text', weekly: true },
   ]},
-  { no: 6, label: 'Persetujuan Orangtua', items: [
-    { label: 'Mengetahui / Validasi Orangtua', opts: ['—','Sudah Mengetahui'], weekly: true },
-    { label: 'TTD Orangtua', type: 'text', weekly: true },
-  ]},
 ];
 
 const _BUKU_KAT_BY_JENJANG = {
