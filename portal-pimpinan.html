@@ -1007,11 +1007,21 @@ function renderKpiRekap(){
 }
 
 /* BUKU STATUS */
+// Kembalikan tanggal hari sekolah terakhir (Sabtu → Jumat, Minggu → Jumat)
+function _lastSchoolDay(){
+  const d = new Date();
+  const day = d.getDay(); // 0=Minggu,6=Sabtu
+  if(day === 0) d.setDate(d.getDate() - 2); // Minggu → Jumat
+  if(day === 6) d.setDate(d.getDate() - 1); // Sabtu → Jumat
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+
 function loadBukuStatus(){
-  // Set default tanggal ke hari ini kalau belum di-set
   const tglInput = document.getElementById('buku-filter-tanggal');
-  if(tglInput && !tglInput.value) tglInput.value = TODAY_ISO;
-  const tgl = tglInput ? tglInput.value || TODAY_ISO : TODAY_ISO;
+  // Default ke hari sekolah terakhir (bukan hari ini kalau weekend)
+  if(tglInput && !tglInput.value) tglInput.value = _lastSchoolDay();
+  const tgl = tglInput ? tglInput.value || _lastSchoolDay() : _lastSchoolDay();
   const jenjang = (document.getElementById('buku-filter-jenjang')||{}).value || '';
 
   // Muat murid dulu jika belum ada
@@ -1034,12 +1044,22 @@ function _fmtWaktu(iso){
 function renderBukuStatus(tgl, jenjang){
   const el=document.getElementById('buku-status-table');
   const banner=document.getElementById('buku-status-banner');
-  const isToday = (tgl||TODAY_ISO)===TODAY_ISO;
-  if(!isToday&&banner){
-    const d=new Date((tgl||TODAY_ISO)+'T00:00:00');
+  // Selalu tampilkan banner dengan tanggal yang sedang dilihat
+  if(banner){
+    const viewDate = tgl || _lastSchoolDay();
+    const d = new Date(viewDate + 'T00:00:00');
+    const isToday = viewDate === TODAY_ISO;
+    const day = d.getDay();
+    const isWeekend = day === 0 || day === 6;
     banner.style.display='';
-    banner.innerHTML=`📅 Menampilkan data tanggal: <strong>${d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</strong>`;
-  } else if(banner){ banner.style.display='none'; }
+    banner.style.background = isWeekend ? '#FFF3CD' : '#E8F5E9';
+    const label = d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    banner.innerHTML = isWeekend
+      ? `📅 <strong>${label}</strong> — hari libur, menampilkan data hari sekolah terakhir`
+      : isToday
+        ? `📅 Menampilkan data hari ini: <strong>${label}</strong>`
+        : `📅 Menampilkan data tanggal: <strong>${label}</strong>`;
+  }
 
   const sm = (allBukuStatus&&allBukuStatus.sekolahMap)||{};
   const rm = (allBukuStatus&&allBukuStatus.rumahMap)||{};
