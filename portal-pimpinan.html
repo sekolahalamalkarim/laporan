@@ -795,7 +795,7 @@ function renderStats(){
   });
   const avgNilai = nilaiArr.length ? Math.round(nilaiArr.reduce((a,b)=>a+b,0)/nilaiArr.length) : null;
   const sm = (allBukuStatus&&allBukuStatus.sekolahMap)||{};
-  const pub = allMurid.filter(m=>sm[m.id]).length;
+  const pub = allMurid.filter(m=>sm[m.nama]).length;
   document.getElementById('stats-grid').innerHTML=`
     <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Karyawan Aktif</div></div>
     <div class="stat-card"><div class="stat-value">${selesai}</div><div class="stat-label">✅ Tugas Selesai</div></div>
@@ -1061,8 +1061,8 @@ function renderBukuStatus(tgl, jenjang){
   if(jenjang) list = list.filter(m=>m.jenjang===jenjang);
 
   // Hitung summary
-  const totalGuru = list.filter(m=>sm[m.id]).length;
-  const totalOrtu = list.filter(m=>rm[m.id]).length;
+  const totalGuru = list.filter(m=>sm[m.nama]).length;
+  const totalOrtu = list.filter(m=>rm[m.nama]).length;
 
   let html=`
   <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap">
@@ -1086,8 +1086,8 @@ function renderBukuStatus(tgl, jenjang){
   </tr></thead><tbody>`;
 
   list.forEach(m=>{
-    const guruOk = !!sm[m.id];
-    const ortuOk = !!rm[m.id];
+    const guruOk = !!sm[m.nama];
+    const ortuOk = !!rm[m.nama];
     html+=`<tr>
       <td style="font-weight:700">${m.nama} <span style="color:var(--gray-500);font-size:11px">(${m.kelas})</span></td>
       <td>${guruOk
@@ -1096,8 +1096,8 @@ function renderBukuStatus(tgl, jenjang){
       <td>${ortuOk
         ? '<span class="badge badge-approved">✅ Sudah Isi</span>'
         : '<span class="badge badge-pending">— Belum Diisi</span>'}</td>
-      <td style="font-size:12px;color:var(--gray-500)">${_fmtWaktu(sm[m.id])}</td>
-      <td style="font-size:12px;color:var(--gray-500)">${_fmtWaktu(rm[m.id])}</td>
+      <td style="font-size:12px;color:var(--gray-500)">${_fmtWaktu(sm[m.nama])}</td>
+      <td style="font-size:12px;color:var(--gray-500)">${_fmtWaktu(rm[m.nama])}</td>
     </tr>`;
   });
   if(!list.length) html+='<tr><td colspan="5"><div class="empty-state" style="padding:20px"><div class="empty-icon">📚</div><p>Belum ada data murid atau tidak ada siswa untuk jenjang ini.</p></div></td></tr>';
