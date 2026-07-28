@@ -122,9 +122,9 @@
               <option value="">Semua Jenjang</option>
               <option>TK</option><option>SD</option><option>SMP</option><option>SMA</option><option>ALC</option><option>Kemediaan</option><option>Admin</option>
             </select>
-            <select id="filter-karyawan" style="padding:7px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;outline:none;font-family:inherit" onchange="renderJobTable()">
-              <option value="">Semua Karyawan</option>
-            </select>
+            <input type="text" id="filter-karyawan" placeholder="🔍 Cari nama karyawan..."
+              style="padding:7px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;outline:none;font-family:inherit;width:180px"
+              oninput="renderJobTable()" />
             <select id="filter-status" style="padding:7px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;outline:none;font-family:inherit" onchange="renderJobTable()">
               <option value="">Semua Status</option>
               <option value="Selesai">✅ Selesai</option>
@@ -421,9 +421,10 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" id="assign-form">
           <div>
             <div style="font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:6px;text-transform:uppercase">Target</div>
-            <select id="assign-target" style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:14px;outline:none;font-family:inherit">
-              <option value="semua">📢 Semua Guru &amp; Karyawan</option>
-            </select>
+            <input type="text" id="assign-target" list="assign-target-list"
+              placeholder="Ketik nama (kosongkan = Semua Guru & Karyawan)"
+              style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:14px;outline:none;font-family:inherit"/>
+            <datalist id="assign-target-list"></datalist>
           </div>
           <div>
             <div style="font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:6px;text-transform:uppercase">Deadline</div>
@@ -666,14 +667,6 @@ function loadJobByDate(forceToday=false, silent=false){
   ]).then(([jobRes, kpiRes])=>{
     if(jobRes.ok && jobRes.data){
       allJobData = jobRes.data;
-      const prevVal = document.getElementById('filter-karyawan').value;
-      const sel = document.getElementById('filter-karyawan');
-      sel.innerHTML = '<option value="">Semua Karyawan</option>';
-      Object.keys(allJobData).forEach(k=>{
-        const o=document.createElement('option'); o.value=k; o.textContent=k;
-        if(k===prevVal) o.selected=true;
-        sel.appendChild(o);
-      });
       renderJobTable(tgl);
       if(isToday) renderStats();
       if(!silent) toast('✅ Data berhasil dimuat');
@@ -702,7 +695,7 @@ setInterval(()=>{ const tgl=document.getElementById('filter-tanggal'); if(!tgl||
 
 function renderJobTable(viewDate){
   const tb=document.getElementById('job-tbody');
-  const fNama=document.getElementById('filter-karyawan').value;
+  const fNama=(document.getElementById('filter-karyawan').value||'').toLowerCase().trim();
   const fStatus=document.getElementById('filter-status').value;
   const currentDate = viewDate || (document.getElementById('filter-tanggal')?.value) || TODAY_ISO;
   tb.innerHTML='';
@@ -712,7 +705,7 @@ function renderJobTable(viewDate){
     return;
   }
   allList.forEach(k=>{
-    if(fNama&&k.karyawan!==fNama)return;
+    if(fNama&&!k.karyawan.toLowerCase().includes(fNama))return;
     const isToday = currentDate === TODAY_ISO;
     const hasTasks = (k.tasks||[]).length > 0;
     const submitted = !!k.pagiSubmittedAt;
@@ -1550,17 +1543,18 @@ function loadJadwal() {
 
 /* ASSIGN TUGAS */
 function populateAssignTarget() {
-  const sel = document.getElementById('assign-target');
-  sel.innerHTML = '<option value="semua">📢 Semua Guru &amp; Karyawan</option>';
+  const dl = document.getElementById('assign-target-list');
+  if (!dl) return;
+  dl.innerHTML = '';
   allUsers.filter(u => u.role === 'guru').forEach(u => {
     const o = document.createElement('option');
-    o.value = u.nama; o.textContent = '🧑‍🏫 ' + u.nama + ' (' + u.jabatan + ')';
-    sel.appendChild(o);
+    o.value = u.nama;
+    dl.appendChild(o);
   });
 }
 
 function doAssignTugas() {
-  const target  = document.getElementById('assign-target').value;
+  const target  = document.getElementById('assign-target').value.trim() || 'semua';
   const agenda  = document.getElementById('assign-agenda').value.trim();
   const deadline = document.getElementById('assign-deadline').value;
   const catatan = document.getElementById('assign-catatan').value.trim();
@@ -1569,6 +1563,7 @@ function doAssignTugas() {
   apiCall('assignTugas', { dari: currentUser.nama, target, agenda, deadline, catatan }).then(res => {
     if (res.ok) {
       toast('✅ ' + res.message);
+      document.getElementById('assign-target').value = '';
       document.getElementById('assign-agenda').value = '';
       document.getElementById('assign-catatan').value = '';
       document.getElementById('assign-deadline').value = '';
