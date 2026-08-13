@@ -297,6 +297,33 @@
         <div id="buku-status-banner" style="display:none;background:#FFF3CD;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px"></div>
         <div class="table-wrapper" id="buku-status-table"></div>
       </div>
+      <!-- REKAP KEAKTIFAN -->
+      <div class="card">
+        <div class="card-header" style="flex-wrap:wrap;gap:8px">
+          <div class="card-title">📊 Rekap Keaktifan Buku Penghubung</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:12px;font-weight:700;color:var(--gray-600)">Dari</span>
+            <input type="date" id="rb-start" style="padding:6px 10px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none"/>
+            <span style="font-size:12px;font-weight:700;color:var(--gray-600)">s/d</span>
+            <input type="date" id="rb-end" style="padding:6px 10px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none"/>
+            <select id="rb-jenjang" style="padding:6px 10px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none">
+              <option value="">Semua Jenjang</option>
+              <option value="TK">TK</option><option value="SD">SD</option>
+              <option value="SMP">SMP</option><option value="SMA">SMA</option><option value="ALC">ALC</option>
+            </select>
+            <select id="rb-view" onchange="renderRekapBuku()" style="padding:6px 10px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:13px;font-family:inherit;outline:none">
+              <option value="kelas">Rekap Per Kelas</option>
+              <option value="siswa">Detail Per Siswa</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="loadRekapBuku()">🔄 Tampilkan</button>
+            <button class="btn btn-green btn-sm" onclick="downloadRekapBuku()">⬇️ Download CSV</button>
+          </div>
+        </div>
+        <div id="rekap-buku-wrap">
+          <div class="empty-state" style="padding:24px"><div class="empty-icon">📊</div><p>Pilih rentang tanggal lalu klik Tampilkan</p></div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-header"><div class="card-title">🏠 Laporan Rumah dari Orangtua</div></div>
         <div class="table-wrapper" id="ortu-report-table"></div>
@@ -1104,6 +1131,134 @@ function renderBukuStatus(tgl, jenjang){
   html+='</tbody></table>';
   el.innerHTML=html;
   document.getElementById('ortu-report-table').innerHTML='<div class="empty-state"><div class="empty-icon">🔄</div><p>Klik Refresh untuk memuat laporan terbaru</p></div>';
+}
+
+/* ── REKAP BUKU PENGHUBUNG ───────────────────────────────────── */
+let _rekapBukuData = null;
+
+function _initRekapBukuDates() {
+  const endEl   = document.getElementById('rb-end');
+  const startEl = document.getElementById('rb-start');
+  if (!endEl.value) endEl.value = TODAY_ISO;
+  if (!startEl.value) {
+    const d = new Date(TODAY_ISO + 'T00:00:00');
+    d.setDate(1);
+    startEl.value = d.toISOString().slice(0,10);
+  }
+}
+
+function loadRekapBuku() {
+  _initRekapBukuDates();
+  const start = document.getElementById('rb-start').value;
+  const end   = document.getElementById('rb-end').value;
+  if (!start || !end) { toast('⚠️ Isi rentang tanggal dulu', true); return; }
+  if (start > end)    { toast('⚠️ Tanggal mulai harus sebelum tanggal selesai', true); return; }
+  document.getElementById('rekap-buku-wrap').innerHTML = '<div style="text-align:center;padding:24px;color:var(--gray-500)">⏳ Memuat rekap...</div>';
+  const doLoad = () => {
+    apiCall('getBukuRekapRange', { startDate: start, endDate: end }).then(res => {
+      if (!res.ok) { toast('⚠️ Gagal memuat rekap: ' + (res.error||''), true); return; }
+      _rekapBukuData = res;
+      renderRekapBuku();
+    });
+  };
+  if (!allMurid.length) {
+    apiCall('getMurid').then(res => { if(res.ok) allMurid = res.data||[]; doLoad(); });
+  } else { doLoad(); }
+}
+
+function renderRekapBuku() {
+  if (!_rekapBukuData) return;
+  const { sekolahCount, rumahCount, startDate, endDate } = _rekapBukuData;
+  const jenjangFilter = document.getElementById('rb-jenjang').value;
+  const view = document.getElementById('rb-view').value;
+  const wrap = document.getElementById('rekap-buku-wrap');
+  let list = allMurid;
+  if (jenjangFilter) list = list.filter(m => m.jenjang === jenjangFilter);
+  const startLabel = new Date(startDate+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  const endLabel   = new Date(endDate  +'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  let html = `<div style="font-size:12px;color:var(--gray-500);margin-bottom:12px">📅 Rentang: <strong>${startLabel} — ${endLabel}</strong> &nbsp;|&nbsp; ${list.length} siswa</div>`;
+
+  if (view === 'kelas') {
+    const kelasMap = {};
+    list.forEach(m => {
+      const k = m.kelas || '—';
+      if (!kelasMap[k]) kelasMap[k] = { kelas: k, jenjang: m.jenjang||'', siswa: [] };
+      kelasMap[k].siswa.push(m);
+    });
+    html += `<div class="table-wrapper"><table><thead><tr>
+      <th>Kelas</th><th>Jenjang</th><th style="text-align:center">Total Siswa</th>
+      <th style="text-align:center">Guru Isi ≥1x</th><th style="text-align:center">% Guru</th>
+      <th style="text-align:center">Ortu Isi ≥1x</th><th style="text-align:center">% Ortu</th>
+      <th style="text-align:center">Rata-rata Isi Ortu</th>
+    </tr></thead><tbody>`;
+    Object.values(kelasMap).sort((a,b)=>a.kelas.localeCompare(b.kelas)).forEach(kg => {
+      const total = kg.siswa.length;
+      const guruIsi  = kg.siswa.filter(m => (sekolahCount[m.nama]||0) > 0).length;
+      const ortuIsi  = kg.siswa.filter(m => (rumahCount[m.nama] ||0) > 0).length;
+      const totalOrtuIsi = kg.siswa.reduce((s,m) => s + (rumahCount[m.nama]||0), 0);
+      const rataOrtu = total ? (totalOrtuIsi/total).toFixed(1) : '0';
+      const pctGuru  = total ? Math.round(guruIsi/total*100) : 0;
+      const pctOrtu  = total ? Math.round(ortuIsi/total*100) : 0;
+      html += `<tr>
+        <td style="font-weight:700">${kg.kelas}</td>
+        <td><span style="background:#E3F2FD;color:#1565C0;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700">${kg.jenjang}</span></td>
+        <td style="text-align:center">${total}</td>
+        <td style="text-align:center;font-weight:700;color:#2E7D32">${guruIsi}</td>
+        <td style="text-align:center">${_pctBadge(pctGuru)}</td>
+        <td style="text-align:center;font-weight:700;color:#1565C0">${ortuIsi}</td>
+        <td style="text-align:center">${_pctBadge(pctOrtu)}</td>
+        <td style="text-align:center;color:var(--gray-600)">${rataOrtu}x</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+  } else {
+    html += `<div class="table-wrapper"><table><thead><tr>
+      <th>Nama Siswa</th><th>Kelas</th><th>Jenjang</th><th>Nama Ortu/Wali</th>
+      <th style="text-align:center;width:110px">Isi Guru</th>
+      <th style="text-align:center;width:110px">Isi Ortu</th>
+    </tr></thead><tbody>`;
+    [...list].sort((a,b)=>(a.kelas||'').localeCompare(b.kelas||'')||a.nama.localeCompare(b.nama)).forEach(m => {
+      const guru = sekolahCount[m.nama] || 0;
+      const ortu = rumahCount[m.nama]   || 0;
+      html += `<tr>
+        <td style="font-weight:700">${m.nama}</td>
+        <td>${m.kelas||'—'}</td>
+        <td><span style="background:#E3F2FD;color:#1565C0;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700">${m.jenjang||'—'}</span></td>
+        <td style="color:var(--gray-600);font-size:13px">${m.namaOrtu||'—'}</td>
+        <td style="text-align:center;font-weight:700;color:${guru>0?'#2E7D32':'var(--gray-400)'}">${guru>0?guru+'x':'—'}</td>
+        <td style="text-align:center;font-weight:700;color:${ortu>0?'#1565C0':'var(--gray-400)'}">${ortu>0?ortu+'x':'—'}</td>
+      </tr>`;
+    });
+    if (!list.length) html += '<tr><td colspan="6"><div class="empty-state" style="padding:20px"><div class="empty-icon">📚</div><p>Tidak ada siswa ditemukan.</p></div></td></tr>';
+    html += '</tbody></table></div>';
+  }
+  wrap.innerHTML = html;
+}
+
+function _pctBadge(pct) {
+  const color = pct>=75?'#2E7D32':pct>=50?'#F57F17':'#C62828';
+  const bg    = pct>=75?'#E8F5E9':pct>=50?'#FFF8E1':'#FFEBEE';
+  return `<span style="background:${bg};color:${color};border-radius:12px;padding:3px 10px;font-size:12px;font-weight:700">${pct}%</span>`;
+}
+
+function downloadRekapBuku() {
+  if (!_rekapBukuData) { toast('⚠️ Tampilkan data dulu sebelum download', true); return; }
+  const { sekolahCount, rumahCount, startDate, endDate } = _rekapBukuData;
+  const jenjangFilter = document.getElementById('rb-jenjang').value;
+  let list = allMurid;
+  if (jenjangFilter) list = list.filter(m => m.jenjang === jenjangFilter);
+  list = [...list].sort((a,b)=>(a.kelas||'').localeCompare(b.kelas||'')||a.nama.localeCompare(b.nama));
+  const rows = [['Nama Siswa','Kelas','Jenjang','Nama Ortu/Wali','Isi Guru (hari)','Isi Ortu (hari)']];
+  list.forEach(m => {
+    rows.push([m.nama, m.kelas||'', m.jenjang||'', m.namaOrtu||'', sekolahCount[m.nama]||0, rumahCount[m.nama]||0]);
+  });
+  const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download=`rekap-buku-${startDate}-sd-${endDate}.csv`; a.click();
+  URL.revokeObjectURL(url);
+  toast('✅ CSV berhasil diunduh');
 }
 
 /* MANAJEMEN DATA */

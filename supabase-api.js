@@ -86,6 +86,7 @@ async function apiCall(action, payload = {}) {
       case 'getBukuRumah':       return await _getBukuRumah(payload);
       case 'saveBukuRumah':      return await _saveBukuRumah(payload);
       case 'getRekapBuku':       return await _getRekapBuku(payload);
+      case 'getBukuRekapRange':  return await _getBukuRekapRange(payload);
       case 'getNilaiKeaktifan':  return await _getNilaiKeaktifan(payload);
 
       /* KPI TAHUNAN */
@@ -816,6 +817,21 @@ async function _getAllBukuStatus({ tanggal } = {}) {
   (rumah || []).forEach(r => { rumahMap[r.siswa_id] = r.updated_at; });
 
   return { ok: true, sekolahMap, rumahMap, tanggal: tgl };
+}
+
+async function _getBukuRekapRange({ startDate, endDate } = {}) {
+  if (!startDate || !endDate) throw new Error('startDate dan endDate wajib diisi');
+  const [{ data: sekolah, error: e1 }, { data: rumah, error: e2 }] = await Promise.all([
+    _sb.from('buku_sekolah').select('siswa_id, tanggal').gte('tanggal', startDate).lte('tanggal', endDate),
+    _sb.from('buku_rumah').select('siswa_id, tanggal').gte('tanggal', startDate).lte('tanggal', endDate),
+  ]);
+  if (e1) throw e1;
+  if (e2) throw e2;
+  const sekolahCount = {};
+  (sekolah || []).forEach(r => { sekolahCount[r.siswa_id] = (sekolahCount[r.siswa_id] || 0) + 1; });
+  const rumahCount = {};
+  (rumah || []).forEach(r => { rumahCount[r.siswa_id] = (rumahCount[r.siswa_id] || 0) + 1; });
+  return { ok: true, sekolahCount, rumahCount, startDate, endDate };
 }
 
 /* ─── BUKU ORTU ──────────────────────────────────────────────── */
