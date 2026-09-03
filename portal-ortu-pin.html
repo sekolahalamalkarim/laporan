@@ -975,9 +975,12 @@ function _loadNilaiKeaktifan(murid) {
   const now = new Date();
   apiCall('getNilaiKeaktifan', { siswaId: murid.nama, bulan: now.getMonth() + 1, tahun: now.getFullYear() })
     .then(res => {
-      if (!res.ok) return;
       const el = document.getElementById('bp-keaktifan-view');
       const badge = document.getElementById('bp-keaktifan-badge');
+      if (!res.ok) {
+        if (el) el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Gagal memuat data keaktifan: ${res.error||'coba refresh halaman'}</p></div>`;
+        return;
+      }
       const bln = now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
       const jml = res.jumlahHari;
       const color = jml >= 24 ? 'var(--success)' : jml >= 14 ? 'var(--warning)' : '#C62828';

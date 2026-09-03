@@ -1165,7 +1165,8 @@ async function _getRekapBuku({ siswaId, startDate, endDate } = {}) {
 async function _getNilaiKeaktifan({ siswaId, bulan, tahun } = {}) {
   const bln  = String(bulan).padStart(2, '0');
   const startDate = `${tahun}-${bln}-01`;
-  const endDate   = `${tahun}-${bln}-31`;
+  const lastDay   = new Date(Number(tahun), Number(bulan), 0).getDate(); // hari terakhir bulan tsb
+  const endDate   = `${tahun}-${bln}-${String(lastDay).padStart(2, '0')}`;
   const { data, error } = await _sb.from('buku_rumah')
     .select('tanggal').eq('siswa_id', siswaId).gte('tanggal', startDate).lte('tanggal', endDate);
   if (error) throw error;
